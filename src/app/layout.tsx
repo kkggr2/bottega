@@ -11,6 +11,9 @@ const mono = IBM_Plex_Mono({ variable: "--ff-mono", weight: ["400", "500"], subs
 export const metadata: Metadata = {
   title: { default: "Bottega", template: "%s · Bottega" },
   description: "Everyone gets one room. Fill it with your taste and step into your friends'.",
+  applicationName: "Bottega",
+  appleWebApp: { capable: true, title: "Bottega", statusBarStyle: "black-translucent" },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
