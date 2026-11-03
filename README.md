@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bottega
 
-## Getting Started
+Everyone gets one room. Fill it with your taste (film posters, scenes, poems, games, songs that play when clicked) and step into your friends' rooms from your library shelf. Friends find each other by username.
 
-First, run the development server:
+Built with Next.js 16, Supabase (sign-in, Postgres, storage, realtime) and plain CSS.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Set up (about 10 minutes)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. **Create a Supabase project** at [supabase.com](https://supabase.com) (the free tier is enough).
+2. **Create the database.** In the Supabase dashboard open **SQL Editor → New query**, paste all of [`supabase/migrations/20261103000000_init.sql`](supabase/migrations/20261103000000_init.sql), and click **Run**. This creates the tables, access rules, the private `media` bucket and live updates.
+3. **Allow sign-in links back to your app.** In **Authentication → URL Configuration**, set **Site URL** to `http://localhost:3000` (and later add your real domain under **Redirect URLs**).
+4. *(Optional)* To let people type a 6-digit code instead of clicking the link, edit **Authentication → Emails → Magic Link** and add `{{ .Token }}` to the template.
+5. **Connect the app.** Copy `.env.example` to `.env.local` and fill in the values from **Project Settings → API** (the project URL and the publishable or anon key).
+   For film search, add `TMDB_READ_TOKEN` from [themoviedb.org](https://www.themoviedb.org/settings/api) (the "API Read Access Token"). It stays on the server.
+   Also run every later file in `supabase/migrations/` in date order.
+6. Run it:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+   ```bash
+   npm install
+   npm run dev
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   Open http://localhost:3000.
 
-## Learn More
+## How it's built
 
-To learn more about Next.js, take a look at the following resources:
+| Where | What |
+| --- | --- |
+| `supabase/migrations/` | Tables (`profiles`, `rooms`, `pieces`, `friendships`), row level security, storage rules, the `claim_username` function |
+| `src/components/gate.tsx` | Sends people through setup → sign-in → pick a username |
+| `src/components/library.tsx` | The shelf, friend requests, adding friends by username |
+| `src/components/room.tsx` | A room: wall, pieces, record player, owner controls, live updates |
+| `src/components/piece-*.tsx` | How each piece looks, its detail sheet, and the editor |
+| `src/lib/` | Supabase client, themes, media upload, music embeds, friendship helpers |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Who can see what
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The database enforces this, not just the app:
 
-## Deploy on Vercel
+- Usernames and room names (the "door") are visible to anyone signed in, so friends can find each other.
+- What's on the walls, and the uploaded images and clips, follow the room's **Who can come in** setting: *Friends* (the default), *Anyone signed in*, or *Just me*.
+- Only the owner can change a room or its pieces. Friend requests can only be accepted by the person they were sent to.
+- Usernames can't be changed after they're claimed. A room holds up to 80 pieces.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Songs
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Clips** you upload (MP3, M4A, OGG, WEBM or WAV, up to 60 seconds and 10 MB) play when someone clicks the record.
+- **Links** from Spotify, Apple Music, YouTube or SoundCloud get a built-in player in the song's detail sheet.
+
+## Where search results come from
+
+- Songs, cover art and 30-second previews: Apple's iTunes Search API
+- Books and covers: [Open Library](https://openlibrary.org)
+- Films, TV, posters, stills and trailers: [TMDB](https://www.themoviedb.org). This product uses the TMDB API but is not endorsed or certified by TMDB.
+- Scene titles and thumbnails: YouTube
+
+## Deploy
+
+Push to GitHub, import the repo on [Vercel](https://vercel.com), add the two `NEXT_PUBLIC_SUPABASE_*` variables and `TMDB_READ_TOKEN`, and add your Vercel URL to Supabase's **Redirect URLs**.
+
+## Next up
+
+Drag-and-drop placement on the wall, share previews for `/r/username` links, notifications, report and block, and an installable phone app.
