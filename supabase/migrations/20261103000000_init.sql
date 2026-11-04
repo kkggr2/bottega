@@ -36,7 +36,7 @@ create table public.pieces (
   body        text not null default '' check (char_length(body) <= 4000),
   image_path  text check (image_path is null or image_path like owner_id::text || '/%'),
   audio_path  text check (audio_path is null or audio_path like owner_id::text || '/%'),
-  link        text check (link is null or link ~ '^https://[^\s]{3,500}$'),
+  link        text check (link is null or (link ~ '^https://\S+$' and char_length(link) between 11 and 500)),
   position    double precision not null default extract(epoch from now()),
   created_at  timestamptz not null default now()
 );
