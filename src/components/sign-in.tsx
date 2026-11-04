@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { isNativeApp } from "@/lib/native";
 import { friendlyError, supabase } from "@/lib/supabase";
 
 export function SignIn() {
@@ -56,7 +57,9 @@ export function SignIn() {
           <form className="stack" onSubmit={(e) => { e.preventDefault(); verify(); }}>
             <p className="mono muted">Check your inbox</p>
             <p>
-              We sent a sign-in link to <b>{sentTo}</b>. Open it on this device, or type the code from the email.
+              {isNativeApp()
+                ? <>We emailed <b>{sentTo}</b>. Type the code from that email here. (The link in it opens your browser, not the app.)</>
+                : <>We sent a sign-in link to <b>{sentTo}</b>. Open it on this device, or type the code from the email.</>}
             </p>
             <div className="field">
               <label htmlFor="otp">Code</label>
@@ -81,7 +84,7 @@ export function SignIn() {
             </div>
             <p className={`msg ${msg?.kind ?? ""}`} aria-live="polite">{msg?.text}</p>
             <div>
-              <button className="btn" type="submit" disabled={busy}>{busy ? "Sending…" : "Email me a link"}</button>
+              <button className="btn" type="submit" disabled={busy}>{busy ? "Sending…" : isNativeApp() ? "Email me a code" : "Email me a link"}</button>
             </div>
           </form>
         )}

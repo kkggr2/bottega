@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bottega</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { height: 100%; margin: 0; }
+  body { background: #2F3B2C; color: #F4ECD8; font: 16px/1.5 -apple-system, system-ui, sans-serif;
+    display: grid; place-items: center; text-align: center;
+    padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom)); }
+  .door { width: 84px; height: 116px; margin: 0 auto 28px; background: #F4ECD8; border: 5px solid #C6A94E;
+    border-radius: 42px 42px 0 0; position: relative; }
+  .door::after { content: ""; position: absolute; right: 16px; top: 62px; width: 10px; height: 10px; border-radius: 50%; background: #94661F; }
+  h1 { font: 400 34px/1.1 Georgia, serif; margin: 0 0 10px; }
+  p { margin: 0 0 24px; opacity: .8; max-width: 30ch; }
+  button { font: inherit; border: 0; border-radius: 999px; padding: 10px 22px; background: #F4ECD8; color: #1B211D; font-weight: 600; }
+</style>
+</head>
+<body>
+  <main>
+    <div class="door" aria-hidden="true"></div>
+    <h1>The door is stuck.</h1>
+    <p>Bottega needs an internet connection. Check your Wi-Fi or mobile data and try again.</p>
+    <button type="button" onclick="location.href='https://bottega-sable.vercel.app'">Try again</button>
+  </main>
+</body>
+</html>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { befriend, friendshipWith, relationOf, unfriend, type Relation } from "@/lib/friends";
 import { removeMedia, signedUrls } from "@/lib/media";
+import { shareLink, tap } from "@/lib/native";
 import { audioOf } from "@/lib/piece-media";
 import { friendlyError, supabase } from "@/lib/supabase";
 import { MAX_PIECES, PIECE_TYPES, roomStyle } from "@/lib/themes";
@@ -114,6 +115,7 @@ function RoomInner({ username, me }: { username: string; me: Profile }) {
       const audio = new Audio(src);
       audio.onended = () => setPlayingId(null);
       audioRef.current = audio;
+      tap();
       audio.play().then(
         () => setPlayingId(piece.id),
         () => setNotice("This record can't play right now."),
@@ -127,6 +129,7 @@ function RoomInner({ username, me }: { username: string; me: Profile }) {
       stopMusic();
       setTvId(piece.id);
       setTvOn(Boolean(piece.link));
+      tap();
     },
     [stopMusic],
   );
@@ -195,6 +198,13 @@ function RoomInner({ username, me }: { username: string; me: Profile }) {
     await load();
   }
 
+  async function share() {
+    const url = `${window.location.origin}/r/${owner.username}`;
+    const result = await shareLink(`${room.name} · @${owner.username} on Bottega`, url);
+    if (result === "copied") setNotice("Link copied. Paste it to a friend.");
+    else if (result === "failed") setNotice(`Couldn't share. The link is ${url}`);
+  }
+
   const friendLabel = {
     none: `Add @${owner.username}`,
     incoming: `Accept @${owner.username}'s request`,
@@ -218,13 +228,17 @@ function RoomInner({ username, me }: { username: string; me: Profile }) {
         <div className="actions">
           {isOwner ? (
             <>
+              <button className="btn ghost" type="button" onClick={share}>Share</button>
               <button className="btn ghost" type="button" onClick={() => setCustomizing(true)}>Customize room</button>
               <button className="btn" type="button" onClick={() => add()}>Add something</button>
             </>
           ) : (
-            <button className={`btn ${relation === "none" || relation === "incoming" ? "" : "ghost"}`} type="button" onClick={friendAction}>
-              {friendLabel}
-            </button>
+            <>
+              <button className="btn ghost" type="button" onClick={share}>Share</button>
+              <button className={`btn ${relation === "none" || relation === "incoming" ? "" : "ghost"}`} type="button" onClick={friendAction}>
+                {friendLabel}
+              </button>
+            </>
           )}
         </div>
       </section>

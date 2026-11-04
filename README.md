@@ -58,6 +58,20 @@ The database enforces this, not just the app:
 
 Push to GitHub, import the repo on [Vercel](https://vercel.com), add the two `NEXT_PUBLIC_SUPABASE_*` variables and `TMDB_READ_TOKEN`, and add your Vercel URL to Supabase's **Redirect URLs**.
 
+## Phone apps (iOS and Android)
+
+The apps are [Capacitor](https://capacitorjs.com) shells around the live site (`server.url` in `capacitor.config.ts`), so every deploy to Vercel reaches them without a store update. `native/www/offline.html` shows when there's no connection.
+
+- In the app, sign-in is by **code**, since email links open the browser. Add `{{ .Token }}` to Supabase's Magic Link email template.
+- Records and scenes keep playing with the iPhone's silent switch on.
+- Icons and the launch screen come from `assets/`; regenerate with `npx @capacitor/assets generate` (then delete any `icons/` folder and `public/manifest.webmanifest` it creates for the web).
+
+```bash
+npx cap sync          # after changing capacitor.config.ts or adding a plugin
+npx cap open ios      # opens Xcode: pick a device and press Run
+npx cap open android  # needs Android Studio
+```
+
 ## Next up
 
 Drag-and-drop placement on the wall, share previews for `/r/username` links, notifications, report and block, and an installable phone app.

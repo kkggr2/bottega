@@ -336,3 +336,14 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .stills button[aria-pressed="true"] { border-color: var(--brass); }
 .stills img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .picked img { aspect-ratio: auto; }
+
+/* Phones: two pieces per row on the wall, and a solid band behind the status bar in the app. */
+@media (max-width: 520px) {
+  .pieces { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 14px; }
+  .plaque b { font-size: 14px; }
+  .typo-poster b { font-size: 20px; }
+  .paper { padding: 12px 10px; }
+  .paper b { font-size: 17px; }
+  .paper p { font-size: 13px; }
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 40; background: var(--bg); }
