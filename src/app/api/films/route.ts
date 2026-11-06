@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { TMDB_IMG as IMG, TmdbMissingToken, tmdb, yearOf as year } from "@/lib/tmdb";
 
 /*
  * Film and TV lookups through TMDB. The token stays on the server; the browser only sees results.
@@ -6,22 +7,7 @@ import type { NextRequest } from "next/server";
  *   GET /api/films?id=movie:655           → director, poster, stills and trailer for one title
  */
 
-const TMDB = "https://api.themoviedb.org/3";
-const IMG = "https://image.tmdb.org/t/p";
-
 type Media = "movie" | "tv";
-
-async function tmdb<T>(path: string): Promise<T> {
-  const token = process.env.TMDB_READ_TOKEN;
-  if (!token) throw new Error("TMDB_READ_TOKEN is not set");
-  const res = await fetch(`${TMDB}${path}`, {
-    headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-  });
-  if (!res.ok) throw new Error(`TMDB ${res.status}`);
-  return res.json() as Promise<T>;
-}
-
-const year = (date?: string) => (date ? date.slice(0, 4) : "");
 
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
@@ -33,7 +19,7 @@ export async function GET(request: NextRequest) {
     if (q.length < 2) return Response.json({ results: [] });
     return Response.json({ results: await search(q) });
   } catch (error) {
-    const missing = error instanceof Error && error.message.includes("TMDB_READ_TOKEN");
+    const missing = error instanceof TmdbMissingToken;
     return Response.json(
       { error: missing ? "Film search isn't set up yet." : "Film search is unavailable right now." },
       { status: missing ? 501 : 502 },

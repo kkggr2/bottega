@@ -347,3 +347,17 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
   .paper p { font-size: 13px; }
 }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 40; background: var(--bg); }
+
+/* import */
+.pick-list { list-style: none; margin: 0; padding: 4px; display: grid; gap: 2px; max-height: 360px; overflow: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); }
+.pick-list label { display: grid; grid-template-columns: auto 40px minmax(0, 1fr); gap: 10px; align-items: center; padding: 6px 8px; border-radius: 8px; cursor: pointer; }
+.pick-list label:hover { background: var(--surface); }
+.pick-list label.in-room { opacity: .55; cursor: default; }
+.pick-list input { width: 18px; height: 18px; accent-color: var(--brass); }
+.pick-list img, .pick-list .noart { width: 40px; height: 56px; object-fit: cover; border-radius: 3px; background: var(--line); display: block; }
+.pick-list b { display: block; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pick-list .muted { display: block; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* share picture */
+.share-preview { display: grid; place-items: center; background: var(--bg); border-radius: 12px; padding: 12px; min-height: 200px; }
+.share-preview img { width: min(260px, 70vw); aspect-ratio: 9 / 16; border-radius: 10px; box-shadow: var(--shadow); display: block; }

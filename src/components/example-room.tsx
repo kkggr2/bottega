@@ -10,6 +10,7 @@ import { MusicCorner } from "./music-corner";
 import { PieceDetail } from "./piece-detail";
 import { PieceView } from "./piece-view";
 import { ScreenCorner } from "./screen-corner";
+import { ShareSheet } from "./share-sheet";
 
 const ROOM: Room = {
   owner_id: "example", name: "The Green Hour", tagline: "An example room. Make yours look nothing like it.",
@@ -71,16 +72,19 @@ const PIECES: Piece[] = [
   piece("game", "Journey", "thatgamecompany · 2012"),
 ];
 
+const EMPTY_URLS: Record<string, string> = {};
+
 export function ExampleRoom() {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [recordId, setRecordId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [tvId, setTvId] = useState<string | null>(null);
   const [tvOn, setTvOn] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   useEffect(() => () => audioRef.current?.pause(), []);
 
-  const urls = {};
+  const urls = EMPTY_URLS;
   const stop = () => { audioRef.current?.pause(); setPlayingId(null); };
   const toggle = (p: Piece) => {
     const src = audioOf(p, urls);
@@ -108,7 +112,10 @@ export function ExampleRoom() {
           <h1>{ROOM.name}</h1>
           <p className="tag">{ROOM.tagline}</p>
         </div>
-        <div className="actions"><Link className="btn" href="/">Make my own room</Link></div>
+        <div className="actions">
+          <button className="btn ghost" type="button" onClick={() => setSharing(true)}>Preview share picture</button>
+          <Link className="btn" href="/">Make my own room</Link>
+        </div>
       </section>
 
       <section className="room" style={roomStyle(ROOM)} aria-label="Example room">
@@ -130,6 +137,7 @@ export function ExampleRoom() {
         <div className="floor" aria-hidden="true" />
       </section>
 
+      {sharing && <ShareSheet room={ROOM} username="example" pieces={PIECES} urls={urls} onClose={() => setSharing(false)} />}
       {detail && (
         <PieceDetail piece={detail} urls={urls} isOwner={false} playing={playingId === detail.id}
           canMoveEarlier={false} canMoveLater={false} onClose={() => setDetailId(null)}

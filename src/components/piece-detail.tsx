@@ -52,7 +52,7 @@ export function PieceDetail({
       </div>
       {img && (
         <div className={`detail-media${piece.type === "book" || piece.type === "song" ? " cover" : ""}`}>
-          <img src={img} alt={piece.title} />
+          <img src={img} alt={piece.title} onError={(e) => { e.currentTarget.parentElement!.hidden = true; }} />
         </div>
       )}
       {img?.startsWith("https://image.tmdb.org/") && <p className="credit">Image from TMDB</p>}

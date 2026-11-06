@@ -12,11 +12,13 @@ import type { Piece, PieceType, Profile, Room } from "@/lib/types";
 import { Bookcase } from "./bookcase";
 import { Customize } from "./customize";
 import { Gate } from "./gate";
+import { ImportSheet } from "./import-sheet";
 import { MusicCorner } from "./music-corner";
 import { PieceDetail } from "./piece-detail";
 import { PieceEditor } from "./piece-editor";
 import { PieceView } from "./piece-view";
 import { ScreenCorner } from "./screen-corner";
+import { ShareSheet } from "./share-sheet";
 
 type Loaded =
   | { state: "loading" }
@@ -39,6 +41,8 @@ function RoomInner({ username, me }: { username: string; me: Profile }) {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [editing, setEditing] = useState<Editing | null>(null);
   const [customizing, setCustomizing] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   // The turntable and the TV.
   const [recordId, setRecordId] = useState<string | null>(null);
@@ -228,8 +232,9 @@ function RoomInner({ username, me }: { username: string; me: Profile }) {
         <div className="actions">
           {isOwner ? (
             <>
-              <button className="btn ghost" type="button" onClick={share}>Share</button>
+              <button className="btn ghost" type="button" onClick={() => setSharing(true)}>Share</button>
               <button className="btn ghost" type="button" onClick={() => setCustomizing(true)}>Customize room</button>
+              <button className="btn ghost" type="button" onClick={() => setImporting(true)}>Import</button>
               <button className="btn" type="button" onClick={() => add()}>Add something</button>
             </>
           ) : (
@@ -276,6 +281,11 @@ function RoomInner({ username, me }: { username: string; me: Profile }) {
                   <div className="piece">
                     <button type="button" className="hang" onClick={() => add("poster")}>+ Hang a poster or a poem</button>
                   </div>
+                  {pieces.length === 0 && (
+                    <div className="piece">
+                      <button type="button" className="hang" onClick={() => setImporting(true)}>Fill it fast: bring in your Letterboxd films or Goodreads books</button>
+                    </div>
+                  )}
                 </div>
               ) : null}
 
@@ -346,6 +356,8 @@ function RoomInner({ username, me }: { username: string; me: Profile }) {
         />
       )}
       {customizing && <Customize room={room} onClose={() => { setCustomizing(false); load(); }} />}
+      {importing && <ImportSheet ownerId={me.id} pieces={pieces} onClose={() => { setImporting(false); load(); }} />}
+      {sharing && <ShareSheet room={room} username={owner.username} pieces={pieces} urls={urls} onClose={() => setSharing(false)} />}
     </div>
   );
 }
