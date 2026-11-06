@@ -11,12 +11,30 @@ const CLOTH = ["#7B2E2E", "#2E4A6B", "#3F5E3A", "#8A6D2F", "#4B3A5E", "#2B2B2B",
 function loadImage(src: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
     const img = new Image();
-    img.crossOrigin = "anonymous";
+    // Through our own server: same origin, so the canvas can always be exported.
+    if (/^https:\/\//.test(src)) src = `/api/image?url=${encodeURIComponent(src)}`;
     const timer = setTimeout(() => resolve(null), 7000);
     img.onload = () => { clearTimeout(timer); resolve(img); };
     img.onerror = () => { clearTimeout(timer); resolve(null); };
     img.src = src;
   });
+}
+
+/** A film without its own picture still gets its real poster on the card, found by title on TMDB. */
+async function posterFor(piece: Piece, urls: Record<string, string>): Promise<string | null> {
+  const own = imageOf(piece, urls);
+  if (own) return own;
+  try {
+    const year = piece.subtitle.match(/\b(19|20)\d{2}\b/)?.[0];
+    const res = await fetch(`/api/films?q=${encodeURIComponent(piece.title)}`);
+    if (!res.ok) return null;
+    const { results } = (await res.json()) as { results: { title: string; subtitle: string; cover_url: string | null }[] };
+    const withPoster = results.filter((r) => r.cover_url);
+    const match = withPoster.find((r) => year && r.subtitle.includes(year)) ?? withPoster[0];
+    return match?.cover_url?.replace("/w185/", "/w500/") ?? null;
+  } catch {
+    return null;
+  }
 }
 
 function cover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number) {
@@ -99,10 +117,16 @@ export async function drawRoomCard(room: Room, username: string, pieces: Piece[]
   const posters = [...of("poster"), ...of("scene")].slice(0, 3);
   const songs = of("song").slice(0, 4);
   const books = of("book").slice(0, 12);
-  const art = await Promise.all([...posters, ...songs].map((p) => {
-    const src = imageOf(p, urls);
-    return src ? loadImage(src) : Promise.resolve(null);
-  }));
+  const art = await Promise.all([
+    ...posters.map(async (p) => {
+      const src = await posterFor(p, urls);
+      return src ? loadImage(src) : null;
+    }),
+    ...songs.map((p) => {
+      const src = imageOf(p, urls);
+      return src ? loadImage(src) : Promise.resolve(null);
+    }),
+  ]);
 
   // The shelf and records stand on the floor; the posters hang centered in the wall space above them.
   const shelfTop = floorY - 230;

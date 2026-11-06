@@ -31,11 +31,11 @@ const pv = (path: string) => `https://audio-ssl.itunes.apple.com/itunes-assets/$
 const ol = (id: number) => `https://covers.openlibrary.org/b/id/${id}-L.jpg`;
 
 const PIECES: Piece[] = [
-  piece("poster", "In the Mood for Love", "Wong Kar-wai · 2000", { body: "The corridor, the noodle tins, the slow walk past each other. Every frame looks like a held breath." }),
+  piece("poster", "In the Mood for Love", "Wong Kar-wai · 2000", { cover_url: "https://image.tmdb.org/t/p/w500/8BgGbbWiLNhPtkMkN0gGTnbtvBv.jpg", body: "The corridor, the noodle tins, the slow walk past each other. Every frame looks like a held breath." }),
   piece("poem", "Inventory", "written for this room", {
     body: "A cup with a chip on the lip,\na coat that remembers the rain,\na book left open at the page\nwhere I stopped trusting the plot.\n\nKeep them. They are the map\nof every room I lived in\nbefore this one.",
   }),
-  piece("poster", "Paris, Texas", "Wim Wenders · 1984", { body: "The one-way mirror. He talks to her back, and she slowly understands who is speaking." }),
+  piece("poster", "Paris, Texas", "Wim Wenders · 1984", { cover_url: "https://image.tmdb.org/t/p/w500/sP27Qm4THyRZyHjHYMfIDtJP6YE.jpg", body: "The one-way mirror. He talks to her back, and she slowly understands who is speaking." }),
   piece("song", "Harvest Moon", "Neil Young · 1992", {
     cover_url: mz("Music124/v4/4d/45/41/4d45414c-6364-51cf-2874-7c8aa755caaa/mzi.oetoyyot.jpg"),
     preview_url: pv("AudioPreview221/v4/2d/c9/d8/2dc9d8d2-4833-3f73-9468-1a85dd8fca8d/mzaf_17391071788735687900"),
