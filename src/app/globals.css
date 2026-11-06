@@ -2,26 +2,28 @@
 
 /* Layout: a library shelf of book spines (one per friend) that opens into full-width rooms:
    a patterned wall of framed pieces above a floorboard strip. */
+/* Colors come from the Bottega logo: printed paper, brown-black ink, rust and the blue underline. */
 :root {
-  --bg: #E9ECE5;
-  --surface: #F6F7F2;
-  --fg: #1B211D;
-  --muted: #5B655D;
-  --line: #C9D0C4;
-  --brass: #94661F;
+  --bg: #F2E8D3;
+  --surface: #FAF4E6;
+  --fg: #2F2822;
+  --muted: #6B5F52;
+  --line: #DCCDB0;
+  --brass: #B3552E;
+  --blue: #405A6F;
   --wood: #7A5638;
   --wood-dark: #553A24;
   --danger: #A2352A;
   --ok: #2F6B45;
-  --shadow: 0 1px 2px rgba(20, 24, 21, .08), 0 8px 24px rgba(20, 24, 21, .08);
+  --shadow: 0 1px 2px rgba(47, 40, 34, .08), 0 8px 24px rgba(47, 40, 34, .10);
   --font-display: var(--ff-display), "Iowan Old Style", Georgia, serif;
   --font-body: var(--ff-body), -apple-system, "Segoe UI", system-ui, sans-serif;
   --font-mono: var(--ff-mono), ui-monospace, "SF Mono", Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #111512; --surface: #191E1A; --fg: #E3E7DE; --muted: #98A296; --line: #2D352F;
-    --brass: #D3A356; --wood: #5C412B; --wood-dark: #3B2A1B; --danger: #E07A6C; --ok: #7CC495;
+    --bg: #1B1714; --surface: #25201B; --fg: #F2E8D3; --muted: #B4A68F; --line: #3A3229;
+    --brass: #DB7A50; --blue: #8AA6BE; --wood: #5C412B; --wood-dark: #3B2A1B; --danger: #E07A6C; --ok: #7CC495;
     --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
     color-scheme: dark;
   }
