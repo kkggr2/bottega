@@ -5,40 +5,157 @@ import { useState } from "react";
 import { isNativeApp } from "@/lib/native";
 import { friendlyError, supabase } from "@/lib/supabase";
 
+/*
+ * Accounts use an email and a password.
+ * - Create account: email + password, then the 6-digit code from the confirmation email.
+ * - Log in: email + password.
+ * - Backups: "Email me a code instead" and "Forgot password" (code + new password).
+ */
+
+type Mode = "login" | "create" | "code" | "forgot";
+type Pending = { email: string; kind: "signup" | "code" | "recovery" };
+
+const MIN_PASSWORD = 8;
+const looksLikeEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+
 export function SignIn() {
+  const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
-  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [pending, setPending] = useState<Pending | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
-  async function send() {
-    const address = email.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) {
-      setMsg({ kind: "err", text: "Enter the email address you want to sign in with." });
-      return;
-    }
-    setBusy(true);
+  const err = (text: string) => setMsg({ kind: "err", text });
+
+  function switchTo(next: Mode) {
+    setMode(next);
+    setPending(null);
+    setCode("");
+    setPassword("");
     setMsg(null);
-    const { error } = await supabase().auth.signInWithOtp({
-      email: address,
-      options: { emailRedirectTo: window.location.origin },
-    });
-    setBusy(false);
-    if (error) setMsg({ kind: "err", text: friendlyError(error, "Couldn't send the email. Try again.") });
-    else setSentTo(address);
   }
 
-  async function verify() {
-    if (!sentTo || !/^\d{6,8}$/.test(code.trim())) {
-      setMsg({ kind: "err", text: "Enter the code from the email." });
-      return;
+  function checked(): string | null {
+    const address = email.trim();
+    if (!looksLikeEmail(address)) {
+      err("Enter your email address.");
+      return null;
     }
-    setBusy(true);
-    const { error } = await supabase().auth.verifyOtp({ email: sentTo, token: code.trim(), type: "email" });
-    setBusy(false);
-    if (error) setMsg({ kind: "err", text: "That code didn't work. Check it, or send a new email." });
+    return address;
   }
+
+  async function run(task: () => Promise<void>) {
+    setBusy(true);
+    setMsg(null);
+    try {
+      await task();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const logIn = () => run(async () => {
+    const address = checked();
+    if (!address) return;
+    if (!password) return err("Enter your password.");
+    const { error } = await supabase().auth.signInWithPassword({ email: address, password });
+    if (!error) return;
+    if (/not confirmed/i.test(error.message)) {
+      await supabase().auth.resend({ type: "signup", email: address, options: { emailRedirectTo: window.location.origin } });
+      setPending({ email: address, kind: "signup" });
+      setMsg({ kind: "ok", text: "Your email isn't confirmed yet. We sent a new code." });
+    } else if (/invalid login credentials/i.test(error.message)) {
+      err("That email and password don't match. Try again, or use “Forgot password”.");
+    } else {
+      err(friendlyError(error, "Couldn't log in. Try again."));
+    }
+  });
+
+  const createAccount = () => run(async () => {
+    const address = checked();
+    if (!address) return;
+    if (password.length < MIN_PASSWORD) return err(`Choose a password with at least ${MIN_PASSWORD} characters.`);
+    const { data, error } = await supabase().auth.signUp({
+      email: address,
+      password,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    if (error) {
+      if (/already registered|already exists/i.test(error.message)) {
+        return err("There's already an account with this email. Log in instead.");
+      }
+      return err(friendlyError(error, "Couldn't create the account. Try again."));
+    }
+    // Supabase hides whether an email is taken: an existing account comes back with no identities.
+    if (data.user && data.user.identities?.length === 0) {
+      return err("There's already an account with this email. Log in instead, or use “Forgot password”.");
+    }
+    if (data.session) return; // Email confirmation is off: already signed in.
+    setPending({ email: address, kind: "signup" });
+  });
+
+  const emailCode = () => run(async () => {
+    const address = checked();
+    if (!address) return;
+    const { error } = await supabase().auth.signInWithOtp({
+      email: address,
+      options: { emailRedirectTo: window.location.origin, shouldCreateUser: false },
+    });
+    if (error) {
+      if (/signups not allowed|not found|otp_disabled/i.test(error.message)) {
+        return err("There's no account with this email yet. Create one first.");
+      }
+      return err(friendlyError(error, "Couldn't send the email. Try again."));
+    }
+    setPending({ email: address, kind: "code" });
+  });
+
+  const sendReset = () => run(async () => {
+    const address = checked();
+    if (!address) return;
+    const { error } = await supabase().auth.resetPasswordForEmail(address, { redirectTo: window.location.origin });
+    if (error) return err(friendlyError(error, "Couldn't send the email. Try again."));
+    setPending({ email: address, kind: "recovery" });
+  });
+
+  const verify = () => run(async () => {
+    if (!pending) return;
+    const token = code.trim();
+    if (!/^\d{6,8}$/.test(token)) return err("Enter the code from the email.");
+    if (pending.kind === "recovery" && password.length < MIN_PASSWORD) {
+      return err(`Choose a new password with at least ${MIN_PASSWORD} characters.`);
+    }
+    const { error } = await supabase().auth.verifyOtp({
+      email: pending.email,
+      token,
+      type: pending.kind === "recovery" ? "recovery" : "email",
+    });
+    if (error) return err("That code didn't work. Check it, or ask for a new email.");
+    if (pending.kind === "recovery") {
+      const { error: pwError } = await supabase().auth.updateUser({ password });
+      if (pwError) err(friendlyError(pwError, "Signed in, but the new password didn't save. Try “Forgot password” again later."));
+    }
+    // Signing in swaps this screen for the app.
+  });
+
+  const resend = () => run(async () => {
+    if (!pending) return;
+    const options = { emailRedirectTo: window.location.origin };
+    const { error } =
+      pending.kind === "signup" ? await supabase().auth.resend({ type: "signup", email: pending.email, options })
+      : pending.kind === "recovery" ? await supabase().auth.resetPasswordForEmail(pending.email, { redirectTo: window.location.origin })
+      : await supabase().auth.signInWithOtp({ email: pending.email, options: { ...options, shouldCreateUser: false } });
+    if (error) err(friendlyError(error, "Couldn't send another email. Wait a minute and try again."));
+    else setMsg({ kind: "ok", text: "Sent. Check your inbox (and spam)." });
+  });
+
+  const intro: Record<Pending["kind"], string> = {
+    signup: "Type the code from the email to confirm your account.",
+    code: "Type the code from the email to log in.",
+    recovery: "Type the code from the email and choose a new password.",
+  };
 
   return (
     <section className="onboard">
@@ -53,39 +170,84 @@ export function SignIn() {
       </div>
 
       <div className="panel">
-        {sentTo ? (
+        {pending ? (
           <form className="stack" onSubmit={(e) => { e.preventDefault(); verify(); }}>
             <p className="mono muted">Check your inbox</p>
             <p>
-              {isNativeApp()
-                ? <>We emailed <b>{sentTo}</b>. Type the code from that email here. (The link in it opens your browser, not the app.)</>
-                : <>We sent a sign-in link to <b>{sentTo}</b>. Open it on this device, or type the code from the email.</>}
+              We emailed <b>{pending.email}</b>. {intro[pending.kind]}
+              {!isNativeApp() && pending.kind !== "recovery" && " You can also open the link in it on this device."}
             </p>
             <div className="field">
               <label htmlFor="otp">Code</label>
               <input id="otp" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={8}
                 value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} />
             </div>
+            {pending.kind === "recovery" && (
+              <div className="field">
+                <label htmlFor="new-password">New password</label>
+                <input id="new-password" type="password" autoComplete="new-password" minLength={MIN_PASSWORD}
+                  value={password} onChange={(e) => setPassword(e.target.value)} />
+                <span className="hint">At least {MIN_PASSWORD} characters.</span>
+              </div>
+            )}
             <p className={`msg ${msg?.kind ?? ""}`} aria-live="polite">{msg?.text}</p>
             <div className="chips">
-              <button className="btn" type="submit" disabled={busy}>Sign in</button>
-              <button className="btn ghost" type="button" onClick={() => { setSentTo(null); setCode(""); setMsg(null); }}>
-                Use a different email
+              <button className="btn" type="submit" disabled={busy}>
+                {pending.kind === "signup" ? "Confirm" : pending.kind === "recovery" ? "Save and log in" : "Log in"}
               </button>
+              <button className="btn ghost" type="button" disabled={busy} onClick={resend}>Send again</button>
             </div>
+            <button className="linkish" type="button" onClick={() => switchTo(mode)}>Use a different email</button>
           </form>
         ) : (
-          <form className="stack" onSubmit={(e) => { e.preventDefault(); send(); }}>
-            <p className="mono muted">Sign in or join</p>
+          <form
+            className="stack"
+            onSubmit={(e) => {
+              e.preventDefault();
+              ({ login: logIn, create: createAccount, code: emailCode, forgot: sendReset })[mode]();
+            }}
+          >
+            <div className="chips" role="group" aria-label="Account">
+              <button type="button" className="chip" aria-pressed={mode !== "create"} onClick={() => switchTo("login")}>Log in</button>
+              <button type="button" className="chip" aria-pressed={mode === "create"} onClick={() => switchTo("create")}>Create account</button>
+            </div>
+
+            {mode === "forgot" && <p>Enter your email and we&rsquo;ll send a code to choose a new password.</p>}
+            {mode === "code" && <p>Enter your email and we&rsquo;ll send a code to log in without your password.</p>}
+
             <div className="field">
               <label htmlFor="email">Email</label>
               <input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-              <span className="hint">No password. We email you a link each time.</span>
             </div>
+
+            {(mode === "login" || mode === "create") && (
+              <div className="field">
+                <label htmlFor="password">Password</label>
+                <input id="password" type="password" minLength={mode === "create" ? MIN_PASSWORD : undefined}
+                  autoComplete={mode === "create" ? "new-password" : "current-password"}
+                  value={password} onChange={(e) => setPassword(e.target.value)} />
+                {mode === "create" && <span className="hint">At least {MIN_PASSWORD} characters. We&rsquo;ll email a code to confirm it&rsquo;s you.</span>}
+              </div>
+            )}
+
             <p className={`msg ${msg?.kind ?? ""}`} aria-live="polite">{msg?.text}</p>
             <div>
-              <button className="btn" type="submit" disabled={busy}>{busy ? "Sending…" : isNativeApp() ? "Email me a code" : "Email me a link"}</button>
+              <button className="btn" type="submit" disabled={busy}>
+                {busy ? "One moment…"
+                  : { login: "Log in", create: "Create account", code: "Email me a code", forgot: "Email me a reset code" }[mode]}
+              </button>
             </div>
+
+            {mode === "login" && (
+              <div className="chips">
+                <button className="linkish" type="button" onClick={() => switchTo("forgot")}>Forgot password?</button>
+                <span className="muted" aria-hidden>·</span>
+                <button className="linkish" type="button" onClick={() => switchTo("code")}>Email me a code instead</button>
+              </div>
+            )}
+            {(mode === "code" || mode === "forgot") && (
+              <button className="linkish" type="button" onClick={() => switchTo("login")}>Back to log in with password</button>
+            )}
           </form>
         )}
       </div>
