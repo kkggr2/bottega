@@ -14,6 +14,7 @@ import type { Piece, PieceType, Profile, Room } from "@/lib/types";
 import { Bookcase } from "./bookcase";
 import { useAuth } from "./auth";
 import { Customize } from "./customize";
+import { DOOR_AT, DoorOpen, DoorProgress } from "./door-progress";
 import { Gate } from "./gate";
 import { ImportSheet } from "./import-sheet";
 import { MusicCorner } from "./music-corner";
@@ -56,6 +57,9 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const viewed = useRef(false);
   const nowApplied = useRef(false);
+  // "Your door is open" shows the moment the fifth thing goes in.
+  const prevCount = useRef<number | null>(null);
+  const [doorOpen, setDoorOpen] = useState(false);
   const meId = me?.id ?? null;
 
   const load = useCallback(async () => {
@@ -96,6 +100,10 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
       if (r.now_film) setTvId(r.now_film);
     }
     if (owner.id !== meId) markSeen(owner.id);
+    else {
+      if (prevCount.current !== null && prevCount.current < DOOR_AT && pieces.length >= DOOR_AT) setDoorOpen(true);
+      prevCount.current = pieces.length;
+    }
     if (!viewed.current) {
       viewed.current = true;
       const relation = meId ? relationOf(friendship, meId) : "none";
@@ -315,6 +323,12 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
         </div>
       </section>
       {notice && <p className="msg ok" role="status" style={{ marginBottom: 12 }}>{notice}</p>}
+      {isOwner && canView && pieces.length < DOOR_AT && (
+        <DoorProgress pieces={pieces} onAdd={add} onImport={() => setImporting(true)} />
+      )}
+      {isOwner && doorOpen && (
+        <DoorOpen onShare={() => { setDoorOpen(false); setSharing(true); }} onClose={() => setDoorOpen(false)} />
+      )}
 
       <section className="room" style={roomStyle(room)} aria-label={`${room.name}, @${owner.username}'s room`}>
         <div className={`wall p-${room.wallpaper}`}>
@@ -348,11 +362,6 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
                   <div className="piece">
                     <button type="button" className="hang" onClick={() => add("poster")}>+ Hang a poster or a poem</button>
                   </div>
-                  {pieces.length === 0 && (
-                    <div className="piece">
-                      <button type="button" className="hang" onClick={() => setImporting(true)}>Fill it fast: bring in your Letterboxd films or Goodreads books</button>
-                    </div>
-                  )}
                 </div>
               ) : null}
 
