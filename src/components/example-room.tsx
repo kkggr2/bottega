@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { NOW_WORDS } from "@/lib/now";
+import { dropNeedle } from "@/lib/needle";
 import { audioOf } from "@/lib/piece-media";
 import { roomStyle } from "@/lib/themes";
 import { track } from "@/lib/track";
@@ -117,7 +118,8 @@ export function ExampleRoom({ embedded = false, onMakeYours }: { embedded?: bool
     const audio = new Audio(src);
     audio.onended = () => setPlayingId(null);
     audioRef.current = audio;
-    audio.play().then(() => setPlayingId(p.id), () => setPlayingId(null));
+    setPlayingId(p.id);
+    dropNeedle(audio).catch(() => setPlayingId(null));
   };
   const insert = (p: Piece) => { touch("dvd"); stop(); setTvId(p.id); setTvOn(true); };
 

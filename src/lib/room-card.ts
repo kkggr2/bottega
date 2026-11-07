@@ -132,50 +132,67 @@ export async function drawRoomCard(room: Room, username: string, pieces: Piece[]
   }
 
   const of = (type: Piece["type"]) => pieces.filter((p) => p.type === type);
-  const posters = [...of("poster"), ...of("scene")].slice(0, 3);
-  const songs = of("song").slice(0, 4);
+  // One standout piece, with the owner's words about it: that's what makes someone want to step in.
+  const hero = pickHero(pieces);
+  const songs = of("song").filter((p) => p !== hero).slice(0, 4);
   const books = of("book").slice(0, 12);
-  const found = await Promise.all(posters.map((p) => posterFor(p, urls)));
-  const wide = found.map((f) => Boolean(f?.wide));
-  const art = await Promise.all([
-    ...found.map((f) => (f ? loadImage(f.src) : Promise.resolve(null))),
+  const heroArt = hero
+    ? hero.type === "poster" || hero.type === "scene" ? await posterFor(hero, urls) : imageOf(hero, urls) ? { src: imageOf(hero, urls)!, wide: false } : null
+    : null;
+  const [heroImg, ...songArt] = await Promise.all([
+    heroArt ? loadImage(heroArt.src) : Promise.resolve(null),
     ...songs.map((p) => {
       const src = imageOf(p, urls);
       return src ? loadImage(src) : Promise.resolve(null);
     }),
   ]);
 
-  // The shelf and records stand on the floor; the posters hang centered in the wall space above them.
+  // The shelf and records stand on the floor; the hero hangs in the wall space above them.
   const shelfTop = floorY - 230;
-  const wallBottom = books.length || songs.length ? shelfTop : floorY;
+  const wallBottom = books.length || songs.length ? shelfTop - 30 : floorY - 30;
 
-  // Framed posters.
-  if (posters.length) {
-    const fw = 280, fh = 420, gap = (W - 160 - fw * 3) / 2;
-    const top = Math.max(y + 60, y + (wallBottom - y - fh) / 2);
-    posters.forEach((p, i) => {
-      const x = 80 + i * (fw + gap) + (posters.length < 3 ? ((3 - posters.length) * (fw + gap)) / 2 : 0);
-      shadow(ctx, true);
-      ctx.fillStyle = "#20170F";
-      ctx.fillRect(x - 16, top - 16, fw + 32, fh + 32);
-      shadow(ctx, false);
-      ctx.fillStyle = "#E9E1CF";
-      ctx.fillRect(x - 5, top - 5, fw + 10, fh + 10);
-      const img = art[i];
-      if (img && wide[i]) contain(ctx, img, x, top, fw, fh);
-      else if (img) cover(ctx, img, x, top, fw, fh);
-      else {
-        const g = ctx.createLinearGradient(x, top, x + fw, top + fh);
-        g.addColorStop(0, t.accent);
-        g.addColorStop(1, "#1A120C");
-        ctx.fillStyle = g;
-        ctx.fillRect(x, top, fw, fh);
-        ctx.fillStyle = "#F7EEDC";
-        ctx.font = `400 40px ${display}`;
-        wrap(ctx, p.title, fw - 40, 4).forEach((l, j, all) => ctx.fillText(l, x + 20, top + fh - 24 - (all.length - 1 - j) * 44));
-      }
-    });
-    y = top + fh + 40;
+  if (hero) {
+    const words = hero.body.trim() && hero.type !== "poem" ? hero.body.trim().split(/\n/)[0] : "";
+    ctx.font = `italic 400 46px ${display}`;
+    const quote = words ? wrap(ctx, `“${words}”`, W - 220, 4) : [];
+    // Space under the frame: gap, the quote lines, then the signature line.
+    const quoteH = quote.length ? 92 + quote.length * 58 + 60 : 0;
+    const square = hero.type === "song";
+    const maxH = wallBottom - (y + 50) - quoteH;
+    const fh = Math.min(square ? 560 : 720, maxH);
+    const fw = square ? fh : Math.round(fh * 2 / 3);
+    const x = (W - fw) / 2;
+    const top = y + 40 + Math.max(0, (maxH - fh) / 2);
+    shadow(ctx, true);
+    ctx.fillStyle = "#20170F";
+    ctx.fillRect(x - 18, top - 18, fw + 36, fh + 36);
+    shadow(ctx, false);
+    ctx.fillStyle = "#E9E1CF";
+    ctx.fillRect(x - 6, top - 6, fw + 12, fh + 12);
+    if (heroImg && heroArt?.wide) contain(ctx, heroImg, x, top, fw, fh);
+    else if (heroImg) cover(ctx, heroImg, x, top, fw, fh);
+    else {
+      const g = ctx.createLinearGradient(x, top, x + fw, top + fh);
+      g.addColorStop(0, t.accent);
+      g.addColorStop(1, "#1A120C");
+      ctx.fillStyle = g;
+      ctx.fillRect(x, top, fw, fh);
+      ctx.fillStyle = "#F7EEDC";
+      ctx.font = `400 52px ${display}`;
+      wrap(ctx, hero.title, fw - 48, 4).forEach((l, j, all) => ctx.fillText(l, x + 24, top + fh - 30 - (all.length - 1 - j) * 56));
+    }
+    if (quote.length) {
+      ctx.fillStyle = t.ink;
+      ctx.textAlign = "center";
+      ctx.font = `italic 400 46px ${display}`;
+      let qy = top + fh + 92;
+      quote.forEach((l) => { ctx.fillText(l, W / 2, qy); qy += 58; });
+      ctx.font = `400 28px ${body}`;
+      ctx.globalAlpha = 0.7;
+      ctx.fillText(`@${username} on ${hero.title}`.slice(0, 60), W / 2, qy + 4);
+      ctx.globalAlpha = 1;
+      ctx.textAlign = "left";
+    }
   }
 
   // Records fanned out on the floor line.
@@ -194,7 +211,7 @@ export async function drawRoomCard(room: Room, username: string, pieces: Piece[]
       ctx.arc(size * 0.28, 0, size * 0.46, 0, Math.PI * 2);
       ctx.fill();
       shadow(ctx, true);
-      const img = art[posters.length + i];
+      const img = songArt[i];
       ctx.fillStyle = t.accent;
       ctx.fillRect(-size / 2, -size / 2, size, size);
       shadow(ctx, false);
@@ -234,7 +251,7 @@ export async function drawRoomCard(room: Room, username: string, pieces: Piece[]
 
   // Footer card on the floor.
   const counts = [
-    [posters.length ? of("poster").length + of("scene").length : 0, "films"],
+    [of("poster").length + of("scene").length, "films"],
     [of("song").length, "records"],
     [of("book").length, "books"],
   ].filter(([n]) => n).map(([n, label]) => `${n} ${label}`).join(" · ");
@@ -253,4 +270,12 @@ export async function drawRoomCard(room: Room, username: string, pieces: Piece[]
   ctx.globalAlpha = 1;
 
   return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("encode"))), "image/png"));
+}
+
+/** The piece the card leads with: one with the owner's words and a picture, films first. */
+function pickHero(pieces: Piece[]): Piece | null {
+  const rank: Piece["type"][] = ["poster", "scene", "song", "book"];
+  const candidates = pieces.filter((p) => rank.includes(p.type));
+  const score = (p: Piece) => (p.body.trim() ? 0 : 10) + rank.indexOf(p.type);
+  return [...candidates].sort((a, b) => score(a) - score(b))[0] ?? null;
 }

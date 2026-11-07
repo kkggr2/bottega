@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { befriend, friendshipWith, relationOf, unfriend, type Relation } from "@/lib/friends";
 import { removeMedia, signedUrls } from "@/lib/media";
 import { markSeen, NOW_WORDS, since, slotFor } from "@/lib/now";
+import { dropNeedle } from "@/lib/needle";
 import { shareLink, tap } from "@/lib/native";
 import { audioOf } from "@/lib/piece-media";
 import { friendlyError, supabase } from "@/lib/supabase";
@@ -155,10 +156,12 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
       audio.onended = () => setPlayingId(null);
       audioRef.current = audio;
       tap();
-      audio.play().then(
-        () => setPlayingId(piece.id),
-        () => setNotice("This record can't play right now."),
-      );
+      // The arm swings in now; the song comes up as it lands.
+      setPlayingId(piece.id);
+      dropNeedle(audio).catch(() => {
+        setPlayingId(null);
+        setNotice("This record can't play right now.");
+      });
     },
     [playingId, urls, stopMusic],
   );
