@@ -4,6 +4,8 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import type { Session } from "@supabase/supabase-js";
 import { isConfigured, supabase } from "@/lib/supabase";
 import { trackOpen } from "@/lib/track";
+import { forgetPushToken } from "@/lib/push";
+import { clearWidget } from "@/lib/widget";
 import type { Profile } from "@/lib/types";
 
 type AuthState =
@@ -60,7 +62,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [load]);
 
   const signOut = useCallback(async () => {
+    await forgetPushToken();
     await supabase().auth.signOut();
+    clearWidget();
   }, []);
 
   return <AuthContext.Provider value={{ ...state, refreshProfile, signOut }}>{children}</AuthContext.Provider>;

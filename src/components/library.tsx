@@ -7,6 +7,10 @@ import { shareLink } from "@/lib/native";
 import { joinDid, lastSeen, NOW_SLOTS, NOW_WORDS, nowAt, nowId, type NowPiece } from "@/lib/now";
 import { friendlyError, supabase } from "@/lib/supabase";
 import { track } from "@/lib/track";
+import { updateWidget } from "@/lib/widget";
+import { dismissPushAsk, enablePush, pushAskDismissed, pushPermission } from "@/lib/push";
+import { useRouter } from "next/navigation";
+import { pathFromUrl } from "./push-setup";
 import { THEMES, USERNAME } from "@/lib/themes";
 import type { Friendship, Profile, RoomWithOwner } from "@/lib/types";
 import { Gate } from "./gate";
@@ -16,7 +20,11 @@ export function LibraryScreen() {
 }
 
 /** One line per friend: what they put out recently, newest first. */
-type Update = { ownerId: string; username: string; line: string; at: string; isNew: boolean };
+type Update = {
+  ownerId: string; username: string; line: string; at: string; isNew: boolean;
+  /** The most recent thing they put out, for the home-screen widget. */
+  title: string; kind: "song" | "film" | "book";
+};
 
 const RECENT_DAYS = 7;
 
@@ -81,9 +89,12 @@ function Library({ me }: { me: Profile }) {
         line: joinDid(recent.map((x) => NOW_WORDS[x.slot].did(x.piece.title))),
         at,
         isNew: !seen || seen < at,
+        title: recent[0].piece.title,
+        kind: recent[0].slot,
       }];
     }).sort((a, b) => b.at.localeCompare(a.at));
 
+    updateWidget(updates.map(({ username, line, title, kind, at, isNew }) => ({ username, line, title, kind, at, isNew })));
     setShelf({
       rooms: list,
       updates,
@@ -231,6 +242,7 @@ function Library({ me }: { me: Profile }) {
           <span className="t">+ a friend</span>
         </button>
       </div>
+      {friendCount > 0 && <PushAsk userId={me.id} />}
       <EmailSwitch userId={me.id} />
 
       {friendCount < 3 ? (
@@ -290,5 +302,29 @@ function EmailSwitch({ userId }: { userId: string }) {
       <input type="checkbox" checked={on} onChange={(e) => change(e.target.checked)} />
       <span>Email me when friends put something on <span className="muted">(at most once a day)</span></span>
     </label>
+  );
+}
+
+/** iPhone app only: once you have a friend, offer a nudge when they put something on. Asked once. */
+function PushAsk({ userId }: { userId: string }) {
+  const router = useRouter();
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    if (pushAskDismissed()) return;
+    pushPermission().then((p) => setShow(p === "prompt"));
+  }, []);
+  if (!show) return null;
+  return (
+    <div className="invite push-ask">
+      <p>Get a nudge when a friend puts something on. <span className="muted">At most one per friend every few hours.</span></p>
+      <div className="row">
+        <button className="btn" type="button" onClick={async () => {
+          await enablePush(userId, (url) => router.push(pathFromUrl(url)));
+          dismissPushAsk();
+          setShow(false);
+        }}>Turn on</button>
+        <button className="btn ghost" type="button" onClick={() => { dismissPushAsk(); setShow(false); }}>Not now</button>
+      </div>
+    </div>
   );
 }

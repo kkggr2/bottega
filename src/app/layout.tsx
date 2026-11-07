@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Figtree, IBM_Plex_Mono, Instrument_Serif } from "next/font/google";
 import { AuthProvider } from "@/components/auth";
+import { NativeLinks } from "@/components/native-links";
+import { PushSetup } from "@/components/push-setup";
 import { TopBar } from "@/components/top-bar";
 import "./globals.css";
 
@@ -29,6 +31,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body>
         <AuthProvider>
+          <NativeLinks />
+          <PushSetup />
           <div className="wrap">
             <TopBar />
             <main>{children}</main>

@@ -507,3 +507,4 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 @media (prefers-color-scheme: dark) {
   .room::after { background: radial-gradient(120% 90% at 50% 42%, transparent 50%, rgba(20, 10, 4, .42) 100%); }
 }
+.push-ask .row { display: flex; gap: 8px; }

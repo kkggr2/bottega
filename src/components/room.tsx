@@ -6,6 +6,7 @@ import { befriend, friendshipWith, relationOf, unfriend, type Relation } from "@
 import { removeMedia, signedUrls } from "@/lib/media";
 import { markSeen, NOW_WORDS, since, slotFor } from "@/lib/now";
 import { dropNeedle } from "@/lib/needle";
+import { notifyFriends } from "@/lib/push";
 import { shareLink, tap } from "@/lib/native";
 import { audioOf } from "@/lib/piece-media";
 import { friendlyError, supabase } from "@/lib/supabase";
@@ -269,7 +270,10 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
     }
     if (on && slot === "song") setRecordId(piece.id);
     if (on && slot === "film") { setTvId(piece.id); setTvOn(false); }
-    if (on) track("now_set", { room: owner.id, detail: slot });
+    if (on) {
+      track("now_set", { room: owner.id, detail: slot });
+      void notifyFriends();
+    }
     setDetailId(null);
     await load();
   }
