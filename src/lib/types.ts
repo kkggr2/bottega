@@ -12,7 +12,16 @@ export type Room = {
   theme: ThemeKey;
   wallpaper: Wallpaper;
   visibility: Visibility;
+  /** What's on right now: a record on the turntable, a film in the TV, a book on the armchair. */
+  now_song?: string | null;
+  now_song_at?: string | null;
+  now_film?: string | null;
+  now_film_at?: string | null;
+  now_book?: string | null;
+  now_book_at?: string | null;
 };
+
+export type NowSlot = "song" | "film" | "book";
 
 export type RoomWithOwner = Room & { profile: { username: string } | null };
 

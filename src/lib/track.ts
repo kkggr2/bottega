@@ -9,7 +9,7 @@ import { isConfigured, supabase } from "./supabase";
 export type EventName =
   | "open" | "landing" | "example" | "room_view" | "make_yours"
   | "account_created" | "room_claimed" | "piece_added" | "import"
-  | "share_link" | "share_picture" | "friend_request" | "made_public";
+  | "share_link" | "share_picture" | "friend_request" | "made_public" | "now_set";
 
 const VISITOR_KEY = "bottega.visitor";
 let memoryVisitor: string | null = null;

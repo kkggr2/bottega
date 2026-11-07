@@ -22,6 +22,7 @@ export function PieceDetail({
   onEdit,
   onMove,
   onDelete,
+  now,
 }: {
   piece: Piece;
   /** Whose room this is, to sign their words. */
@@ -36,6 +37,8 @@ export function PieceDetail({
   onEdit: () => void;
   onMove: (dir: -1 | 1) => void;
   onDelete: () => Promise<void>;
+  /** For the owner: leave this out on the turntable, in the TV or on the armchair. */
+  now?: { on: boolean; put: string; take: string; set: (on: boolean) => Promise<void> };
 }) {
   const [armed, setArmed] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -93,6 +96,15 @@ export function PieceDetail({
           <a href={piece.link} target="_blank" rel="noopener noreferrer">Open link ↗</a>{" "}
           <span className="muted">{hostOf(piece.link)}</span>
         </p>
+      )}
+      {now && (
+        <div className="now-toggle">
+          <button className={`btn ${now.on ? "ghost" : ""}`} type="button" disabled={busy}
+            onClick={async () => { setBusy(true); await now.set(!now.on); setBusy(false); }}>
+            {now.on ? now.take : now.put}
+          </button>
+          {!now.on && <span className="hint">Friends see it when they come in.</span>}
+        </div>
       )}
       {isOwner ? (
         <div className="row split">

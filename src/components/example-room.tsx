@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { NOW_WORDS } from "@/lib/now";
 import { audioOf } from "@/lib/piece-media";
 import { roomStyle } from "@/lib/themes";
 import { track } from "@/lib/track";
@@ -75,13 +76,17 @@ const PIECES: Piece[] = [
 
 const EMPTY_URLS: Record<string, string> = {};
 
+// What the example room's owner left out: a record on the turntable and a book on the armchair.
+const NOW_SONG = PIECES.find((p) => p.title === "Harvest Moon")!;
+const NOW_BOOK = PIECES.find((p) => p.title === "Normal People")!;
+
 /**
  * The example room. On its own page it has a header; embedded on the landing page it's just the room,
  * and "Make my own room" scrolls to the sign-up form instead.
  */
 export function ExampleRoom({ embedded = false, onMakeYours }: { embedded?: boolean; onMakeYours?: () => void } = {}) {
   const [detailId, setDetailId] = useState<string | null>(null);
-  const [recordId, setRecordId] = useState<string | null>(null);
+  const [recordId, setRecordId] = useState<string | null>(NOW_SONG.id);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [tvId, setTvId] = useState<string | null>(null);
   const [tvOn, setTvOn] = useState(false);
@@ -143,12 +148,14 @@ export function ExampleRoom({ embedded = false, onMakeYours }: { embedded?: bool
             ))}
           </div>
           <div className="furniture">
-            <Bookcase books={of("book")} isOwner={false} onOpen={open} onAdd={() => {}} />
+            <Bookcase books={of("book")} isOwner={false} onOpen={open} onAdd={() => {}}
+              chairBook={NOW_BOOK} note={`${NOW_WORDS.book.where} since Sunday`} />
             <ScreenCorner scenes={of("scene")} games={of("game")} urls={urls} tvId={tvId} tvOn={tvOn} isOwner={false}
               onInsert={insert} onPower={() => { if (!tvOn) stop(); setTvOn(!tvOn); }} onOpen={open}
               onAddScene={() => {}} onAddGame={() => {}} />
             <MusicCorner songs={of("song")} urls={urls} playingId={playingId} currentId={recordId} isOwner={false}
-              onToggle={toggle} onOpen={open} onAdd={() => {}} />
+              onToggle={toggle} onOpen={open} onAdd={() => {}}
+              note={recordId === NOW_SONG.id ? `${NOW_WORDS.song.where} since Friday` : null} />
           </div>
         </div>
         <div className="floor" aria-hidden="true" />

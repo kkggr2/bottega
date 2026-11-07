@@ -22,6 +22,8 @@ export function ScreenCorner({
   onOpen,
   onAddScene,
   onAddGame,
+  extraFilm,
+  note,
 }: {
   scenes: Piece[];
   games: Piece[];
@@ -34,8 +36,12 @@ export function ScreenCorner({
   onOpen: (piece: Piece) => void;
   onAddScene: () => void;
   onAddGame: () => void;
+  /** A poster the owner left in the TV. It isn't a DVD in the pile, but it shows on the screen. */
+  extraFilm?: Piece | null;
+  /** e.g. "In the TV since Tuesday". */
+  note?: string | null;
 }) {
-  const current = scenes.find((s) => s.id === tvId) ?? null;
+  const current = scenes.find((s) => s.id === tvId) ?? (extraFilm && extraFilm.id === tvId ? extraFilm : null);
   const still = current ? imageOf(current, urls) : null;
   const src = current && tvOn ? sceneEmbed(current.link, current.clip_start, current.clip_end) : null;
   const span = current && current.clip_start != null
@@ -48,7 +54,7 @@ export function ScreenCorner({
         <div className="tv">
           <span className="antenna" aria-hidden="true" />
           <div className="tv-body">
-            <div className={`tv-screen${tvOn && current ? " on" : ""}`}>
+            <div className={`tv-screen${tvOn && current ? " on" : ""}${current?.type === "poster" ? " poster" : ""}`}>
               {src ? (
                 <iframe
                   key={current!.id}
@@ -123,10 +129,10 @@ export function ScreenCorner({
       <div className={`now${current ? "" : " empty"}`} aria-live="polite">
         {current ? (
           <>
-            <span className="mono">{tvOn ? "Now showing" : "In the player"}{span ? ` · ${span}` : ""}</span>
+            <span className="mono">{tvOn ? "Now showing" : note ?? "In the player"}{span ? ` · ${span}` : ""}</span>
             <b>{current.title}</b>
             {current.subtitle && <span className="muted-ink">{current.subtitle}</span>}
-            <button type="button" className="linkish" onClick={() => onOpen(current)}>About this scene</button>
+            <button type="button" className="linkish" onClick={() => onOpen(current)}>{current.type === "poster" ? "About this film" : "About this scene"}</button>
           </>
         ) : null}
       </div>

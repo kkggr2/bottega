@@ -412,3 +412,42 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .invite { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; justify-content: space-between; margin-top: 18px;
   padding: 16px 18px; border: 1px dashed var(--line); border-radius: 14px; }
 .invite p { flex: 1 1 300px; color: var(--muted); font-size: 14.5px; }
+
+/* The armchair in front of the bookshelf, with the book someone left open on it. */
+.bookcase-corner { position: relative; }
+.armchair { position: absolute; right: -14px; bottom: -22px; z-index: 3; width: 124px; height: 100px; padding: 0; border: 0; background: none;
+  --chair: color-mix(in srgb, var(--raccent) 55%, #4A2E1E); transition: transform .2s ease; }
+.armchair:hover, .armchair:focus-visible { transform: translateY(-3px); }
+.armchair .back { position: absolute; left: 16px; right: 16px; top: 0; height: 66px; border-radius: 30px 30px 12px 12px;
+  background: linear-gradient(color-mix(in srgb, var(--chair) 88%, #fff), var(--chair)); box-shadow: inset 0 -6px 10px rgba(0,0,0,.18); }
+.armchair .seat { position: absolute; left: 14px; right: 14px; bottom: 18px; height: 30px; border-radius: 12px;
+  background: color-mix(in srgb, var(--chair) 80%, #fff); box-shadow: 0 4px 8px rgba(0,0,0,.25); }
+.armchair .arm { position: absolute; bottom: 14px; width: 24px; height: 54px; border-radius: 14px;
+  background: color-mix(in srgb, var(--chair) 82%, #000); box-shadow: 0 4px 8px rgba(0,0,0,.25); }
+.armchair .arm.left { left: 2px; }
+.armchair .arm.right { right: 2px; }
+.armchair .leg { position: absolute; bottom: 4px; width: 7px; height: 12px; border-radius: 2px; background: #2A1D14; }
+.armchair .leg.left { left: 22px; }
+.armchair .leg.right { right: 22px; }
+.chair-book { position: absolute; left: 50%; bottom: 34px; width: 38px; height: 54px; transform: translateX(-50%) rotate(-14deg);
+  border-radius: 2px; overflow: hidden; background: #7B2E2E; box-shadow: 2px 4px 6px rgba(0,0,0,.35); }
+.chair-book img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.chair-book b { display: block; padding: 4px; color: #F2E8D5; font: 400 9px/1.1 var(--font-display); }
+@media (max-width: 860px) { .armchair { right: 4px; } }
+
+/* A poster left in the TV shows whole on the screen. */
+.tv-screen.poster img { object-fit: contain; filter: saturate(.85) brightness(.8); }
+
+.now-toggle { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+
+/* Library: what friends put on this week. */
+.updates { display: grid; gap: 6px; margin: 4px 0 22px; }
+.update { display: flex; gap: 10px; align-items: baseline; padding: 10px 14px; border-radius: 12px; background: var(--surface);
+  border: 1px solid var(--line); color: inherit; text-decoration: none; font-size: 15px; }
+.update:hover { border-color: var(--brass); }
+.update > span:nth-child(2), .update:not(.new) > span:first-child { flex: 1; min-width: 0; }
+.update b { font-weight: 600; }
+.update .when { color: var(--muted); font-size: 13px; white-space: nowrap; }
+.update .dot, .spine.new::before { width: 8px; height: 8px; border-radius: 50%; background: var(--brass); flex: none; align-self: center; }
+.spine.new { position: relative; }
+.spine.new::before { content: ""; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); box-shadow: 0 0 0 2px var(--sp-wall, #333); }

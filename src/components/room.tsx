@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { befriend, friendshipWith, relationOf, unfriend, type Relation } from "@/lib/friends";
 import { removeMedia, signedUrls } from "@/lib/media";
+import { markSeen, NOW_WORDS, since, slotFor } from "@/lib/now";
 import { shareLink, tap } from "@/lib/native";
 import { audioOf } from "@/lib/piece-media";
 import { friendlyError, supabase } from "@/lib/supabase";
@@ -54,6 +55,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
   const [tvOn, setTvOn] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const viewed = useRef(false);
+  const nowApplied = useRef(false);
   const meId = me?.id ?? null;
 
   const load = useCallback(async () => {
@@ -65,7 +67,8 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
       return setData({ state: meId ? "missing" : "hidden" });
     }
     const [{ data: room }, { data: canView }, friendship] = await Promise.all([
-      sb.from("rooms").select("owner_id, name, tagline, theme, wallpaper, visibility").eq("owner_id", owner.id).maybeSingle(),
+      // All columns, so rooms keep working before and after the "now playing" columns exist.
+      sb.from("rooms").select("*").eq("owner_id", owner.id).maybeSingle(),
       sb.rpc("can_view_room", { owner: owner.id }),
       !meId || owner.id === meId ? Promise.resolve(null) : friendshipWith(meId, owner.id),
     ]);
@@ -85,6 +88,14 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
       pieces,
       relation: meId ? relationOf(friendship, meId) : "none",
     });
+    // Whatever the owner left out is already on the turntable and in the TV when you walk in.
+    if (!nowApplied.current) {
+      nowApplied.current = true;
+      const r = room as Room;
+      if (r.now_song) setRecordId(r.now_song);
+      if (r.now_film) setTvId(r.now_film);
+    }
+    if (owner.id !== meId) markSeen(owner.id);
     if (!viewed.current) {
       viewed.current = true;
       const relation = meId ? relationOf(friendship, meId) : "none";
@@ -184,6 +195,12 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
   const full = pieces.length >= MAX_PIECES;
 
   const detail = pieces.find((p) => p.id === detailId) ?? null;
+  const chairBook = pieces.find((p) => p.id === room.now_book && p.type === "book") ?? null;
+  const posterInTv = pieces.find((p) => p.id === room.now_film && p.type === "poster") ?? null;
+  const songNote = recordId && recordId === room.now_song ? `${NOW_WORDS.song.where} ${since(room.now_song_at)}` : null;
+  const filmNote = tvId && tvId === room.now_film ? `${NOW_WORDS.film.where} ${since(room.now_film_at)}` : null;
+  const bookNote = chairBook ? `${NOW_WORDS.book.where} ${since(room.now_book_at)}` : null;
+  const detailSlot = detail ? slotFor(detail.type) : null;
   // Earlier/later moves a piece among its own kind, which is what you see side by side.
   const siblings = detail ? pieces.filter((p) => p.type === detail.type) : [];
   const detailIndex = detail ? siblings.indexOf(detail) : -1;
@@ -225,6 +242,23 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
     await removeMedia([piece.image_path, piece.audio_path]).catch(() => {});
     if (recordId === piece.id) { stopMusic(); setRecordId(null); }
     if (tvId === piece.id) { setTvOn(false); setTvId(null); }
+    setDetailId(null);
+    await load();
+  }
+
+  // Leave a piece out (or put it away). The database stamps the time.
+  async function setNow(piece: Piece, on: boolean) {
+    const slot = slotFor(piece.type);
+    if (!slot) return;
+    const { error } = await supabase().from("rooms").update({ [`now_${slot}`]: on ? piece.id : null }).eq("owner_id", owner.id);
+    if (error) {
+      return setNotice(/now_/.test(error.message)
+        ? "The database needs its latest update. Run the newest file in supabase/migrations in the Supabase SQL editor."
+        : friendlyError(error, "Couldn't change that. Try again."));
+    }
+    if (on && slot === "song") setRecordId(piece.id);
+    if (on && slot === "film") { setTvId(piece.id); setTvOn(false); }
+    if (on) track("now_set", { room: owner.id, detail: slot });
     setDetailId(null);
     await load();
   }
@@ -324,7 +358,8 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
 
               <div className="furniture">
                 {showBooks && (
-                  <Bookcase books={books} isOwner={isOwner} onOpen={(p) => setDetailId(p.id)} onAdd={() => add("book")} />
+                  <Bookcase books={books} isOwner={isOwner} onOpen={(p) => setDetailId(p.id)} onAdd={() => add("book")}
+                    chairBook={chairBook} urls={urls} note={bookNote} />
                 )}
                 {showScreen && (
                   <ScreenCorner
@@ -339,6 +374,8 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
                     onOpen={(p) => setDetailId(p.id)}
                     onAddScene={() => add("scene")}
                     onAddGame={() => add("game")}
+                    extraFilm={posterInTv}
+                    note={filmNote}
                   />
                 )}
                 {showMusic && (
@@ -351,6 +388,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
                     onToggle={toggleRecord}
                     onOpen={(p) => setDetailId(p.id)}
                     onAdd={() => add("song")}
+                    note={songNote}
                   />
                 )}
               </div>
@@ -388,6 +426,12 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
           onEdit={() => { setEditing({ piece: detail }); setDetailId(null); }}
           onMove={move}
           onDelete={() => remove(detail)}
+          now={isOwner && detailSlot ? {
+            on: room[`now_${detailSlot}`] === detail.id,
+            put: NOW_WORDS[detailSlot].put,
+            take: NOW_WORDS[detailSlot].take,
+            set: (on) => setNow(detail, on),
+          } : undefined}
         />
       )}
       {editing && (

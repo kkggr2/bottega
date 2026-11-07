@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { accept, befriend, unfriend } from "@/lib/friends";
 import { shareLink } from "@/lib/native";
+import { joinDid, lastSeen, NOW_SLOTS, NOW_WORDS, nowAt, nowId, type NowPiece } from "@/lib/now";
 import { friendlyError, supabase } from "@/lib/supabase";
 import { track } from "@/lib/track";
 import { THEMES, USERNAME } from "@/lib/themes";
@@ -14,8 +15,14 @@ export function LibraryScreen() {
   return <Gate>{(me) => <Library me={me} />}</Gate>;
 }
 
+/** One line per friend: what they put out recently, newest first. */
+type Update = { ownerId: string; username: string; line: string; at: string; isNew: boolean };
+
+const RECENT_DAYS = 7;
+
 type Shelf = {
   rooms: RoomWithOwner[];
+  updates: Update[];
   incoming: Profile[];
   outgoing: Profile[];
 };
@@ -38,7 +45,8 @@ function Library({ me }: { me: Profile }) {
 
     const [{ data: rooms }, { data: people }] = await Promise.all([
       sb.from("rooms")
-        .select("owner_id, name, tagline, theme, wallpaper, visibility, profile:profiles(username)")
+        // All columns, so the shelf keeps working before and after the "now playing" columns exist.
+        .select("*, profile:profiles(username)")
         .in("owner_id", [me.id, ...friendIds]),
       incomingIds.length + outgoingIds.length
         ? sb.from("profiles").select("id, username").in("id", [...incomingIds, ...outgoingIds])
@@ -48,8 +56,37 @@ function Library({ me }: { me: Profile }) {
       a.owner_id === me.id ? -1 : b.owner_id === me.id ? 1 : (a.profile?.username ?? "").localeCompare(b.profile?.username ?? ""),
     );
     const byId = new Map(((people as Profile[]) ?? []).map((p) => [p.id, p]));
+
+    // What friends left out this week.
+    const cutoff = Date.now() - RECENT_DAYS * 864e5;
+    const friends = list.filter((r) => r.owner_id !== me.id);
+    const ids = friends.flatMap((r) => NOW_SLOTS.map((slot) => {
+      const at = nowAt(r, slot);
+      return at && new Date(at).getTime() > cutoff ? nowId(r, slot) : null;
+    })).filter((id): id is string => Boolean(id));
+    const { data: nowRows } = ids.length
+      ? await sb.from("pieces").select("id, type, title, subtitle, cover_url").in("id", ids)
+      : { data: [] as NowPiece[] };
+    const nowById = new Map(((nowRows as NowPiece[]) ?? []).map((p) => [p.id, p]));
+    const updates: Update[] = friends.flatMap((r) => {
+      const recent = NOW_SLOTS.map((slot) => ({ slot, at: nowAt(r, slot), piece: nowById.get(nowId(r, slot) ?? "") }))
+        .filter((x): x is { slot: typeof x.slot; at: string; piece: NowPiece } => Boolean(x.at && x.piece && new Date(x.at).getTime() > cutoff))
+        .sort((a, b) => b.at.localeCompare(a.at));
+      if (!recent.length) return [];
+      const at = recent[0].at;
+      const seen = lastSeen(r.owner_id);
+      return [{
+        ownerId: r.owner_id,
+        username: r.profile?.username ?? "",
+        line: joinDid(recent.map((x) => NOW_WORDS[x.slot].did(x.piece.title))),
+        at,
+        isNew: !seen || seen < at,
+      }];
+    }).sort((a, b) => b.at.localeCompare(a.at));
+
     setShelf({
       rooms: list,
+      updates,
       incoming: incomingIds.map((id) => byId.get(id)).filter((p): p is Profile => Boolean(p)),
       outgoing: outgoingIds.map((id) => byId.get(id)).filter((p): p is Profile => Boolean(p)),
     });
@@ -61,6 +98,8 @@ function Library({ me }: { me: Profile }) {
     const channel = sb
       .channel("my-friendships")
       .on("postgres_changes", { event: "*", schema: "public", table: "friendships" }, () => load())
+      // A friend putting on a record shows up while you're looking.
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "rooms" }, () => load())
       .subscribe();
     return () => {
       sb.removeChannel(channel);
@@ -114,6 +153,7 @@ function Library({ me }: { me: Profile }) {
 
   if (!shelf) return <p className="loading">Dusting the shelves…</p>;
   const friendCount = shelf.rooms.length - 1;
+  const newIds = new Set(shelf.updates.filter((u) => u.isNew).map((u) => u.ownerId));
 
   return (
     <div>
@@ -155,6 +195,18 @@ function Library({ me }: { me: Profile }) {
         </section>
       )}
 
+      {shelf.updates.length > 0 && (
+        <section className="updates" aria-label="What friends put on">
+          {shelf.updates.map((u) => (
+            <Link key={u.ownerId} href={`/r/${u.username}`} className={`update${u.isNew ? " new" : ""}`}>
+              {u.isNew && <span className="dot" aria-label="New" />}
+              <span><b>@{u.username}</b> {u.line}</span>
+              <span className="when">{ago(u.at)}</span>
+            </Link>
+          ))}
+        </section>
+      )}
+
       <div className="shelf">
         {shelf.rooms.map((room) => {
           const t = THEMES[room.theme] ?? THEMES.oak;
@@ -163,7 +215,7 @@ function Library({ me }: { me: Profile }) {
             <Link
               key={room.owner_id}
               href={`/r/${username}`}
-              className={`spine${room.owner_id === me.id ? " me" : ""}`}
+              className={`spine${room.owner_id === me.id ? " me" : ""}${newIds.has(room.owner_id) ? " new" : ""}`}
               title={`${room.name} · @${username}`}
               style={{
                 height: 176 + (hash(room.owner_id) % 50),
@@ -198,4 +250,15 @@ function hash(s: string): number {
   let n = 0;
   for (const c of s) n = (n * 31 + c.charCodeAt(0)) >>> 0;
   return n;
+}
+
+/** "just now", "3h", "yesterday", "Tue". */
+function ago(iso: string): string {
+  const mins = Math.round((Date.now() - new Date(iso).getTime()) / 6e4);
+  if (mins < 2) return "just now";
+  if (mins < 60) return `${mins} min`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  if (hours < 48) return "yesterday";
+  return new Date(iso).toLocaleDateString(undefined, { weekday: "short" });
 }

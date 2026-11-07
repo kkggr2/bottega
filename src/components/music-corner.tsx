@@ -15,6 +15,7 @@ export function MusicCorner({
   onToggle,
   onOpen,
   onAdd,
+  note,
 }: {
   songs: Piece[];
   urls: Record<string, string>;
@@ -24,6 +25,8 @@ export function MusicCorner({
   onToggle: (piece: Piece) => void;
   onOpen: (piece: Piece) => void;
   onAdd: () => void;
+  /** Shown when the owner left this record out, e.g. "On the turntable since Tuesday". */
+  note?: string | null;
 }) {
   const current = songs.find((s) => s.id === currentId) ?? null;
   // The sleeves sit stacked in the crate. Tapping it spreads them out so each one is easy to pick.
@@ -95,7 +98,7 @@ export function MusicCorner({
       <div className={`now${current || open ? "" : " empty"}`} aria-live="polite">
         {current ? (
           <>
-            <span className="mono">{spinning ? "Now playing" : "On the turntable"}</span>
+            <span className="mono">{spinning ? "Now playing" : note ?? "On the turntable"}</span>
             <b>{current.title}</b>
             {current.subtitle && <span className="muted-ink">{current.subtitle}</span>}
             <button type="button" className="linkish" onClick={() => onOpen(current)}>About this song</button>
