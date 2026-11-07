@@ -451,3 +451,4 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .update .dot, .spine.new::before { width: 8px; height: 8px; border-radius: 50%; background: var(--brass); flex: none; align-self: center; }
 .spine.new { position: relative; }
 .spine.new::before { content: ""; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); box-shadow: 0 0 0 2px var(--sp-wall, #333); }
+.email-switch { margin-top: 18px; color: var(--muted); }

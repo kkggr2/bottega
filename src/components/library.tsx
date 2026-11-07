@@ -231,6 +231,8 @@ function Library({ me }: { me: Profile }) {
           <span className="t">+ a friend</span>
         </button>
       </div>
+      <EmailSwitch userId={me.id} />
+
       {friendCount < 3 ? (
         <div className="invite">
           <p>
@@ -261,4 +263,32 @@ function ago(iso: string): string {
   if (hours < 24) return `${hours}h`;
   if (hours < 48) return "yesterday";
   return new Date(iso).toLocaleDateString(undefined, { weekday: "short" });
+}
+
+/** One daily email, only on days a friend put something on. On unless turned off. */
+function EmailSwitch({ userId }: { userId: string }) {
+  const [on, setOn] = useState<boolean | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    supabase().from("email_prefs").select("digest").eq("user_id", userId).maybeSingle()
+      .then(({ data, error }) => {
+        if (error) return setFailed(true); // The database update isn't in yet: hide the switch.
+        setOn(data ? Boolean(data.digest) : true);
+      });
+  }, [userId]);
+
+  async function change(next: boolean) {
+    setOn(next);
+    const { error } = await supabase().from("email_prefs").upsert({ user_id: userId, digest: next }, { onConflict: "user_id" });
+    if (error) setOn(!next);
+  }
+
+  if (failed || on === null) return null;
+  return (
+    <label className="check email-switch">
+      <input type="checkbox" checked={on} onChange={(e) => change(e.target.checked)} />
+      <span>Email me when friends put something on <span className="muted">(at most once a day)</span></span>
+    </label>
+  );
 }
