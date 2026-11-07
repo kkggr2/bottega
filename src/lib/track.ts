@@ -60,6 +60,7 @@ export function trackOpen(userId: string | null): void {
 /* Remember whose room someone came from, so their new room starts with that friend. */
 
 const CAME_FROM_KEY = "bottega.cameFrom";
+/** `id` is empty when the room was friends-only and the visitor couldn't see who owns it. */
 export type CameFrom = { id: string; username: string };
 
 export function rememberCameFrom(owner: CameFrom): void {
@@ -74,8 +75,8 @@ export function cameFrom(): CameFrom | null {
     if (!raw) return null;
     const v = JSON.parse(raw) as CameFrom & { at: number };
     // Forget it after two weeks.
-    if (!v.id || !v.username || Date.now() - v.at > 14 * 864e5) return null;
-    return { id: v.id, username: v.username };
+    if (!v.username || Date.now() - v.at > 14 * 864e5) return null;
+    return { id: v.id ?? "", username: v.username };
   } catch {
     return null;
   }

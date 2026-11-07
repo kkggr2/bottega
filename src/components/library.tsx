@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { accept, befriend, unfriend } from "@/lib/friends";
+import { shareLink } from "@/lib/native";
 import { friendlyError, supabase } from "@/lib/supabase";
+import { track } from "@/lib/track";
 import { THEMES, USERNAME } from "@/lib/themes";
 import type { Friendship, Profile, RoomWithOwner } from "@/lib/types";
 import { Gate } from "./gate";
@@ -91,6 +93,15 @@ function Library({ me }: { me: Profile }) {
     setBusy(false);
   }
 
+  // Early on, most friends won't have Bottega yet, so a link works better than a username search.
+  async function sendLink() {
+    const url = `${window.location.origin}/r/${me.username}`;
+    const result = await shareLink(`My room on Bottega`, url);
+    if (result === "shared" || result === "copied") track("share_link", { room: me.id, detail: "library" });
+    if (result === "copied") setMsg({ kind: "ok", text: "Link copied. Send it to a friend." });
+    else if (result === "failed") setMsg({ kind: "err", text: `Couldn't share. Your link is ${url}` });
+  }
+
   async function respond(person: Profile, yes: boolean) {
     try {
       if (yes) await accept(person.id, me.id);
@@ -108,9 +119,6 @@ function Library({ me }: { me: Profile }) {
     <div>
       <section className="lib-head">
         <div>
-          <p className="mono muted">
-            {shelf.rooms.length} {shelf.rooms.length === 1 ? "room" : "rooms"} on your shelf
-          </p>
           <h1>Your library</h1>
           <p>Every spine is someone&rsquo;s room. Pull one out to step inside.</p>
         </div>
@@ -171,11 +179,17 @@ function Library({ me }: { me: Profile }) {
           <span className="t">+ a friend</span>
         </button>
       </div>
-      <p className="lib-note">
-        {friendCount === 0
-          ? "Your shelf is just you for now. Ask a friend for their Bottega username and add it above."
-          : "Friends can see your room and you can see theirs. Change who can come in from your room's Customize menu."}
-      </p>
+      {friendCount < 3 ? (
+        <div className="invite">
+          <p>
+            {friendCount === 0 ? "Your shelf is just you for now." : "A shelf feels like a library at three friends."}{" "}
+            Send your room link. When a friend makes their own room from it, you&rsquo;ll get their friend request.
+          </p>
+          <button className="btn" type="button" onClick={sendLink}>Send my room link</button>
+        </div>
+      ) : (
+        <p className="lib-note">Friends can see your room and you can see theirs. Change who can come in from your room&rsquo;s Customize menu.</p>
+      )}
     </div>
   );
 }

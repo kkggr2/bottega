@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { audioOf, imageOf, wobble } from "@/lib/piece-media";
 import type { Piece } from "@/lib/types";
 
@@ -25,6 +26,9 @@ export function MusicCorner({
   onAdd: () => void;
 }) {
   const current = songs.find((s) => s.id === currentId) ?? null;
+  // The sleeves sit stacked in the crate. Tapping it spreads them out so each one is easy to pick.
+  const [open, setOpen] = useState(false);
+  const stacked = songs.length > 1 && !open;
   const spinning = Boolean(current && playingId === current.id);
   const currentArt = current ? imageOf(current, urls) : null;
 
@@ -48,7 +52,7 @@ export function MusicCorner({
           <span className="tt-light" aria-hidden="true" />
         </div>
 
-        <div className="crate" role="list">
+        <div className={`crate${open ? " open" : ""}`} role="list" aria-label="Records">
           {songs.map((s, i) => {
             const art = imageOf(s, urls);
             const playable = Boolean(audioOf(s, urls));
@@ -59,9 +63,20 @@ export function MusicCorner({
                 <button
                   type="button"
                   className="sleeve"
-                  onClick={() => (playable ? onToggle(s) : onOpen(s))}
-                  aria-pressed={playable ? playingId === s.id : undefined}
-                  aria-label={playable ? `Play ${s.title}${s.subtitle ? ` by ${s.subtitle}` : ""}` : `${s.title}, open details`}
+                  onClick={() => {
+                    if (stacked) return setOpen(true);
+                    setOpen(false);
+                    if (playable) onToggle(s);
+                    else onOpen(s);
+                  }}
+                  aria-pressed={!stacked && playable ? playingId === s.id : undefined}
+                  aria-expanded={stacked ? false : undefined}
+                  // While stacked, the front sleeve stands for the whole crate.
+                  tabIndex={stacked && i > 0 ? -1 : undefined}
+                  aria-hidden={stacked && i > 0 ? true : undefined}
+                  aria-label={stacked
+                    ? `Flip through ${songs.length} records`
+                    : playable ? `Play ${s.title}${s.subtitle ? ` by ${s.subtitle}` : ""}` : `${s.title}, open details`}
                   title={[s.title, s.subtitle].filter(Boolean).join(" · ")}
                 >
                   {art ? <img src={art} alt="" loading="lazy" /> : <span className="sleeve-type">{s.title}</span>}
@@ -77,7 +92,7 @@ export function MusicCorner({
         </div>
       </div>
 
-      <div className="now" aria-live="polite">
+      <div className={`now${current || open ? "" : " empty"}`} aria-live="polite">
         {current ? (
           <>
             <span className="mono">{spinning ? "Now playing" : "On the turntable"}</span>
@@ -85,9 +100,9 @@ export function MusicCorner({
             {current.subtitle && <span className="muted-ink">{current.subtitle}</span>}
             <button type="button" className="linkish" onClick={() => onOpen(current)}>About this song</button>
           </>
-        ) : (
-          <span className="mono">{songs.length ? "Pick a record" : "Record player"}</span>
-        )}
+        ) : open ? (
+          <button type="button" className="linkish" onClick={() => setOpen(false)}>Put them back</button>
+        ) : null}
       </div>
     </section>
   );

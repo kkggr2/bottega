@@ -1,6 +1,6 @@
 -- Bottega: let signed-out visitors step into public rooms, and keep a small event log
 -- for the growth numbers (published rooms, shares, people coming back).
--- Run this once in the Supabase SQL editor.
+-- Run this in the Supabase SQL editor. It is safe to run again.
 
 -- ---------------------------------------------------------------------------
 -- Public rooms open to everyone, including people without an account
@@ -9,14 +9,17 @@
 grant usage on schema public to anon;
 
 -- Only the owners of public rooms are visible to signed-out visitors.
+drop policy if exists "profiles with public rooms" on public.profiles;
 create policy "profiles with public rooms" on public.profiles
   for select to anon
   using (exists (select 1 from public.rooms r where r.owner_id = profiles.id and r.visibility = 'public'));
 
+drop policy if exists "public rooms readable" on public.rooms;
 create policy "public rooms readable" on public.rooms
   for select to anon
   using (visibility = 'public');
 
+drop policy if exists "pieces readable in public rooms" on public.pieces;
 create policy "pieces readable in public rooms" on public.pieces
   for select to anon
   using (public.can_view_room(owner_id));
@@ -24,6 +27,7 @@ create policy "pieces readable in public rooms" on public.pieces
 grant select on public.profiles, public.rooms, public.pieces to anon;
 grant execute on function public.can_view_room(uuid) to anon;
 
+drop policy if exists "media readable in public rooms" on storage.objects;
 create policy "media readable in public rooms" on storage.objects
   for select to anon
   using (bucket_id = 'media' and public.can_view_room(((storage.foldername(name))[1])::uuid));
@@ -32,7 +36,7 @@ create policy "media readable in public rooms" on storage.objects
 -- Event log: write-only from the app, read only here in the dashboard
 -- ---------------------------------------------------------------------------
 
-create table public.events (
+create table if not exists public.events (
   id          bigint generated always as identity primary key,
   at          timestamptz not null default now(),
   name        text not null check (name in (
@@ -44,15 +48,17 @@ create table public.events (
   room_owner  uuid,                   -- whose room it happened in
   detail      text not null default '' check (char_length(detail) <= 40)
 );
-create index events_name_at on public.events (name, at);
-create index events_user on public.events (user_id, at) where user_id is not null;
-create index events_visitor on public.events (visitor);
+create index if not exists events_name_at on public.events (name, at);
+create index if not exists events_user on public.events (user_id, at) where user_id is not null;
+create index if not exists events_visitor on public.events (visitor);
 
 alter table public.events enable row level security;
 
+drop policy if exists "visitors log events" on public.events;
 create policy "visitors log events" on public.events
   for insert to anon
   with check (user_id is null);
+drop policy if exists "people log their own events" on public.events;
 create policy "people log their own events" on public.events
   for insert to authenticated
   with check (user_id is null or user_id = auth.uid());
@@ -69,7 +75,7 @@ grant insert (name, visitor, user_id, room_owner, detail) on public.events to an
 -- See docs/STRATEGY.md for the targets.
 -- ---------------------------------------------------------------------------
 
-create view public.metrics_cohorts with (security_invoker = true) as
+create or replace view public.metrics_cohorts with (security_invoker = true) as
 with fifth as (
   select owner_id, created_at as fifth_at
   from (select owner_id, created_at, row_number() over (partition by owner_id order by created_at) as n
@@ -111,7 +117,7 @@ group by 1
 order by 1 desc;
 
 -- Visitors who saw a room or the example before having an account, and how many went on to make one.
-create view public.metrics_visitors with (security_invoker = true) as
+create or replace view public.metrics_visitors with (security_invoker = true) as
 with first_seen as (
   select visitor, min(at) as at
   from public.events
@@ -120,21 +126,30 @@ with first_seen as (
 ),
 made as (
   select distinct visitor from public.events where name = 'room_claimed'
+),
+weekly as (
+  select date_trunc('week', s.at)::date as week, count(*) as visitors, count(m.visitor) as made_a_room
+  from first_seen s
+  left join made m on m.visitor = s.visitor
+  group by 1
+),
+visits as (
+  select date_trunc('week', at)::date as week, count(*) as visits_to_others_rooms
+  from public.events
+  where name = 'room_view' and detail in ('friend', 'member', 'signed_out')
+  group by 1
 )
 select
-  date_trunc('week', s.at)::date                                         as week,
-  count(*)                                                               as visitors,
-  count(m.visitor)                                                       as made_a_room,
-  round(100.0 * count(m.visitor) / count(*), 1)                          as visitor_to_creator_pct,
-  (select count(*) from public.events e
-    where e.name = 'room_view' and e.detail in ('friend', 'member', 'signed_out')
-      and date_trunc('week', e.at) = date_trunc('week', s.at))           as visits_to_others_rooms
-from first_seen s
-left join made m on m.visitor = s.visitor
-group by 1
+  w.week,
+  w.visitors,
+  w.made_a_room,
+  round(100.0 * w.made_a_room / nullif(w.visitors, 0), 1) as visitor_to_creator_pct,
+  coalesce(v.visits_to_others_rooms, 0)                   as visits_to_others_rooms
+from weekly w
+left join visits v on v.week = w.week
 order by 1 desc;
 
-create view public.metrics_daily with (security_invoker = true) as
+create or replace view public.metrics_daily with (security_invoker = true) as
 select at::date as day, name, count(*) as events, count(distinct coalesce(user_id, visitor)) as people
 from public.events
 group by 1, 2

@@ -68,6 +68,9 @@ export function PieceEditor({
   const [stills, setStills] = useState<string[]>([]);
   const [usedTrailer, setUsedTrailer] = useState(false);
   const meta = PIECE_TYPES[draft.type];
+  // A prompt that calls up a memory, picked once per sheet so it doesn't jump while typing.
+  const [promptSeed] = useState(() => Math.floor(Math.random() * 1000));
+  const whyPrompt = WHY_PROMPTS[draft.type][promptSeed % WHY_PROMPTS[draft.type].length];
   const set = (patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch }));
 
   const preview = useMemo(() => (image instanceof Blob ? URL.createObjectURL(image) : null), [image]);
@@ -294,6 +297,15 @@ export function PieceEditor({
         </div>
       )}
 
+      {draft.type !== "poem" && (
+        <div className="field why">
+          <label htmlFor="ed-body">In your words</label>
+          <textarea id="ed-body" rows={2} maxLength={Math.max(WHY_MAX, draft.body.length)} placeholder={whyPrompt}
+            value={draft.body} onChange={(e) => set({ body: e.target.value })} />
+          <span className="hint">This is what friends read first.</span>
+        </div>
+      )}
+
       <details className="manual" open={Boolean(existing) || !SEARCHABLE.includes(draft.type)}>
         <summary>{SEARCHABLE.includes(draft.type) ? "Edit details or fill in by hand" : "Details"}</summary>
         <div className="stack">
@@ -354,10 +366,12 @@ export function PieceEditor({
         </div>
       </details>
 
-      <div className="field">
-        <label htmlFor="ed-body">{meta.body}</label>
-        <textarea id="ed-body" maxLength={4000} value={draft.body} onChange={(e) => set({ body: e.target.value })} />
-      </div>
+      {draft.type === "poem" && (
+        <div className="field">
+          <label htmlFor="ed-body">{meta.body}</label>
+          <textarea id="ed-body" maxLength={4000} value={draft.body} onChange={(e) => set({ body: e.target.value })} />
+        </div>
+      )}
 
       <p className="msg err" aria-live="polite">{msg}</p>
       <div className="row">
@@ -367,3 +381,15 @@ export function PieceEditor({
     </Sheet>
   );
 }
+
+const WHY_MAX = 280;
+
+/** Prompts that call up a memory instead of asking for a review. */
+const WHY_PROMPTS: Record<PieceType, string[]> = {
+  song: ["The summer this was on repeat…", "Where you were when this found you…", "The line you always wait for…"],
+  poster: ["The scene you still think about…", "Who you watched it with…", "Why it stayed with you…"],
+  scene: ["What happens in this moment…", "Why you keep coming back to it…"],
+  book: ["The page you folded down…", "Where you were when you read it…", "What stayed with you…"],
+  game: ["The night you couldn't stop playing…", "Who you played it with…"],
+  poem: [""],
+};

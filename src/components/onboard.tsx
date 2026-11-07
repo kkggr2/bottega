@@ -5,9 +5,7 @@ import { befriend } from "@/lib/friends";
 import { friendlyError, supabase } from "@/lib/supabase";
 import { cameFrom, forgetCameFrom, track } from "@/lib/track";
 import { USERNAME } from "@/lib/themes";
-import type { ThemeKey } from "@/lib/types";
 import { useAuth } from "./auth";
-import { ThemeSwatches } from "./theme-swatches";
 
 export function Onboard() {
   const auth = useAuth();
@@ -16,8 +14,6 @@ export function Onboard() {
   const [from] = useState(cameFrom);
   const [addFrom, setAddFrom] = useState(true);
   const [username, setUsername] = useState("");
-  const [roomName, setRoomName] = useState("");
-  const [theme, setTheme] = useState<ThemeKey>("oak");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,8 +26,9 @@ export function Onboard() {
     setError(null);
     const { error } = await supabase().rpc("claim_username", {
       p_username: username,
-      p_room_name: roomName,
-      p_theme: theme,
+      // The name and walls start with good defaults; both change later from the room.
+      p_room_name: "",
+      p_theme: "oak",
     });
     if (error) {
       setBusy(false);
@@ -40,9 +37,17 @@ export function Onboard() {
     }
     track("room_claimed", { detail: from ? "from_room" : "" });
     if (from && addFrom && auth.userId) {
-      await befriend(auth.userId, from.id)
-        .then((rel) => track("friend_request", { room: from.id, detail: `signup:${rel}` }))
-        .catch(() => {});
+      try {
+        // Friends-only rooms hide their owner from visitors, so look them up by username now.
+        const ownerId = from.id
+          || (await supabase().from("profiles").select("id").eq("username", from.username).maybeSingle()).data?.id;
+        if (ownerId && ownerId !== auth.userId) {
+          const rel = await befriend(auth.userId, ownerId);
+          track("friend_request", { room: ownerId, detail: `signup:${rel}` });
+        }
+      } catch {
+        // The room still opens; they can add the friend from the library.
+      }
     }
     forgetCameFrom();
     await refreshProfile();
@@ -51,9 +56,8 @@ export function Onboard() {
   return (
     <section className="onboard">
       <div>
-        <p className="mono muted">Welcome in</p>
         <h1>There&rsquo;s an empty room with your name on it.</h1>
-        <p className="lede">Pick the username your friends will type to find you, then fill the walls with what you love.</p>
+        <p className="lede">Pick the username friends will type to find you. You can name the room and paint the walls once you&rsquo;re inside.</p>
       </div>
       <div className="panel">
         <form onSubmit={(e) => { e.preventDefault(); claim(); }}>
@@ -66,15 +70,6 @@ export function Onboard() {
             </div>
             <span className="hint">3–20 lowercase letters, numbers or underscores. Friends find you with this, and it can&rsquo;t be changed later.</span>
           </div>
-          <div className="field">
-            <label htmlFor="ob-name">Name your room</label>
-            <input id="ob-name" type="text" maxLength={48} placeholder="The Late Show" value={roomName}
-              onChange={(e) => setRoomName(e.target.value)} />
-          </div>
-          <div className="field">
-            <span className="label">Walls</span>
-            <ThemeSwatches value={theme} onChange={setTheme} />
-          </div>
           {from && (
             <label className="check">
               <input type="checkbox" checked={addFrom} onChange={(e) => setAddFrom(e.target.checked)} />
@@ -83,7 +78,7 @@ export function Onboard() {
           )}
           <p className="msg err" aria-live="polite">{error}</p>
           <div>
-            <button className="btn" type="submit" disabled={busy}>{busy ? "Unlocking…" : "Get my key"}</button>
+            <button className="btn" type="submit" disabled={busy}>{busy ? "Opening…" : "Open my room"}</button>
           </div>
         </form>
       </div>

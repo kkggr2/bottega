@@ -10,7 +10,6 @@ export function TopBar() {
     <header className="bar">
       <Link href="/" className="brand">
         <b>Bottega</b>
-        <span className="mono">a library of friends</span>
       </Link>
       {/* The current path is only known at request time, so the nav streams in. */}
       <Suspense fallback={null}>

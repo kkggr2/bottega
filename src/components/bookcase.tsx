@@ -48,7 +48,7 @@ export function Bookcase({
           )}
         </div>
       </div>
-      <p className="corner-label mono">{books.length ? `${books.length} ${books.length === 1 ? "book" : "books"}` : "Bookshelf"}</p>
+
     </section>
   );
 }

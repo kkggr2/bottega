@@ -231,6 +231,7 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .now { display: flex; flex-wrap: wrap; gap: 2px 10px; align-items: baseline; justify-content: center; padding: 6px 12px; font-size: 13.5px; text-align: center; }
 .now b { font: 400 17px/1.2 var(--font-display); }
 .now .mono { font-size: 10px; }
+.now.empty { visibility: hidden; }
 .muted-ink { opacity: .7; }
 .linkish { background: none; border: 0; padding: 0; text-decoration: underline; color: inherit; font-size: 13px; }
 @media (max-width: 860px) {
@@ -286,6 +287,10 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .sleeve-slot { margin-left: -52px; position: relative; transition: transform .25s ease, opacity .25s ease; }
 .sleeve-slot:hover, .sleeve-slot:focus-within { transform: translateY(-12px); z-index: 50 !important; }
 .sleeve-slot.out { opacity: .45; }
+/* Opened crate: sleeves spread into a row so every one is a full-size target. */
+.crate.open { padding-left: 0; gap: 8px; max-width: 240px; }
+.crate.open .sleeve-slot { margin-left: 0; rotate: 0deg !important; }
+.crate.open .sleeve-slot:hover, .crate.open .sleeve-slot:focus-within { transform: translateY(-4px); }
 .sleeve { display: block; width: 72px; aspect-ratio: 1; padding: 0; border: 0; border-radius: 2px; overflow: hidden; background: color-mix(in srgb, var(--raccent) 75%, #1A1A1A); color: #FFF8E8; box-shadow: 0 4px 10px rgba(0,0,0,.35); }
 .sleeve img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .sleeve-type { display: block; padding: 6px; text-align: left; font: 400 13px/1.1 var(--font-display); }
@@ -323,8 +328,8 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .tv-stand span:last-child::after { left: 6px; }
 
 .pile { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
-.dvd { display: flex; align-items: center; width: 104px; height: 18px; padding: 0 8px; border: 0; border-radius: 2px; background: var(--case, #222); color: #EFE6D2; text-align: left; box-shadow: inset 0 -2px 0 rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.12), 0 1px 2px rgba(0,0,0,.3); transition: transform .2s ease, opacity .2s ease; }
-.dvd span { font: 500 9.5px/1 var(--font-mono); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dvd { display: flex; align-items: center; width: 112px; height: 26px; padding: 0 8px; border: 0; border-radius: 2px; background: var(--case, #222); color: #EFE6D2; text-align: left; box-shadow: inset 0 -2px 0 rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.12), 0 1px 2px rgba(0,0,0,.3); transition: transform .2s ease, opacity .2s ease; }
+.dvd span { font: 500 10px/1 var(--font-mono); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dvd:hover, .dvd:focus-visible { transform: translateX(8px); }
 .dvd.in { transform: translateX(18px); opacity: .5; }
 .dvd.add { background: transparent; border: 1.5px dashed color-mix(in srgb, var(--rink) 40%, transparent); color: var(--rink); box-shadow: none; }
@@ -365,11 +370,14 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .share-preview img { width: min(260px, 70vw); aspect-ratio: 9 / 16; border-radius: 10px; box-shadow: var(--shadow); display: block; }
 
 /* Landing: a short hero, then a real room to play with, then the form. */
-.landing-hero { padding-block: 40px 24px; max-width: 760px; }
+.landing-hero { padding-block: 32px 20px; max-width: 760px; }
 .landing-hero h1 { font: 400 clamp(44px, 7vw, 80px)/0.98 var(--font-display); }
-.landing-hero .lede { font-size: 17px; color: var(--muted); max-width: 52ch; margin: 16px 0 22px; }
+.landing-hero .lede { font-size: 18px; color: var(--muted); max-width: 52ch; margin: 12px 0 20px; }
 .landing-room { display: grid; gap: 12px; }
-.landing-room .try { font-size: 12px; }
+.landing-room .try { font-size: 14px; color: var(--muted); }
+/* Smaller posters on the landing room so the turntable and TV show sooner. */
+.landing-room .wall { padding-top: clamp(18px, 3vw, 32px); }
+.landing-room .pieces { grid-template-columns: repeat(auto-fill, minmax(128px, 150px)); justify-content: center; }
 .example-foot { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 14px; }
 .join-title { font: 400 clamp(34px, 5vw, 52px)/1.02 var(--font-display); }
 #join { scroll-margin-top: 16px; }
@@ -384,3 +392,23 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   border: 1px solid var(--brass); background: color-mix(in srgb, var(--brass) 8%, var(--surface)); font-size: 14px; }
 .check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
 .check input { margin-top: 3px; accent-color: var(--brass); }
+
+/* "In your words": short, in the owner's voice. */
+.why textarea { min-height: 64px; font: italic 400 18px/1.4 var(--font-display); }
+
+/* Who a room belongs to, said plainly. */
+.who { font-size: 14px; color: var(--muted); }
+.panel-title { font: 400 28px/1.1 var(--font-display); }
+
+/* Piece details: the owner's words first, signed. */
+.detail-why { margin: 0; padding: 4px 0 4px 16px; border-left: 3px solid var(--brass); }
+.detail-why p { white-space: pre-line; font: italic 400 22px/1.4 var(--font-display); }
+.detail-why footer { margin-top: 8px; font-size: 13.5px; color: var(--muted); }
+.detail-media.small { background: none; width: min(220px, 100%); }
+.detail-media.small img { max-height: 34vh; border-radius: 6px; }
+.detail-media.small.cover { width: min(200px, 100%); }
+
+/* Empty or small shelf: invite by link. */
+.invite { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; justify-content: space-between; margin-top: 18px;
+  padding: 16px 18px; border: 1px dashed var(--line); border-radius: 14px; }
+.invite p { flex: 1 1 300px; color: var(--muted); font-size: 14.5px; }

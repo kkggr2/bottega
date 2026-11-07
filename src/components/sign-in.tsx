@@ -172,12 +172,8 @@ export function SignIn() {
   return (
     <div className="landing">
       <section className="landing-hero">
-        <p className="mono muted">Everyone gets one room</p>
         <h1>Step into your friends&rsquo; taste.</h1>
-        <p className="lede">
-          Hang a film poster, shelve the books that made you, leave a record that plays when someone drops the needle.
-          Then visit your friends&rsquo; rooms.
-        </p>
+        <p className="lede">Fill one room with what you love. Then visit theirs.</p>
         <div className="chips">
           <button className="btn" type="button" onClick={() => goToForm("create")}>Make my own room</button>
           <button className="btn ghost" type="button" onClick={() => goToForm("login")}>Log in</button>
@@ -185,13 +181,12 @@ export function SignIn() {
       </section>
 
       <section className="landing-room" aria-label="An example room you can try">
-        <p className="mono muted try">Try it: this is a real room. Drop the needle, or slide a DVD into the TV.</p>
+        <p className="try">This room is real. Tap the records, or a DVD.</p>
         <ExampleRoom embedded onMakeYours={() => goToForm("create")} />
       </section>
 
       <section className="onboard" id="join" ref={joinRef}>
         <div>
-          <p className="mono muted">{mode === "create" ? "Make your room" : "Welcome back"}</p>
           <h2 className="join-title">{mode === "create" ? "Five things open your door." : "Your room is waiting."}</h2>
           <p className="lede">
             {from
@@ -205,7 +200,7 @@ export function SignIn() {
       <div className="panel">
         {pending ? (
           <form className="stack" onSubmit={(e) => { e.preventDefault(); verify(); }}>
-            <p className="mono muted">Check your inbox</p>
+            <h2 className="panel-title">Check your inbox</h2>
             <p>
               We emailed <b>{pending.email}</b>. {intro[pending.kind]}
               {!isNativeApp() && pending.kind !== "recovery" && " You can also open the link in it on this device."}

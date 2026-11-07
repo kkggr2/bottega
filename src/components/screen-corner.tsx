@@ -120,7 +120,7 @@ export function ScreenCorner({
         </div>
       </div>
 
-      <div className="now" aria-live="polite">
+      <div className={`now${current ? "" : " empty"}`} aria-live="polite">
         {current ? (
           <>
             <span className="mono">{tvOn ? "Now showing" : "In the player"}{span ? ` · ${span}` : ""}</span>
@@ -128,9 +128,7 @@ export function ScreenCorner({
             {current.subtitle && <span className="muted-ink">{current.subtitle}</span>}
             <button type="button" className="linkish" onClick={() => onOpen(current)}>About this scene</button>
           </>
-        ) : (
-          <span className="mono">{scenes.length ? "Pick a DVD" : "Television"}</span>
-        )}
+        ) : null}
       </div>
     </section>
   );

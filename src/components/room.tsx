@@ -60,7 +60,10 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
     const sb = supabase();
     const { data: owner } = await sb.from("profiles").select("id, username").eq("username", username).maybeSingle();
     // Signed out, only owners of public rooms are visible.
-    if (!owner) return setData({ state: meId ? "missing" : "hidden" });
+    if (!owner) {
+      if (!meId) rememberCameFrom({ id: "", username });
+      return setData({ state: meId ? "missing" : "hidden" });
+    }
     const [{ data: room }, { data: canView }, friendship] = await Promise.all([
       sb.from("rooms").select("owner_id, name, tagline, theme, wallpaper, visibility").eq("owner_id", owner.id).maybeSingle(),
       sb.rpc("can_view_room", { owner: owner.id }),
@@ -250,7 +253,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
       <section className="door">
         <div>
           <Link className="back mono" href="/">{me ? "← Library" : "← Bottega"}</Link>
-          <p className="mono muted">@{owner.username}{isOwner ? " · your room" : ""}</p>
+          <p className="who">{isOwner ? "Your room" : `@${owner.username}`}</p>
           <h1>{room.name}</h1>
           {room.tagline && <p className="tag">{room.tagline}</p>}
         </div>
@@ -360,7 +363,6 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
       {!me && (
         <section className="make-yours">
           <div>
-            <p className="mono muted">Everyone gets one room</p>
             <h2>Make yours. It takes about three minutes.</h2>
             <p className="muted">Hang what you love, then send @{owner.username} a friend request so your rooms sit side by side.</p>
           </div>
@@ -371,6 +373,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
       {detail && (
         <PieceDetail
           piece={detail}
+          ownerName={owner.username}
           urls={urls}
           isOwner={isOwner}
           playing={playingId === detail.id}

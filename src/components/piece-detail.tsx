@@ -4,7 +4,6 @@ import { useState } from "react";
 import { hostOf, toEmbed } from "@/lib/embeds";
 import { formatTime } from "@/lib/lookup";
 import { audioOf, imageOf } from "@/lib/piece-media";
-import { PIECE_TYPES } from "@/lib/themes";
 import type { Piece } from "@/lib/types";
 import { Sheet } from "./sheet";
 
@@ -12,6 +11,7 @@ import { Sheet } from "./sheet";
 
 export function PieceDetail({
   piece,
+  ownerName,
   urls,
   isOwner,
   playing,
@@ -24,6 +24,8 @@ export function PieceDetail({
   onDelete,
 }: {
   piece: Piece;
+  /** Whose room this is, to sign their words. */
+  ownerName?: string;
   urls: Record<string, string>;
   isOwner: boolean;
   playing: boolean;
@@ -47,16 +49,23 @@ export function PieceDetail({
   return (
     <Sheet onClose={onClose} label={piece.title}>
       <div>
-        <p className="mono muted">{[PIECE_TYPES[piece.type].label, piece.subtitle].filter(Boolean).join(" · ")}</p>
         <h2>{piece.title}</h2>
+        {piece.subtitle && <p className="who">{piece.subtitle}</p>}
       </div>
+      {/* The owner's words come first: they're why this piece is here. */}
+      {piece.body && piece.type !== "poem" && (
+        <blockquote className="detail-why">
+          <p>{piece.body}</p>
+          {ownerName && <footer>@{ownerName}</footer>}
+        </blockquote>
+      )}
+      {piece.body && piece.type === "poem" && <div className="detail-text poem">{piece.body}</div>}
       {img && (
-        <div className={`detail-media${piece.type === "book" || piece.type === "song" ? " cover" : ""}`}>
+        <div className={`detail-media${piece.type === "book" || piece.type === "song" ? " cover" : ""}${piece.body ? " small" : ""}`}>
           <img src={img} alt={piece.title} onError={(e) => { e.currentTarget.parentElement!.hidden = true; }} />
         </div>
       )}
       {img?.startsWith("https://image.tmdb.org/") && <p className="credit">Image from TMDB</p>}
-      {piece.body && <div className={`detail-text${piece.type === "poem" ? " poem" : ""}`}>{piece.body}</div>}
       {songAudio && (
         <div>
           <button className="btn" type="button" onClick={onPlay}>{playing ? "Pause" : "Play on the turntable"}</button>

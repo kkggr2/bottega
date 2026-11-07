@@ -125,7 +125,7 @@ export function ExampleRoom({ embedded = false, onMakeYours }: { embedded?: bool
       {!embedded && <section className="door">
         <div>
           <Link className="back mono" href="/">← Back</Link>
-          <p className="mono muted">@example · example room</p>
+          <p className="who">@example &middot; an example room</p>
           <h1>{ROOM.name}</h1>
           <p className="tag">{ROOM.tagline}</p>
         </div>
@@ -162,7 +162,7 @@ export function ExampleRoom({ embedded = false, onMakeYours }: { embedded?: bool
 
       {sharing && <ShareSheet room={ROOM} username="example" pieces={PIECES} urls={urls} onClose={() => setSharing(false)} />}
       {detail && (
-        <PieceDetail piece={detail} urls={urls} isOwner={false} playing={playingId === detail.id}
+        <PieceDetail piece={detail} ownerName="example" urls={urls} isOwner={false} playing={playingId === detail.id}
           canMoveEarlier={false} canMoveLater={false} onClose={() => setDetailId(null)}
           onPlay={() => { if (detail.type === "scene") insert(detail); else toggle(detail); setDetailId(null); }}
           onEdit={() => {}} onMove={() => {}} onDelete={async () => {}} />
