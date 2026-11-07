@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { audioOf } from "@/lib/piece-media";
 import { roomStyle } from "@/lib/themes";
+import { track } from "@/lib/track";
 import type { Piece, PieceType, Room } from "@/lib/types";
 import { Bookcase } from "./bookcase";
 import { MusicCorner } from "./music-corner";
@@ -74,7 +75,11 @@ const PIECES: Piece[] = [
 
 const EMPTY_URLS: Record<string, string> = {};
 
-export function ExampleRoom() {
+/**
+ * The example room. On its own page it has a header; embedded on the landing page it's just the room,
+ * and "Make my own room" scrolls to the sign-up form instead.
+ */
+export function ExampleRoom({ embedded = false, onMakeYours }: { embedded?: boolean; onMakeYours?: () => void } = {}) {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [recordId, setRecordId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
@@ -83,10 +88,21 @@ export function ExampleRoom() {
   const [sharing, setSharing] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   useEffect(() => () => audioRef.current?.pause(), []);
+  useEffect(() => {
+    if (!embedded) track("example", { detail: "page" });
+  }, [embedded]);
+  // Count the first time someone actually plays with it.
+  const touched = useRef(false);
+  const touch = (what: string) => {
+    if (touched.current) return;
+    touched.current = true;
+    track("example", { detail: `${embedded ? "landing" : "page"}:${what}` });
+  };
 
   const urls = EMPTY_URLS;
   const stop = () => { audioRef.current?.pause(); setPlayingId(null); };
   const toggle = (p: Piece) => {
+    touch("record");
     const src = audioOf(p, urls);
     if (!src) return setDetailId(p.id);
     if (playingId === p.id) return stop();
@@ -98,14 +114,15 @@ export function ExampleRoom() {
     audioRef.current = audio;
     audio.play().then(() => setPlayingId(p.id), () => setPlayingId(null));
   };
-  const insert = (p: Piece) => { stop(); setTvId(p.id); setTvOn(true); };
+  const insert = (p: Piece) => { touch("dvd"); stop(); setTvId(p.id); setTvOn(true); };
 
   const of = (t: PieceType) => PIECES.filter((p) => p.type === t);
   const detail = PIECES.find((p) => p.id === detailId) ?? null;
+  const open = (p: Piece) => { touch("piece"); setDetailId(p.id); };
 
   return (
     <div>
-      <section className="door">
+      {!embedded && <section className="door">
         <div>
           <Link className="back mono" href="/">← Back</Link>
           <p className="mono muted">@example · example room</p>
@@ -114,28 +131,34 @@ export function ExampleRoom() {
         </div>
         <div className="actions">
           <button className="btn ghost" type="button" onClick={() => setSharing(true)}>Preview share picture</button>
-          <Link className="btn" href="/">Make my own room</Link>
+          <Link className="btn" href="/" onClick={() => track("make_yours", { detail: "example" })}>Make my own room</Link>
         </div>
-      </section>
+      </section>}
 
       <section className="room" style={roomStyle(ROOM)} aria-label="Example room">
         <div className={`wall p-${ROOM.wallpaper}`}>
           <div className="pieces" aria-label="On the wall">
             {PIECES.filter((p) => p.type === "poster" || p.type === "poem").map((p) => (
-              <PieceView key={p.id} piece={p} urls={urls} onOpen={() => setDetailId(p.id)} />
+              <PieceView key={p.id} piece={p} urls={urls} onOpen={() => open(p)} />
             ))}
           </div>
           <div className="furniture">
-            <Bookcase books={of("book")} isOwner={false} onOpen={(p) => setDetailId(p.id)} onAdd={() => {}} />
+            <Bookcase books={of("book")} isOwner={false} onOpen={open} onAdd={() => {}} />
             <ScreenCorner scenes={of("scene")} games={of("game")} urls={urls} tvId={tvId} tvOn={tvOn} isOwner={false}
-              onInsert={insert} onPower={() => { if (!tvOn) stop(); setTvOn(!tvOn); }} onOpen={(p) => setDetailId(p.id)}
+              onInsert={insert} onPower={() => { if (!tvOn) stop(); setTvOn(!tvOn); }} onOpen={open}
               onAddScene={() => {}} onAddGame={() => {}} />
             <MusicCorner songs={of("song")} urls={urls} playingId={playingId} currentId={recordId} isOwner={false}
-              onToggle={toggle} onOpen={(p) => setDetailId(p.id)} onAdd={() => {}} />
+              onToggle={toggle} onOpen={open} onAdd={() => {}} />
           </div>
         </div>
         <div className="floor" aria-hidden="true" />
       </section>
+      {embedded && (
+        <div className="example-foot">
+          <button className="btn ghost" type="button" onClick={() => setSharing(true)}>See its share picture</button>
+          <button className="btn" type="button" onClick={() => { track("make_yours", { detail: "landing" }); onMakeYours?.(); }}>Make my own room</button>
+        </div>
+      )}
 
       {sharing && <ShareSheet room={ROOM} username="example" pieces={PIECES} urls={urls} onClose={() => setSharing(false)} />}
       {detail && (

@@ -13,6 +13,7 @@ import {
   uploadMedia,
 } from "@/lib/media";
 import { friendlyError, supabase } from "@/lib/supabase";
+import { track } from "@/lib/track";
 import { PIECE_TYPES } from "@/lib/themes";
 import type { Piece, PieceType } from "@/lib/types";
 import { SearchPicker } from "./search-picker";
@@ -196,6 +197,7 @@ export function PieceEditor({
         ? await sb.from("pieces").update(row).eq("id", existing.id)
         : await sb.from("pieces").insert({ ...row, owner_id: ownerId });
       if (error) throw error;
+      if (!existing) track("piece_added", { room: ownerId, detail: draft.type });
 
       if (existing) {
         await removeMedia([

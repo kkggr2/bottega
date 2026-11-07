@@ -1,14 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { befriend } from "@/lib/friends";
 import { friendlyError, supabase } from "@/lib/supabase";
+import { cameFrom, forgetCameFrom, track } from "@/lib/track";
 import { USERNAME } from "@/lib/themes";
 import type { ThemeKey } from "@/lib/types";
 import { useAuth } from "./auth";
 import { ThemeSwatches } from "./theme-swatches";
 
 export function Onboard() {
-  const { refreshProfile } = useAuth();
+  const auth = useAuth();
+  const { refreshProfile } = auth;
+  // Someone who arrived through a friend's room starts with a friend request to them.
+  const [from] = useState(cameFrom);
+  const [addFrom, setAddFrom] = useState(true);
   const [username, setUsername] = useState("");
   const [roomName, setRoomName] = useState("");
   const [theme, setTheme] = useState<ThemeKey>("oak");
@@ -32,6 +38,13 @@ export function Onboard() {
       setError(friendlyError(error, "Couldn't save your room. Try again."));
       return;
     }
+    track("room_claimed", { detail: from ? "from_room" : "" });
+    if (from && addFrom && auth.userId) {
+      await befriend(auth.userId, from.id)
+        .then((rel) => track("friend_request", { room: from.id, detail: `signup:${rel}` }))
+        .catch(() => {});
+    }
+    forgetCameFrom();
     await refreshProfile();
   }
 
@@ -62,6 +75,12 @@ export function Onboard() {
             <span className="label">Walls</span>
             <ThemeSwatches value={theme} onChange={setTheme} />
           </div>
+          {from && (
+            <label className="check">
+              <input type="checkbox" checked={addFrom} onChange={(e) => setAddFrom(e.target.checked)} />
+              <span>Send <b>@{from.username}</b> a friend request, so your rooms sit side by side</span>
+            </label>
+          )}
           <p className="msg err" aria-live="polite">{error}</p>
           <div>
             <button className="btn" type="submit" disabled={busy}>{busy ? "Unlocking…" : "Get my key"}</button>

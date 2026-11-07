@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { isNativeApp } from "@/lib/native";
+import { ExampleRoom } from "./example-room";
 import { friendlyError, supabase } from "@/lib/supabase";
+import { cameFrom, track } from "@/lib/track";
 
 /*
  * Accounts use an email and a password.
@@ -19,7 +20,17 @@ const MIN_PASSWORD = 8;
 const looksLikeEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 
 export function SignIn() {
-  const [mode, setMode] = useState<Mode>("login");
+  // Most people here are new, so the form starts on "Create account".
+  const [mode, setMode] = useState<Mode>("create");
+  const [from] = useState(cameFrom);
+  const joinRef = useRef<HTMLDivElement>(null);
+  useEffect(() => track("landing", { detail: from ? "from_room" : "" }), [from]);
+
+  function goToForm(next: Mode) {
+    switchTo(next);
+    joinRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setTimeout(() => document.getElementById("email")?.focus({ preventScroll: true }), 400);
+  }
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
@@ -92,6 +103,7 @@ export function SignIn() {
     if (data.user && data.user.identities?.length === 0) {
       return err("There's already an account with this email. Log in instead, or use “Forgot password”.");
     }
+    track("account_created");
     if (data.session) return; // Email confirmation is off: already signed in.
     setPending({ email: address, kind: "signup" });
   });
@@ -158,16 +170,37 @@ export function SignIn() {
   };
 
   return (
-    <section className="onboard">
-      <div>
+    <div className="landing">
+      <section className="landing-hero">
         <p className="mono muted">Everyone gets one room</p>
         <h1>Step into your friends&rsquo; taste.</h1>
         <p className="lede">
-          Hang a film poster, tape up a poem, leave a record on the wall that plays when someone clicks it.
-          Add friends by username and their rooms line your shelf.
+          Hang a film poster, shelve the books that made you, leave a record that plays when someone drops the needle.
+          Then visit your friends&rsquo; rooms.
         </p>
-        <p style={{ marginTop: 20 }}><Link className="btn ghost" href="/example">Look around an example room</Link></p>
-      </div>
+        <div className="chips">
+          <button className="btn" type="button" onClick={() => goToForm("create")}>Make my own room</button>
+          <button className="btn ghost" type="button" onClick={() => goToForm("login")}>Log in</button>
+        </div>
+      </section>
+
+      <section className="landing-room" aria-label="An example room you can try">
+        <p className="mono muted try">Try it: this is a real room. Drop the needle, or slide a DVD into the TV.</p>
+        <ExampleRoom embedded onMakeYours={() => goToForm("create")} />
+      </section>
+
+      <section className="onboard" id="join" ref={joinRef}>
+        <div>
+          <p className="mono muted">{mode === "create" ? "Make your room" : "Welcome back"}</p>
+          <h2 className="join-title">{mode === "create" ? "Five things open your door." : "Your room is waiting."}</h2>
+          <p className="lede">
+            {from
+              ? <>You came from <b>@{from.username}</b>&rsquo;s room. Make yours and we&rsquo;ll send them a friend request so your rooms sit side by side.</>
+              : mode === "create"
+                ? "Pick a username, hang five things you love, and send the link to a friend. Bring in Letterboxd films or Goodreads books in one tap."
+                : "Log in with your email and password, or have a code sent to you."}
+          </p>
+        </div>
 
       <div className="panel">
         {pending ? (
@@ -208,8 +241,8 @@ export function SignIn() {
             }}
           >
             <div className="chips" role="group" aria-label="Account">
-              <button type="button" className="chip" aria-pressed={mode !== "create"} onClick={() => switchTo("login")}>Log in</button>
               <button type="button" className="chip" aria-pressed={mode === "create"} onClick={() => switchTo("create")}>Create account</button>
+              <button type="button" className="chip" aria-pressed={mode !== "create"} onClick={() => switchTo("login")}>Log in</button>
             </div>
 
             {mode === "forgot" && <p>Enter your email and we&rsquo;ll send a code to choose a new password.</p>}
@@ -251,6 +284,7 @@ export function SignIn() {
           </form>
         )}
       </div>
-    </section>
+      </section>
+    </div>
   );
 }

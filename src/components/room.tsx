@@ -7,9 +7,11 @@ import { removeMedia, signedUrls } from "@/lib/media";
 import { shareLink, tap } from "@/lib/native";
 import { audioOf } from "@/lib/piece-media";
 import { friendlyError, supabase } from "@/lib/supabase";
+import { rememberCameFrom, track } from "@/lib/track";
 import { MAX_PIECES, PIECE_TYPES, roomStyle } from "@/lib/themes";
 import type { Piece, PieceType, Profile, Room } from "@/lib/types";
 import { Bookcase } from "./bookcase";
+import { useAuth } from "./auth";
 import { Customize } from "./customize";
 import { Gate } from "./gate";
 import { ImportSheet } from "./import-sheet";
@@ -23,19 +25,20 @@ import { ShareSheet } from "./share-sheet";
 type Loaded =
   | { state: "loading" }
   | { state: "missing" }
+  | { state: "hidden" }
   | { state: "ready"; owner: Profile; room: Room; canView: boolean; pieces: Piece[]; relation: Relation };
 
 type Editing = { piece: Piece | null; type?: PieceType };
 
 export function RoomScreen({ username }: { username: string }) {
-  return (
-    <Gate>
-      {(me) => <RoomInner username={decodeURIComponent(username).toLowerCase()} me={me} />}
-    </Gate>
-  );
+  const auth = useAuth();
+  const name = decodeURIComponent(username).toLowerCase();
+  // Visitors without an account can step into public rooms.
+  if (auth.status === "signedOut") return <RoomInner username={name} me={null} />;
+  return <Gate>{(me) => <RoomInner username={name} me={me} />}</Gate>;
 }
 
-function RoomInner({ username, me }: { username: string; me: Profile }) {
+function RoomInner({ username, me }: { username: string; me: Profile | null }) {
   const [data, setData] = useState<Loaded>({ state: "loading" });
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -50,17 +53,20 @@ function RoomInner({ username, me }: { username: string; me: Profile }) {
   const [tvId, setTvId] = useState<string | null>(null);
   const [tvOn, setTvOn] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const viewed = useRef(false);
+  const meId = me?.id ?? null;
 
   const load = useCallback(async () => {
     const sb = supabase();
     const { data: owner } = await sb.from("profiles").select("id, username").eq("username", username).maybeSingle();
-    if (!owner) return setData({ state: "missing" });
+    // Signed out, only owners of public rooms are visible.
+    if (!owner) return setData({ state: meId ? "missing" : "hidden" });
     const [{ data: room }, { data: canView }, friendship] = await Promise.all([
       sb.from("rooms").select("owner_id, name, tagline, theme, wallpaper, visibility").eq("owner_id", owner.id).maybeSingle(),
       sb.rpc("can_view_room", { owner: owner.id }),
-      owner.id === me.id ? Promise.resolve(null) : friendshipWith(me.id, owner.id),
+      !meId || owner.id === meId ? Promise.resolve(null) : friendshipWith(meId, owner.id),
     ]);
-    if (!room) return setData({ state: "missing" });
+    if (!room) return setData({ state: meId ? "missing" : "hidden" });
     let pieces: Piece[] = [];
     if (canView) {
       const { data: rows } = await sb.from("pieces").select("*").eq("owner_id", owner.id).order("position");
@@ -74,9 +80,16 @@ function RoomInner({ username, me }: { username: string; me: Profile }) {
       room: room as Room,
       canView: Boolean(canView),
       pieces,
-      relation: relationOf(friendship, me.id),
+      relation: meId ? relationOf(friendship, meId) : "none",
     });
-  }, [username, me.id]);
+    if (!viewed.current) {
+      viewed.current = true;
+      const relation = meId ? relationOf(friendship, meId) : "none";
+      const as = owner.id === meId ? "owner" : !meId ? "signed_out" : relation === "friends" ? "friend" : "member";
+      track("room_view", { room: owner.id, detail: as });
+      if (!meId) rememberCameFrom({ id: owner.id, username: owner.username });
+    }
+  }, [username, meId]);
 
   const ownerId = data.state === "ready" ? data.owner.id : null;
 
@@ -139,6 +152,15 @@ function RoomInner({ username, me }: { username: string; me: Profile }) {
   );
 
   if (data.state === "loading") return <p className="loading">Turning on the lights…</p>;
+  if (data.state === "hidden") {
+    return (
+      <div className="empty-wall">
+        <h2>@{username}&rsquo;s room is for friends.</h2>
+        <p>Log in to step inside, or make a room of your own.</p>
+        <p style={{ marginTop: 16 }}><Link className="btn" href="/">Make my own room</Link></p>
+      </div>
+    );
+  }
   if (data.state === "missing") {
     return (
       <div className="empty-wall">
@@ -149,7 +171,7 @@ function RoomInner({ username, me }: { username: string; me: Profile }) {
   }
 
   const { owner, room, canView, pieces, relation } = data;
-  const isOwner = owner.id === me.id;
+  const isOwner = owner.id === meId;
   const zoneOf = (p: Piece) => PIECE_TYPES[p.type]?.zone ?? "wall";
   const wall = pieces.filter((p) => zoneOf(p) === "wall");
   const books = pieces.filter((p) => p.type === "book");
@@ -166,9 +188,11 @@ function RoomInner({ username, me }: { username: string; me: Profile }) {
   const add = (type?: PieceType) => (full ? setNotice(`A room holds ${MAX_PIECES} pieces. Remove one to make space.`) : setEditing({ piece: null, type }));
 
   async function friendAction() {
+    if (!me) return;
     try {
       if (relation === "none" || relation === "incoming") {
         const next = await befriend(me.id, owner.id);
+        track("friend_request", { room: owner.id, detail: next });
         setNotice(next === "friends" ? `You and @${owner.username} are friends now.` : `Request sent to @${owner.username}.`);
       } else {
         await unfriend(me.id, owner.id);
@@ -205,6 +229,7 @@ function RoomInner({ username, me }: { username: string; me: Profile }) {
   async function share() {
     const url = `${window.location.origin}/r/${owner.username}`;
     const result = await shareLink(`${room.name} · @${owner.username} on Bottega`, url);
+    if (result === "shared" || result === "copied") track("share_link", { room: owner.id, detail: "visitor" });
     if (result === "copied") setNotice("Link copied. Paste it to a friend.");
     else if (result === "failed") setNotice(`Couldn't share. The link is ${url}`);
   }
@@ -224,7 +249,7 @@ function RoomInner({ username, me }: { username: string; me: Profile }) {
     <div>
       <section className="door">
         <div>
-          <Link className="back mono" href="/">← Library</Link>
+          <Link className="back mono" href="/">{me ? "← Library" : "← Bottega"}</Link>
           <p className="mono muted">@{owner.username}{isOwner ? " · your room" : ""}</p>
           <h1>{room.name}</h1>
           {room.tagline && <p className="tag">{room.tagline}</p>}
@@ -237,12 +262,17 @@ function RoomInner({ username, me }: { username: string; me: Profile }) {
               <button className="btn ghost" type="button" onClick={() => setImporting(true)}>Import</button>
               <button className="btn" type="button" onClick={() => add()}>Add something</button>
             </>
-          ) : (
+          ) : me ? (
             <>
               <button className="btn ghost" type="button" onClick={share}>Share</button>
               <button className={`btn ${relation === "none" || relation === "incoming" ? "" : "ghost"}`} type="button" onClick={friendAction}>
                 {friendLabel}
               </button>
+            </>
+          ) : (
+            <>
+              <button className="btn ghost" type="button" onClick={share}>Share</button>
+              <Link className="btn" href="/" onClick={() => track("make_yours", { room: owner.id, detail: "top" })}>Make my own room</Link>
             </>
           )}
         </div>
@@ -327,6 +357,17 @@ function RoomInner({ username, me }: { username: string; me: Profile }) {
         <div className="floor" aria-hidden="true" />
       </section>
 
+      {!me && (
+        <section className="make-yours">
+          <div>
+            <p className="mono muted">Everyone gets one room</p>
+            <h2>Make yours. It takes about three minutes.</h2>
+            <p className="muted">Hang what you love, then send @{owner.username} a friend request so your rooms sit side by side.</p>
+          </div>
+          <Link className="btn" href="/" onClick={() => track("make_yours", { room: owner.id, detail: "bottom" })}>Make my own room</Link>
+        </section>
+      )}
+
       {detail && (
         <PieceDetail
           piece={detail}
@@ -348,7 +389,7 @@ function RoomInner({ username, me }: { username: string; me: Profile }) {
       )}
       {editing && (
         <PieceEditor
-          ownerId={me.id}
+          ownerId={owner.id}
           existing={editing.piece}
           initialType={editing.type}
           existingImageUrl={editing.piece?.image_path ? urls[editing.piece.image_path] : undefined}
@@ -356,8 +397,8 @@ function RoomInner({ username, me }: { username: string; me: Profile }) {
         />
       )}
       {customizing && <Customize room={room} onClose={() => { setCustomizing(false); load(); }} />}
-      {importing && <ImportSheet ownerId={me.id} pieces={pieces} onClose={() => { setImporting(false); load(); }} />}
-      {sharing && <ShareSheet room={room} username={owner.username} pieces={pieces} urls={urls} onClose={() => setSharing(false)} />}
+      {importing && <ImportSheet ownerId={owner.id} pieces={pieces} onClose={() => { setImporting(false); load(); }} />}
+      {sharing && <ShareSheet room={room} username={owner.username} pieces={pieces} urls={urls} onClose={() => setSharing(false)} onChanged={load} />}
     </div>
   );
 }

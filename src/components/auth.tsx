@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { isConfigured, supabase } from "@/lib/supabase";
+import { trackOpen } from "@/lib/track";
 import type { Profile } from "@/lib/types";
 
 type AuthState =
@@ -25,6 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const load = useCallback(async (session: Session | null) => {
+    trackOpen(session?.user.id ?? null);
     if (!session) {
       setState({ status: "signedOut", userId: null, profile: null });
       return;

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { readGoodreadsExport } from "@/lib/goodreads";
 import { friendlyError, supabase } from "@/lib/supabase";
+import { track } from "@/lib/track";
 import { MAX_PIECES } from "@/lib/themes";
 import type { Piece, PieceType } from "@/lib/types";
 import { Sheet } from "./sheet";
@@ -123,6 +124,7 @@ export function ImportSheet({ ownerId, pieces, onClose }: { ownerId: string; pie
     const { error } = await supabase().from("pieces").insert(rows);
     setBusy(false);
     if (error) return setMsg({ kind: "err", text: friendlyError(error, "Couldn't add them.") });
+    track("import", { room: ownerId, detail: `${source}:${rows.length}` });
     onClose();
   }
 

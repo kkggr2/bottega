@@ -20,7 +20,7 @@ export const WALLPAPERS: Record<Wallpaper, string> = {
 
 export const VISIBILITY: Record<Visibility, { label: string; hint: string }> = {
   friends: { label: "Friends", hint: "Only accepted friends can step inside." },
-  public: { label: "Anyone signed in", hint: "Anyone with a Bottega account can visit." },
+  public: { label: "Anyone with the link", hint: "Anyone can look around, even without an account." },
   private: { label: "Just me", hint: "The door stays locked. Friends see the name only." },
 };
 
