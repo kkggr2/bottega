@@ -20,10 +20,19 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
   });
 }
 
-/** A film without its own picture still gets its real poster on the card, found by title on TMDB. */
-async function posterFor(piece: Piece, urls: Record<string, string>): Promise<string | null> {
+/**
+ * A film without its own picture still gets its real poster on the card, found by title on TMDB.
+ * Scenes carry a wide video still, which a tall frame would crop, so they look for the film's poster first.
+ */
+async function posterFor(piece: Piece, urls: Record<string, string>): Promise<{ src: string; wide: boolean } | null> {
   const own = imageOf(piece, urls);
-  if (own) return own;
+  if (own && piece.type !== "scene") return { src: own, wide: false };
+  const found = await lookupPoster(piece);
+  if (found) return { src: found, wide: false };
+  return own ? { src: own, wide: true } : null;
+}
+
+async function lookupPoster(piece: Piece): Promise<string | null> {
   try {
     const year = piece.subtitle.match(/\b(19|20)\d{2}\b/)?.[0];
     const res = await fetch(`/api/films?q=${encodeURIComponent(piece.title)}`);
@@ -35,6 +44,15 @@ async function posterFor(piece: Piece, urls: Record<string, string>): Promise<st
   } catch {
     return null;
   }
+}
+
+/** Draws a wide still whole, centered on a dark mat, instead of cropping it to the frame. */
+function contain(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number) {
+  ctx.fillStyle = "#14100C";
+  ctx.fillRect(x, y, w, h);
+  const scale = Math.min(w / img.naturalWidth, h / img.naturalHeight);
+  const dw = img.naturalWidth * scale, dh = img.naturalHeight * scale;
+  ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
 }
 
 function cover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number) {
@@ -117,11 +135,10 @@ export async function drawRoomCard(room: Room, username: string, pieces: Piece[]
   const posters = [...of("poster"), ...of("scene")].slice(0, 3);
   const songs = of("song").slice(0, 4);
   const books = of("book").slice(0, 12);
+  const found = await Promise.all(posters.map((p) => posterFor(p, urls)));
+  const wide = found.map((f) => Boolean(f?.wide));
   const art = await Promise.all([
-    ...posters.map(async (p) => {
-      const src = await posterFor(p, urls);
-      return src ? loadImage(src) : null;
-    }),
+    ...found.map((f) => (f ? loadImage(f.src) : Promise.resolve(null))),
     ...songs.map((p) => {
       const src = imageOf(p, urls);
       return src ? loadImage(src) : Promise.resolve(null);
@@ -145,7 +162,8 @@ export async function drawRoomCard(room: Room, username: string, pieces: Piece[]
       ctx.fillStyle = "#E9E1CF";
       ctx.fillRect(x - 5, top - 5, fw + 10, fh + 10);
       const img = art[i];
-      if (img) cover(ctx, img, x, top, fw, fh);
+      if (img && wide[i]) contain(ctx, img, x, top, fw, fh);
+      else if (img) cover(ctx, img, x, top, fw, fh);
       else {
         const g = ctx.createLinearGradient(x, top, x + fw, top + fh);
         g.addColorStop(0, t.accent);
