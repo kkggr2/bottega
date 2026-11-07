@@ -11,7 +11,7 @@ const config: CapacitorConfig = {
   backgroundColor: "#111512",
   server: {
     // CAP_SERVER_URL=http://localhost:3000 npx cap sync ios  → test against your own Mac.
-    url: process.env.CAP_SERVER_URL ?? "https://bottega-sable.vercel.app",
+    url: process.env.CAP_SERVER_URL ?? "https://bottegarooms.com",
     cleartext: Boolean(process.env.CAP_SERVER_URL?.startsWith("http://")),
     errorPath: "offline.html",
   },

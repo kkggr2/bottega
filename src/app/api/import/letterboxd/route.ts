@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
   }
 
   const res = await fetch(`https://letterboxd.com/${user}/rss/`, {
-    headers: { "User-Agent": "Bottega/1.0 (+https://bottega-sable.vercel.app)" },
+    headers: { "User-Agent": "Bottega/1.0 (+https://bottegarooms.com)" },
   });
   if (res.status === 404) return Response.json({ error: `No Letterboxd member called ${user}.` }, { status: 404 });
   if (!res.ok) return Response.json({ error: "Letterboxd didn't answer. Try again in a minute." }, { status: 502 });
