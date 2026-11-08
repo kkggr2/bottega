@@ -3,9 +3,18 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { joinDid, NOW_WORDS } from "./now";
 import type { NowSlot } from "./types";
 
+type Slot = NowSlot | "note" | "rec";
+
 /* The daily email: what friends put on, one line each, in Bottega's colors. */
 
-export type DigestItem = { friend: string; slot: NowSlot; title: string; at: string };
+export type DigestItem = { friend: string; slot: Slot; title: string; at: string };
+
+/** "put on Teardrop", "left a note on your wall", "left you Normal People". */
+function did(item: DigestItem): string {
+  if (item.slot === "note") return "left a note on your wall";
+  if (item.slot === "rec") return `left you ${item.title}`;
+  return NOW_WORDS[item.slot].did(item.title);
+}
 
 const SITE = "https://bottegarooms.com";
 const C = { paper: "#F2E8D3", card: "#FAF4E6", ink: "#2F2822", muted: "#6B5F52", line: "#DCCDB0", rust: "#B3552E" };
@@ -32,7 +41,7 @@ export function linesFor(items: DigestItem[]): { friend: string; line: string }[
   for (const it of [...items].sort((a, b) => b.at.localeCompare(a.at))) {
     byFriend.set(it.friend, [...(byFriend.get(it.friend) ?? []), it]);
   }
-  return [...byFriend].map(([friend, list]) => ({ friend, line: joinDid(list.map((i) => NOW_WORDS[i.slot].did(i.title))) }));
+  return [...byFriend].map(([friend, list]) => ({ friend, line: joinDid(list.map(did)) }));
 }
 
 export function subjectFor(lines: { friend: string; line: string }[]): string {
@@ -42,7 +51,7 @@ export function subjectFor(lines: { friend: string; line: string }[]): string {
     return s.length > 78 ? `@${first.friend} put something on in their room` : s;
   }
   const others = lines.length - 1;
-  return `@${first.friend} and ${others} ${others === 1 ? "friend" : "friends"} put something on`;
+  return `New from @${first.friend} and ${others} ${others === 1 ? "friend" : "friends"}`;
 }
 
 export function renderDigest(userId: string, items: DigestItem[]): { subject: string; html: string; text: string } {

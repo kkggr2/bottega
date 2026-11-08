@@ -31,9 +31,13 @@ type Update = {
 
 const RECENT_DAYS = 7;
 
+/** For you: notes on your wall and things friends left at your door. */
+type InboxItem = { key: string; username: string; line: string; at: string; href: string; isNew: boolean };
+
 type Shelf = {
   rooms: RoomWithOwner[];
   updates: Update[];
+  inbox: InboxItem[];
   incoming: Profile[];
   outgoing: Profile[];
 };
@@ -98,14 +102,33 @@ function Library({ me }: { me: Profile }) {
       }];
     }).sort((a, b) => b.at.localeCompare(a.at));
 
+    // Notes on your wall (last week) and recommendations waiting at your door.
+    const weekAgo = new Date(cutoff).toISOString();
+    const [{ data: notes }, { data: recs }] = await Promise.all([
+      sb.from("notes").select("id, author, created_at").eq("room_owner", me.id).neq("author", me.id).gte("created_at", weekAgo).order("created_at", { ascending: false }).limit(10),
+      sb.from("recommendations").select("id, from_user, title, type, created_at").eq("to_user", me.id).eq("status", "new").order("created_at", { ascending: false }).limit(10),
+    ]);
+    const senderIds = [...new Set([...(notes ?? []).map((n) => n.author as string), ...(recs ?? []).map((r) => r.from_user as string)])];
+    const { data: senders } = senderIds.length ? await sb.from("profiles").select("id, username").in("id", senderIds) : { data: [] };
+    const nameOf = new Map((senders ?? []).map((p) => [p.id as string, p.username as string]));
+    const seenMine = lastSeen(me.id);
+    const kindWord: Record<string, string> = { song: "a song", poster: "a film", scene: "a scene", book: "a book" };
+    const inbox: InboxItem[] = [
+      ...(notes ?? []).map((n) => ({ key: `n-${n.id}`, username: nameOf.get(n.author as string) ?? "someone", line: "left a note on your wall",
+        at: n.created_at as string, href: `/r/${me.username}#guestbook`, isNew: !seenMine || seenMine < (n.created_at as string) })),
+      ...(recs ?? []).map((r) => ({ key: `r-${r.id}`, username: nameOf.get(r.from_user as string) ?? "someone", line: `left you ${kindWord[r.type as string] ?? "something"}: ${r.title}`,
+        at: r.created_at as string, href: `/r/${me.username}`, isNew: true })),
+    ].sort((a, b) => b.at.localeCompare(a.at));
+
     updateWidget(updates.map(({ username, line, title, kind, at, isNew }) => ({ username, line, title, kind, at, isNew })));
     setShelf({
       rooms: list,
       updates,
+      inbox,
       incoming: incomingIds.map((id) => byId.get(id)).filter((p): p is Profile => Boolean(p)),
       outgoing: outgoingIds.map((id) => byId.get(id)).filter((p): p is Profile => Boolean(p)),
     });
-  }, [me.id]);
+  }, [me.id, me.username]);
 
   useEffect(() => {
     load(); // eslint-disable-line react-hooks/set-state-in-effect -- fetching on mount
@@ -115,11 +138,13 @@ function Library({ me }: { me: Profile }) {
       .on("postgres_changes", { event: "*", schema: "public", table: "friendships" }, () => load())
       // A friend putting on a record shows up while you're looking.
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "rooms" }, () => load())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notes", filter: `room_owner=eq.${me.id}` }, () => load())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "recommendations", filter: `to_user=eq.${me.id}` }, () => load())
       .subscribe();
     return () => {
       sb.removeChannel(channel);
     };
-  }, [load]);
+  }, [load, me.id]);
 
   async function addFriend() {
     const username = draft.trim().replace(/^@/, "").toLowerCase();
@@ -178,6 +203,7 @@ function Library({ me }: { me: Profile }) {
   if (!shelf) return <p className="loading">Lighting the hallway…</p>;
   const friendCount = shelf.rooms.length - 1;
   const newIds = new Set(shelf.updates.filter((u) => u.isNew).map((u) => u.ownerId));
+  if (shelf.inbox.some((i) => i.isNew)) newIds.add(me.id);
 
   return (
     <div>
@@ -215,6 +241,18 @@ function Library({ me }: { me: Profile }) {
               <span className="muted">Waiting for <b>@{p.username}</b> to accept.</span>
               <button className="btn ghost small" type="button" onClick={() => respond(p, false)}>Cancel</button>
             </div>
+          ))}
+        </section>
+      )}
+
+      {shelf.inbox.length > 0 && (
+        <section className="updates inbox" aria-label="For you">
+          {shelf.inbox.map((u) => (
+            <Link key={u.key} href={u.href} className={`update${u.isNew ? " new" : ""}`}>
+              {u.isNew && <span className="dot" aria-label="New" />}
+              <span><b>@{u.username}</b> {u.line}</span>
+              <span className="when">{ago(u.at)}</span>
+            </Link>
           ))}
         </section>
       )}

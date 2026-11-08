@@ -7,6 +7,7 @@ import { befriend, friendshipWith, relationOf, unfriend, type Relation } from "@
 import { removeMedia, signedUrls } from "@/lib/media";
 import { markSeen, NOW_WORDS, since, slotFor } from "@/lib/now";
 import { around, useNeighbors } from "@/lib/neighbors";
+import { loadRecommendations, type Recommendation } from "@/lib/wall";
 import { dropNeedle } from "@/lib/needle";
 import { notifyFriends } from "@/lib/push";
 import { shareLink, tap } from "@/lib/native";
@@ -27,6 +28,9 @@ import { PieceDetail } from "./piece-detail";
 import { PieceEditor } from "./piece-editor";
 import { PieceView } from "./piece-view";
 import { ScreenCorner } from "./screen-corner";
+import { ByTheDoor } from "./by-the-door";
+import { Guestbook } from "./guestbook";
+import { RecommendSheet } from "./recommend-sheet";
 import { SafetySheet } from "./safety-sheet";
 import { ShareSheet } from "./share-sheet";
 
@@ -55,6 +59,8 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
   const [importing, setImporting] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [safety, setSafety] = useState(false);
+  const [recommending, setRecommending] = useState(false);
+  const [recs, setRecs] = useState<Recommendation[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
   // The turntable and the TV.
   const [recordId, setRecordId] = useState<string | null>(null);
@@ -106,8 +112,9 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
       if (r.now_song) setRecordId(r.now_song);
       if (r.now_film) setTvId(r.now_film);
     }
-    if (owner.id !== meId) markSeen(owner.id);
-    else {
+    markSeen(owner.id);
+    if (owner.id === meId) {
+      setRecs(await loadRecommendations(owner.id));
       if (prevCount.current !== null && prevCount.current < DOOR_AT && pieces.length >= DOOR_AT) setDoorOpen(true);
       prevCount.current = pieces.length;
     }
@@ -368,6 +375,9 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
               <button className={`btn ${relation === "none" || relation === "incoming" ? "" : "ghost"}`} type="button" onClick={friendAction}>
                 {friendLabel}
               </button>
+              {relation === "friends" && (
+                <button className="btn ghost" type="button" onClick={() => setRecommending(true)}>Recommend something</button>
+              )}
               <button className="btn ghost more" type="button" onClick={() => setSafety(true)} aria-label={`Report or block @${owner.username}`}>⋯</button>
             </>
           ) : (
@@ -382,6 +392,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
       {isOwner && canView && pieces.length < DOOR_AT && (
         <DoorProgress pieces={pieces} onAdd={add} onImport={() => setImporting(true)} />
       )}
+      {isOwner && me && <ByTheDoor recs={recs} meId={me.id} onChanged={load} />}
       {isOwner && doorOpen && (
         <DoorOpen onShare={() => { setDoorOpen(false); setSharing(true); }} onClose={() => setDoorOpen(false)} />
       )}
@@ -464,6 +475,10 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
         <div className="floor" aria-hidden="true" />
       </section>
 
+      {me && canView && (
+        <Guestbook ownerId={owner.id} ownerName={owner.username} meId={me.id} canWrite={isOwner || relation === "friends"} />
+      )}
+
       {!me && (
         <section className="make-yours">
           <div>
@@ -478,6 +493,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
         <PieceDetail
           piece={detail}
           ownerName={owner.username}
+          meId={meId}
           urls={urls}
           isOwner={isOwner}
           playing={playingId === detail.id}
@@ -511,6 +527,9 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
       )}
       {customizing && <Customize room={room} onClose={() => { setCustomizing(false); load(); }} />}
       {importing && <ImportSheet ownerId={owner.id} pieces={pieces} onClose={() => { setImporting(false); load(); }} />}
+      {recommending && me && (
+        <RecommendSheet meId={me.id} toId={owner.id} toName={owner.username} onClose={() => setRecommending(false)} />
+      )}
       {safety && me && (
         <SafetySheet meId={me.id} ownerId={owner.id} username={owner.username} onClose={() => setSafety(false)} />
       )}

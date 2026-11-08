@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { loadReactions, setReaction } from "@/lib/wall";
 import { hostOf, toEmbed } from "@/lib/embeds";
 import { formatTime } from "@/lib/lookup";
 import { audioOf, imageOf } from "@/lib/piece-media";
@@ -23,6 +24,7 @@ export function PieceDetail({
   onMove,
   onDelete,
   now,
+  meId,
 }: {
   piece: Piece;
   /** Whose room this is, to sign their words. */
@@ -39,8 +41,26 @@ export function PieceDetail({
   onDelete: () => Promise<void>;
   /** For the owner: leave this out on the turntable, in the TV or on the armchair. */
   now?: { on: boolean; put: string; take: string; set: (on: boolean) => Promise<void> };
+  /** Signed-in viewer, for reactions. Left out in the example room. */
+  meId?: string | null;
 }) {
   const [armed, setArmed] = useState(false);
+  // "This one got me": visitors can react; only the owner sees who did.
+  const [reactions, setReactions] = useState<{ user_id: string; username?: string }[] | null>(null);
+  useEffect(() => {
+    if (!meId) return;
+    let live = true;
+    loadReactions(piece.id).then((r) => live && setReactions(r));
+    return () => { live = false; };
+  }, [piece.id, meId]);
+  const mine = Boolean(meId && reactions?.some((r) => r.user_id === meId));
+  async function toggleReaction() {
+    if (!meId) return;
+    const next = !mine;
+    setReactions((r) => next ? [...(r ?? []), { user_id: meId }] : (r ?? []).filter((x) => x.user_id !== meId));
+    const err = await setReaction(piece.id, meId, next);
+    if (err) setReactions(await loadReactions(piece.id));
+  }
   const [busy, setBusy] = useState(false);
   const img = imageOf(piece, urls);
   const songAudio = piece.type === "song" ? audioOf(piece, urls) : null;
@@ -69,6 +89,14 @@ export function PieceDetail({
         </div>
       )}
       {img?.startsWith("https://image.tmdb.org/") && <p className="credit">Image from TMDB</p>}
+      {meId && !isOwner && reactions !== null && (
+        <button type="button" className={`react${mine ? " on" : ""}`} aria-pressed={mine} onClick={toggleReaction}>
+          <span aria-hidden="true">✦</span> {mine ? "This one got you" : "This one got me"}
+        </button>
+      )}
+      {isOwner && reactions && reactions.length > 0 && (
+        <p className="reacted"><span aria-hidden="true">✦</span> Got {joinNames(reactions.map((r) => `@${r.username}`))}</p>
+      )}
       {songAudio && (
         <div>
           <button className="btn" type="button" onClick={onPlay}>{playing ? "Pause" : "Play on the turntable"}</button>
@@ -130,4 +158,9 @@ export function PieceDetail({
       )}
     </Sheet>
   );
+}
+
+function joinNames(names: string[]): string {
+  if (names.length <= 2) return names.join(" and ");
+  return `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
 }
