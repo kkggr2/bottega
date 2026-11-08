@@ -5,7 +5,8 @@ import { Capacitor, registerPlugin } from "@capacitor/core";
  * Only does anything inside the iOS app.
  */
 
-export type WidgetFriend = { username: string; line: string; title: string; kind: "song" | "film" | "book"; at: string; isNew: boolean };
+/** `cover` is a web address; the app downloads it for the widget, which can't load images itself. */
+export type WidgetFriend = { username: string; line: string; title: string; kind: "song" | "film" | "book"; at: string; isNew: boolean; cover: string | null };
 
 type WidgetBridge = { save(options: { json: string }): Promise<void> };
 const bridge = registerPlugin<WidgetBridge>("WidgetBridge");
@@ -14,7 +15,7 @@ const onIos = () => typeof window !== "undefined" && Capacitor.getPlatform() ===
 
 export function updateWidget(friends: WidgetFriend[]): void {
   if (!onIos()) return;
-  const json = JSON.stringify({ updatedAt: new Date().toISOString(), friends: friends.slice(0, 5) });
+  const json = JSON.stringify({ updatedAt: new Date().toISOString(), friends: friends.slice(0, 6) });
   bridge.save({ json }).catch(() => {});
 }
 

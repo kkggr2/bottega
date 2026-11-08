@@ -435,7 +435,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .update { display: flex; gap: 10px; align-items: baseline; padding: 10px 14px; border-radius: 12px; background: var(--surface);
   border: 1px solid var(--line); color: inherit; text-decoration: none; font-size: 15px; }
 .update:hover { border-color: var(--brass); }
-.update > span:nth-child(2), .update:not(.new) > span:first-child { flex: 1; min-width: 0; }
+/* The text takes the free space; the time stays on the right. */
+.update > span:not(.dot):not(.when) { flex: 1 1 auto; min-width: 0; }
 .update b { font-weight: 600; }
 .update .when { color: var(--muted); font-size: 13px; white-space: nowrap; }
 .update .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brass); flex: none; align-self: center; }

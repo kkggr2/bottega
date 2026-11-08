@@ -26,7 +26,7 @@ export function LibraryScreen() {
 type Update = {
   ownerId: string; username: string; line: string; at: string; isNew: boolean;
   /** The most recent thing they put out, for the home-screen widget. */
-  title: string; kind: "song" | "film" | "book";
+  title: string; kind: "song" | "film" | "book"; cover: string | null;
 };
 
 const RECENT_DAYS = 7;
@@ -99,6 +99,7 @@ function Library({ me }: { me: Profile }) {
         isNew: !seen || seen < at,
         title: recent[0].piece.title,
         kind: recent[0].slot,
+        cover: recent[0].piece.cover_url,
       }];
     }).sort((a, b) => b.at.localeCompare(a.at));
 
@@ -120,7 +121,7 @@ function Library({ me }: { me: Profile }) {
         at: r.created_at as string, href: `/r/${me.username}`, isNew: true })),
     ].sort((a, b) => b.at.localeCompare(a.at));
 
-    updateWidget(updates.map(({ username, line, title, kind, at, isNew }) => ({ username, line, title, kind, at, isNew })));
+    updateWidget(updates.map(({ username, line, title, kind, at, isNew, cover }) => ({ username, line, title, kind, at, isNew, cover })));
     setShelf({
       rooms: list,
       updates,
