@@ -99,11 +99,13 @@ export function formatTime(seconds: number | null | undefined): string {
 }
 
 /** The YouTube player URL for a scene, cut to its start and end. */
-export function sceneEmbed(link: string | null, start: number | null, end: number | null, autoplay = true): string | null {
+export function sceneEmbed(link: string | null, start: number | null, end: number | null, autoplay = true, muted = false): string | null {
   const id = link ? youtubeId(link) : null;
   if (!id) return null;
   const params = new URLSearchParams({ rel: "0", modestbranding: "1", playsinline: "1" });
   if (autoplay) params.set("autoplay", "1");
+  // Muted, the browser lets it start by itself; it plays quietly like a TV left on in the background.
+  if (muted) { params.set("mute", "1"); params.set("controls", "0"); }
   if (start != null) params.set("start", String(start));
   if (end != null) params.set("end", String(end));
   return `https://www.youtube-nocookie.com/embed/${id}?${params}`;
