@@ -300,7 +300,9 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .tv-screen { position: relative; aspect-ratio: 16 / 9; border-radius: 18px / 14px; overflow: hidden; background: radial-gradient(ellipse at 40% 35%, #3A4440, #0E1211 70%); box-shadow: inset 0 0 18px rgba(0,0,0,.8), 0 0 0 6px #1D1D1D; }
 .tv-screen iframe, .tv-screen img { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; object-fit: cover; }
 .tv-screen img { filter: saturate(.8) brightness(.75); }
-.tv-screen iframe.tall { top: -100%; height: 300%; }
+/* The player is three screens tall (YouTube's bars sit off the screen) and zoomed a little,
+   so the wide black bars most film trailers carry fall outside the glass and the picture fills it. */
+.tv-screen iframe.tall { top: -100%; height: 300%; transform: scale(1.3); transform-origin: 50% 50%; }
 .tv-cover { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(ellipse at 40% 35%, #3A4440, #0E1211 70%); transition: opacity .6s ease .15s; }
 .tv-cover.gone { opacity: 0; pointer-events: none; }
 .tv-screen.on { box-shadow: inset 0 0 12px rgba(0,0,0,.6), 0 0 0 6px #1D1D1D, 0 0 28px rgba(160, 230, 210, .25); }
@@ -433,8 +435,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .chair-book b { display: block; padding: 4px; color: #F2E8D5; font: 400 9px/1.1 var(--font-display); }
 @media (max-width: 860px) { .armchair { right: 4px; } }
 
-/* A poster left in the TV shows whole on the screen. */
-.tv-screen.poster img { object-fit: contain; filter: saturate(.85) brightness(.8); }
+/* A tall poster on the TV shows whole, over a soft blur of itself. */
+.tv-screen img.still-blur { filter: blur(14px) saturate(.8) brightness(.5); transform: scale(1.2); }
+.tv-screen img.still-whole { object-fit: contain; filter: saturate(.85) brightness(.85); }
 
 .now-toggle { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
 

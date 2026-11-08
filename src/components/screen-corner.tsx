@@ -10,8 +10,9 @@ import type { Piece } from "@/lib/types";
 const CASES = ["#14213D", "#3D1F1F", "#1F3324", "#2A2A2A", "#3B2F4A", "#4A3B1F"];
 const CARTS = ["#B23A48", "#2F5D8A", "#E0A100", "#3E7D4F", "#6A4C93", "#D65A31"];
 
-/** Trailers for posters left in the TV, looked up once per film. */
-const trailers = new Map<string, Promise<string | null>>();
+/** For a poster left in the TV: its trailer, and a wide still from the film to show while it isn't playing. */
+type FilmExtras = { trailer: string | null; still: string | null };
+const extras = new Map<string, Promise<FilmExtras>>();
 function tmdbId(link: string | null): string | null {
   const m = link?.match(/themoviedb\.org\/(movie|tv)\/(\d+)/);
   if (m) return `${m[1]}:${m[2]}`;
@@ -33,16 +34,16 @@ async function findFilm(poster: Piece): Promise<string | null> {
     ?? results[0];
   return pick?.id ?? null;
 }
-function trailerFor(poster: Piece): Promise<string | null> {
+function extrasFor(poster: Piece): Promise<FilmExtras> {
   const key = poster.link || `${poster.title}|${poster.subtitle}`;
-  if (!trailers.has(key)) {
-    trailers.set(key, findFilm(poster)
+  if (!extras.has(key)) {
+    extras.set(key, findFilm(poster)
       .then((id) => (id ? fetch(`/api/films?id=${id}`) : null))
       .then((r) => (r?.ok ? r.json() : null))
-      .then((d: { trailer?: string | null } | null) => d?.trailer ?? null)
-      .catch(() => null));
+      .then((d: { trailer?: string | null; stills?: string[] } | null) => ({ trailer: d?.trailer ?? null, still: d?.stills?.[0] ?? null }))
+      .catch(() => ({ trailer: null, still: null })));
   }
-  return trailers.get(key)!;
+  return extras.get(key)!;
 }
 
 function subscribeMotion(change: () => void): () => void {
@@ -92,18 +93,22 @@ export function ScreenCorner({
   // What's in the player: the chosen DVD or poster, otherwise the first scene that can play.
   const chosen = scenes.find((s) => s.id === tvId) ?? (extraFilm && extraFilm.id === tvId ? extraFilm : null);
   const current = chosen ?? scenes.find((s) => s.link && youtubeId(s.link)) ?? null;
-  const still = current ? imageOf(current, urls) : null;
-
-  // A poster plays its film's trailer.
-  const [trailer, setTrailer] = useState<{ for: string; link: string | null } | null>(null);
+  // A poster plays its film's trailer, and shows a wide still from the film (not the tall poster) while it isn't playing.
+  const [film, setFilm] = useState<({ for: string } & FilmExtras) | null>(null);
   const poster = current?.type === "poster" ? current : null;
   useEffect(() => {
     if (!poster) return;
     let live = true;
-    void trailerFor(poster).then((link) => { if (live) setTrailer({ for: poster.id, link }); });
+    void extrasFor(poster).then((x) => { if (live) setFilm({ for: poster.id, ...x }); });
     return () => { live = false; };
   }, [poster]);
-  const playLink = current?.type === "poster" ? (trailer?.for === current.id ? trailer.link : null) : current?.link ?? null;
+  const posterFilm = poster && film?.for === poster.id ? film : null;
+  const own = current ? imageOf(current, urls) : null;
+  const filmStill = posterFilm?.still ?? null;
+  const still = poster ? filmStill ?? (posterFilm ? own : null) : own;
+  // A tall picture is shown whole, over a soft blur of itself, never cut off.
+  const tall = Boolean(poster && !filmStill);
+  const playLink = poster ? posterFilm?.trailer ?? null : current?.link ?? null;
   const clipStart = current?.type === "poster" ? null : current?.clip_start ?? null;
   const clipEnd = current?.type === "poster" ? null : current?.clip_end ?? null;
 
@@ -125,18 +130,19 @@ export function ScreenCorner({
         <div className="tv">
           <span className="antenna" aria-hidden="true" />
           <div className="tv-body">
-            <div className={`tv-screen${src ? " on" : ""}${current?.type === "poster" && !src ? " poster" : ""}`}>
+            <div className={`tv-screen${src ? " on" : ""}`}>
               {src ? (
                 <Broadcast
                   key={`${current!.id}${withSound ? ":sound" : ""}`}
                   src={src}
                   still={still}
+                  tall={tall}
                   muted={!withSound}
                   title={`${current!.title} scene`}
                   onSound={soundOn}
                 />
               ) : still ? (
-                <img src={still} alt="" />
+                <Still src={still} tall={tall} />
               ) : null}
               {!src && <span className="glare" aria-hidden="true" />}
               <span className="scanlines" aria-hidden="true" />
@@ -220,14 +226,14 @@ export function ScreenCorner({
 const YT_ORIGIN = "https://www.youtube-nocookie.com";
 
 /*
- * The scene on the screen, without YouTube's loading screen and title bar.
+ * The scene on the screen, filling the glass, without YouTube's loading screen and title bar.
  * The still stays up until the video is really playing, then fades. The muted player is three screens tall,
  * so its title bar and logo sit off the screen while the picture fills it.
  * If the phone won't start the video by itself (Low Power Mode, or sound without a tap inside the player),
  * the still says Play and lets the tap through to the player underneath, so one tap starts it.
  */
-function Broadcast({ src, still, muted, title, onSound }: {
-  src: string; still: string | null; muted: boolean; title: string; onSound: () => void;
+function Broadcast({ src, still, tall, muted, title, onSound }: {
+  src: string; still: string | null; tall: boolean; muted: boolean; title: string; onSound: () => void;
 }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -271,7 +277,7 @@ function Broadcast({ src, still, muted, title, onSound }: {
     <>
       <iframe
         ref={frame}
-        className={muted ? "tall" : undefined}
+        className="tall"
         src={full}
         title={title}
         onLoad={listen}
@@ -282,7 +288,7 @@ function Broadcast({ src, still, muted, title, onSound }: {
         style={{ pointerEvents: muted && playing ? "none" : "auto" }}
       />
       <span className={`tv-cover${playing ? " gone" : ""}`} aria-hidden="true">
-        {still && <img src={still} alt="" />}
+        {still && <Still src={still} tall={tall} />}
         {stuck && <span className="tv-sound">{"\u25B6\uFE0E"} Play</span>}
       </span>
       {muted && playing && (
@@ -290,6 +296,17 @@ function Broadcast({ src, still, muted, title, onSound }: {
           <span className="tv-sound">Tap for sound</span>
         </button>
       )}
+    </>
+  );
+}
+
+/** A picture on the glass. Wide ones fill it; a tall poster sits whole over a blur of itself. */
+function Still({ src, tall }: { src: string; tall: boolean }) {
+  if (!tall) return <img src={src} alt="" />;
+  return (
+    <>
+      <img src={src} alt="" className="still-blur" />
+      <img src={src} alt="" className="still-whole" />
     </>
   );
 }
