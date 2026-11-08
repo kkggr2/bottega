@@ -115,8 +115,6 @@ export function ScreenCorner({
     : quiet ? null
     : sceneEmbed(playLink, clipStart, clipEnd, true, true);
   const soundOn = () => { if (current) onInsert(current); };
-  // Some phones (Low Power Mode, for one) won't start a video by itself; then the button says Play.
-  const [stuckSrc, setStuckSrc] = useState<string | null>(null);
   const span = current && current.clip_start != null
     ? `${formatTime(current.clip_start)}${current.clip_end != null ? `–${formatTime(current.clip_end)}` : ""}`
     : "";
@@ -135,16 +133,16 @@ export function ScreenCorner({
                   still={still}
                   muted={!withSound}
                   title={`${current!.title} scene`}
-                  onStuck={(stuck) => setStuckSrc(stuck ? src : null)}
+                  onSound={soundOn}
                 />
               ) : still ? (
                 <img src={still} alt="" />
               ) : null}
               {!src && <span className="glare" aria-hidden="true" />}
               <span className="scanlines" aria-hidden="true" />
-              {current && playLink && !withSound && (
-                <button type="button" className="tv-sound" onClick={soundOn} aria-label={`Play ${current.title} with sound`}>
-                  {src && stuckSrc !== src ? "Tap for sound" : "▶ Play"}
+              {current && playLink && !src && (
+                <button type="button" className="tv-tap" onClick={soundOn} aria-label={`Play ${current.title}`}>
+                  <span className="tv-sound">{"\u25B6\uFE0E"} Play</span>
                 </button>
               )}
             </div>
@@ -222,22 +220,23 @@ export function ScreenCorner({
 const YT_ORIGIN = "https://www.youtube-nocookie.com";
 
 /*
- * The scene on the screen, without YouTube's loading screen and title bar:
- * the still stays up until the video is really playing, then fades, and the muted player is
- * three screens tall so its title bar and logo sit off the screen while the picture fills it.
+ * The scene on the screen, without YouTube's loading screen and title bar.
+ * The still stays up until the video is really playing, then fades. The muted player is three screens tall,
+ * so its title bar and logo sit off the screen while the picture fills it.
+ * If the phone won't start the video by itself (Low Power Mode, or sound without a tap inside the player),
+ * the still says Play and lets the tap through to the player underneath, so one tap starts it.
  */
-function Broadcast({ src, still, muted, title, onStuck }: {
-  src: string; still: string | null; muted: boolean; title: string; onStuck: (stuck: boolean) => void;
+function Broadcast({ src, still, muted, title, onSound }: {
+  src: string; still: string | null; muted: boolean; title: string; onSound: () => void;
 }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const [playing, setPlaying] = useState(false);
-  const onStuckRef = useRef(onStuck);
-  const playingRef = useRef(false);
-  useEffect(() => { onStuckRef.current = onStuck; });
+  const [stuck, setStuck] = useState(false);
   const full = `${src}&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`;
 
   useEffect(() => {
     let clock: number | null = null;
+    let started = false;
     const onMessage = (e: MessageEvent) => {
       if (e.origin !== YT_ORIGIN || e.source !== frame.current?.contentWindow || typeof e.data !== "string") return;
       try {
@@ -248,27 +247,22 @@ function Broadcast({ src, still, muted, title, onStuck }: {
         const time = info?.currentTime;
         const moved = typeof time === "number" && clock !== null && time > clock;
         if (typeof time === "number") clock = time;
-        if (state === 1 || moved) setPlaying(true);
+        if (state === 1 || moved) {
+          started = true;
+          setPlaying(true);
+          setStuck(false);
+        }
       } catch {
         // Not a player message.
       }
     };
     window.addEventListener("message", onMessage);
-    // With sound, don't keep the picture covered if the phone wants a tap on the player itself.
-    // Muted, if nothing has started after a few seconds, the phone isn't going to start it alone.
-    const timer = setTimeout(() => {
-      if (!muted) setPlaying(true);
-      else if (!playingRef.current) onStuckRef.current(true);
-    }, muted ? 3500 : 2500);
+    const timer = setTimeout(() => { if (!started) setStuck(true); }, muted ? 3500 : 2500);
     return () => {
       window.removeEventListener("message", onMessage);
       clearTimeout(timer);
     };
   }, [muted]);
-  useEffect(() => {
-    playingRef.current = playing;
-    if (playing) onStuckRef.current(false);
-  }, [playing]);
 
   // Ask the player to report when it starts.
   const listen = () => frame.current?.contentWindow?.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), YT_ORIGIN);
@@ -283,11 +277,19 @@ function Broadcast({ src, still, muted, title, onStuck }: {
         onLoad={listen}
         allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
         allowFullScreen
-        tabIndex={muted ? -1 : undefined}
+        tabIndex={muted && playing ? -1 : undefined}
+        // Playing quietly, a tap means "sound on" (the button below), not "pause".
+        style={{ pointerEvents: muted && playing ? "none" : "auto" }}
       />
       <span className={`tv-cover${playing ? " gone" : ""}`} aria-hidden="true">
         {still && <img src={still} alt="" />}
+        {stuck && <span className="tv-sound">{"\u25B6\uFE0E"} Play</span>}
       </span>
+      {muted && playing && (
+        <button type="button" className="tv-tap" onClick={onSound} aria-label={`Play ${title} with sound`}>
+          <span className="tv-sound">Tap for sound</span>
+        </button>
+      )}
     </>
   );
 }
