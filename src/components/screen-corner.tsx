@@ -14,18 +14,35 @@ const CARTS = ["#B23A48", "#2F5D8A", "#E0A100", "#3E7D4F", "#6A4C93", "#D65A31"]
 const trailers = new Map<string, Promise<string | null>>();
 function tmdbId(link: string | null): string | null {
   const m = link?.match(/themoviedb\.org\/(movie|tv)\/(\d+)/);
-  return m ? `${m[1]}:${m[2]}` : null;
+  if (m) return `${m[1]}:${m[2]}`;
+  const lb = link?.match(/letterboxd\.com\/tmdb\/(\d+)/);
+  return lb ? `movie:${lb[1]}` : null;
 }
-function trailerFor(link: string | null): Promise<string | null> {
-  const id = tmdbId(link);
-  if (!id) return Promise.resolve(null);
-  if (!trailers.has(id)) {
-    trailers.set(id, fetch(`/api/films?id=${id}`)
-      .then((r) => (r.ok ? r.json() : null))
+/** Which film this poster is: from its link, or else by searching its title (and year, if the subtitle has one). */
+async function findFilm(poster: Piece): Promise<string | null> {
+  const id = tmdbId(poster.link);
+  if (id) return id;
+  const res = await fetch(`/api/films?q=${encodeURIComponent(poster.title)}`);
+  if (!res.ok) return null;
+  const { results } = (await res.json()) as { results: { id: string; title: string; subtitle: string }[] };
+  const year = poster.subtitle.match(/\b(19|20)\d{2}\b/)?.[0];
+  const same = (r: { title: string }) => r.title.toLowerCase() === poster.title.toLowerCase();
+  const pick = results.find((r) => same(r) && (!year || r.subtitle.includes(year)))
+    ?? (year ? results.find((r) => r.subtitle.includes(year)) : undefined)
+    ?? results.find(same)
+    ?? results[0];
+  return pick?.id ?? null;
+}
+function trailerFor(poster: Piece): Promise<string | null> {
+  const key = poster.link || `${poster.title}|${poster.subtitle}`;
+  if (!trailers.has(key)) {
+    trailers.set(key, findFilm(poster)
+      .then((id) => (id ? fetch(`/api/films?id=${id}`) : null))
+      .then((r) => (r?.ok ? r.json() : null))
       .then((d: { trailer?: string | null } | null) => d?.trailer ?? null)
       .catch(() => null));
   }
-  return trailers.get(id)!;
+  return trailers.get(key)!;
 }
 
 function subscribeMotion(change: () => void): () => void {
@@ -79,13 +96,13 @@ export function ScreenCorner({
 
   // A poster plays its film's trailer.
   const [trailer, setTrailer] = useState<{ for: string; link: string | null } | null>(null);
-  const posterLink = current?.type === "poster" ? current.link : null;
+  const poster = current?.type === "poster" ? current : null;
   useEffect(() => {
-    if (!current || !posterLink) return;
+    if (!poster) return;
     let live = true;
-    void trailerFor(posterLink).then((link) => { if (live) setTrailer({ for: current.id, link }); });
+    void trailerFor(poster).then((link) => { if (live) setTrailer({ for: poster.id, link }); });
     return () => { live = false; };
-  }, [current, posterLink]);
+  }, [poster]);
   const playLink = current?.type === "poster" ? (trailer?.for === current.id ? trailer.link : null) : current?.link ?? null;
   const clipStart = current?.type === "poster" ? null : current?.clip_start ?? null;
   const clipEnd = current?.type === "poster" ? null : current?.clip_end ?? null;
@@ -98,6 +115,8 @@ export function ScreenCorner({
     : quiet ? null
     : sceneEmbed(playLink, clipStart, clipEnd, true, true);
   const soundOn = () => { if (current) onInsert(current); };
+  // Some phones (Low Power Mode, for one) won't start a video by itself; then the button says Play.
+  const [stuckSrc, setStuckSrc] = useState<string | null>(null);
   const span = current && current.clip_start != null
     ? `${formatTime(current.clip_start)}${current.clip_end != null ? `–${formatTime(current.clip_end)}` : ""}`
     : "";
@@ -116,6 +135,7 @@ export function ScreenCorner({
                   still={still}
                   muted={!withSound}
                   title={`${current!.title} scene`}
+                  onStuck={(stuck) => setStuckSrc(stuck ? src : null)}
                 />
               ) : still ? (
                 <img src={still} alt="" />
@@ -124,7 +144,7 @@ export function ScreenCorner({
               <span className="scanlines" aria-hidden="true" />
               {current && playLink && !withSound && (
                 <button type="button" className="tv-sound" onClick={soundOn} aria-label={`Play ${current.title} with sound`}>
-                  {src ? "Tap for sound" : "▶ Play"}
+                  {src && stuckSrc !== src ? "Tap for sound" : "▶ Play"}
                 </button>
               )}
             </div>
@@ -206,9 +226,14 @@ const YT_ORIGIN = "https://www.youtube-nocookie.com";
  * the still stays up until the video is really playing, then fades, and the muted player is
  * three screens tall so its title bar and logo sit off the screen while the picture fills it.
  */
-function Broadcast({ src, still, muted, title }: { src: string; still: string | null; muted: boolean; title: string }) {
+function Broadcast({ src, still, muted, title, onStuck }: {
+  src: string; still: string | null; muted: boolean; title: string; onStuck: (stuck: boolean) => void;
+}) {
   const frame = useRef<HTMLIFrameElement>(null);
   const [playing, setPlaying] = useState(false);
+  const onStuckRef = useRef(onStuck);
+  const playingRef = useRef(false);
+  useEffect(() => { onStuckRef.current = onStuck; });
   const full = `${src}&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`;
 
   useEffect(() => {
@@ -230,12 +255,20 @@ function Broadcast({ src, still, muted, title }: { src: string; still: string | 
     };
     window.addEventListener("message", onMessage);
     // With sound, don't keep the picture covered if the phone wants a tap on the player itself.
-    const reveal = muted ? undefined : setTimeout(() => setPlaying(true), 2500);
+    // Muted, if nothing has started after a few seconds, the phone isn't going to start it alone.
+    const timer = setTimeout(() => {
+      if (!muted) setPlaying(true);
+      else if (!playingRef.current) onStuckRef.current(true);
+    }, muted ? 3500 : 2500);
     return () => {
       window.removeEventListener("message", onMessage);
-      if (reveal) clearTimeout(reveal);
+      clearTimeout(timer);
     };
   }, [muted]);
+  useEffect(() => {
+    playingRef.current = playing;
+    if (playing) onStuckRef.current(false);
+  }, [playing]);
 
   // Ask the player to report when it starts.
   const listen = () => frame.current?.contentWindow?.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), YT_ORIGIN);
