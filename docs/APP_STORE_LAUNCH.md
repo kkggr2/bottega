@@ -46,8 +46,84 @@ Then **Redeploy**.
 
 If no notification arrives, tell Claude which step failed. The Vercel logs for `/api/push/now` will say why.
 
-## 6. Before submitting to the App Store
+## 6. Before submitting
 
-- Remove `APNS_SANDBOX` in Vercel (App Store and TestFlight builds use Apple's production push).
-- In `ios/App/App/App.entitlements`, Xcode switches `aps-environment` to `production` when you archive for distribution. Nothing to do by hand.
-- App Store Connect: create the app (bundle ID `com.kkggr2.bottega`), screenshots of a full room, privacy details (email for sign‑in; usage events such as rooms viewed, pieces added and shares, linked to the account when signed in and used only for product analytics, never for ads or tracking across apps), and a review note explaining the widget and notifications.
+1. **Run the safety update:** Supabase → SQL Editor → all of `supabase/migrations/20261111000000_safety.sql` → **Run**. It adds blocking, reports and account deletion.
+2. **Make hello@bottegarooms.com reach you.** Reports and support emails go there. Namecheap → Domain List → **Manage** → **Redirect Email** → **Add Forwarder**: alias `hello`, forward to your own inbox.
+3. **Vercel:** delete `APNS_SANDBOX`, then **Redeploy**. App Store and TestFlight builds use Apple's production push service. Phones running the app straight from Xcode stop getting notifications after this; that's expected.
+4. **Make a demo account for Apple's reviewer.** Apple needs to log in. On bottegarooms.com create e.g. `review@bottegarooms.com` (Namecheap can forward it too), give it a room with 5+ things, and make it friends with your own account, so the library, swiping and notifications have something to show.
+
+## 7. Create the app in App Store Connect
+
+[appstoreconnect.apple.com](https://appstoreconnect.apple.com) → **Apps** → **+** → **New App**:
+
+| Field | Value |
+|---|---|
+| Platform | iOS |
+| Name | `Bottega`. If it's taken, `Bottega: Rooms with Friends` |
+| Primary language | English (U.S.) |
+| Bundle ID | `com.kkggr2.bottega` |
+| SKU | `bottega-ios` |
+
+Then fill in:
+
+- **Subtitle (30 characters):** `Your taste, as a room`
+- **Category:** Social Networking; secondary: Lifestyle
+- **Privacy Policy URL:** `https://bottegarooms.com/privacy`
+- **Support URL:** `https://bottegarooms.com/support`
+- **Age rating:** answer honestly. User content and messaging between friends usually comes out at 12+ or 13+.
+- **Description:**
+
+  > Everyone gets one room. Hang the films that made you, shelve the books you'd lend, leave a record on the turntable that plays when a friend drops the needle.
+  >
+  > Add friends by username and their rooms line your library. See what they put on, step inside, and swipe from room to room.
+  >
+  > • Find songs, films and books in seconds, or bring in your Letterboxd films and Goodreads books
+  > • A real turntable, TV and bookshelf: tap to play a song or a scene
+  > • A widget for your home screen showing what friends have on
+  > • A share picture of your room, sized for Stories
+  >
+  > No ads, no likes, no strangers' feeds. Just your friends' taste.
+
+- **Keywords:** `taste,friends,music,films,books,letterboxd,goodreads,vinyl,room,library,share,profile`
+
+### App Privacy (the "nutrition label")
+
+Choose **Yes, we collect data** and tick, all **linked to the user**, **not used for tracking**:
+
+- **Contact info → Email address:** App functionality
+- **User content → Photos or videos, Audio data, Other user content:** App functionality
+- **Identifiers → User ID, Device ID:** App functionality, Analytics
+- **Usage data → Product interaction:** Analytics
+
+This matches the app's built-in privacy manifest.
+
+## 8. Upload a build
+
+1. Xcode, top center: choose **Any iOS Device (arm64)**, not your phone and not a simulator.
+2. Menu **Product → Archive**. Wait a few minutes.
+3. The Organizer window opens: **Distribute App** → **App Store Connect** → **Upload** → keep the defaults → **Upload**.
+4. After 10–30 minutes the build appears in App Store Connect under **TestFlight**. Apple emails you when it's processed.
+
+For every later upload, raise the **Build** number by one: App target → **General** → Identity.
+
+## 9. TestFlight first (recommended)
+
+App Store Connect → **TestFlight** → **Internal Testing** → add yourself, then later friends as **External Testers** with a public link. Use it for a few days with real friends before submitting.
+
+## 10. Submit for review
+
+App Store Connect → your app → the **1.0** version:
+
+1. **Screenshots** for 6.9" iPhone: at least 3 (1320 × 2868 px). Use a full room, the library with friends' updates, and the record playing. Claude can make these from the simulator.
+2. **Build:** pick the uploaded build.
+3. **App Review Information → Sign-in required:** the demo account's email and password.
+4. **Notes for the reviewer** (paste):
+
+   > Bottega is a social app where each person has one "room" of things they love (songs, films, books) and visits friends' rooms.
+   > The demo account already has a room and a friend. Tap a record on the turntable to play a 30-second Apple Music preview; open the library to see friends' updates; long-press the home screen to add the Bottega widget.
+   > User safety: every room has a ⋯ button to report it or block the person. Reports are emailed to us and reviewed within 24 hours. The Terms (shown at sign-up) forbid objectionable content.
+   > Account deletion: Library → bottom → "Delete my account".
+   > Notifications are only sent when a friend puts something on, at most once per friend every 6 hours.
+
+5. **Add for Review** → **Submit to App Review**. Review usually takes 1–3 days.

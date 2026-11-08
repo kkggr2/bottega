@@ -18,9 +18,11 @@
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6822FE993A50072D4E8 /* SceneDelegate.swift */; };
+		ACF2C2906554E0EE7B1B28C5 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 3513D101FFB106D36D4A1DE8 /* PrivacyInfo.xcprivacy */; };
 		B0CA3B7EB4BEF6CB64C7DC37 /* BottegaWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56FB11C39AF9A3152F33EF35 /* BottegaWidget.swift */; };
 		BEA4E818FC8A1906E1E17DEA /* WidgetBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E2053229446AE93681E69D1 /* WidgetBridge.swift */; };
 		C2D70EADD67C6CC35949729F /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E58EC83A0CF12580615CF571 /* SwiftUI.framework */; };
+		DA3D459146866A5A5A079F76 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 51D69BBA10D4D5408545C6D5 /* PrivacyInfo.xcprivacy */; };
 		FB06B62295FB4435F677EFC7 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B139DD5828B2321AE519B177 /* Foundation.framework */; };
 /* End PBXBuildFile section */
 
@@ -51,6 +53,7 @@
 /* Begin PBXFileReference section */
 		2E2053229446AE93681E69D1 /* WidgetBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetBridge.swift; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
+		3513D101FFB106D36D4A1DE8 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		504EC3071FED79650016851F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -59,6 +62,7 @@
 		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
+		51D69BBA10D4D5408545C6D5 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		56FB11C39AF9A3152F33EF35 /* BottegaWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BottegaWidget.swift; sourceTree = "<group>"; };
 		576F01557C3657F55DD7A1E0 /* App.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		9582B6822FE993A50072D4E8 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -127,6 +131,7 @@
 				50B271D01FEDC1A000F3C39B /* public */,
 				2E2053229446AE93681E69D1 /* WidgetBridge.swift */,
 				576F01557C3657F55DD7A1E0 /* App.entitlements */,
+				3513D101FFB106D36D4A1DE8 /* PrivacyInfo.xcprivacy */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -155,6 +160,7 @@
 				56FB11C39AF9A3152F33EF35 /* BottegaWidget.swift */,
 				D0702AAF582CCA471DFD0F66 /* Info.plist */,
 				C3468CFCE43EB8835FE5B1F9 /* BottegaWidget.entitlements */,
+				51D69BBA10D4D5408545C6D5 /* PrivacyInfo.xcprivacy */,
 			);
 			path = BottegaWidget;
 			sourceTree = "<group>";
@@ -244,6 +250,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DA3D459146866A5A5A079F76 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -257,6 +264,7 @@
 				50379B232058CBB4000EE86E /* capacitor.config.json in Resources */,
 				504EC30D1FED79650016851F /* Main.storyboard in Resources */,
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
+				ACF2C2906554E0EE7B1B28C5 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

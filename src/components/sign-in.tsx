@@ -266,6 +266,9 @@ export function SignIn() {
               </button>
             </div>
 
+            {mode === "create" && (
+              <p className="hint">By creating an account you agree to the <a href="/terms">Terms</a> and <a href="/privacy">Privacy policy</a>. No hateful or abusive content.</p>
+            )}
             {mode === "login" && (
               <div className="chips">
                 <button className="linkish" type="button" onClick={() => switchTo("forgot")}>Forgot password?</button>
@@ -280,6 +283,11 @@ export function SignIn() {
         )}
       </div>
       </section>
+      <footer className="lib-foot">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/support">Help</a>
+      </footer>
     </div>
   );
 }

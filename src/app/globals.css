@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Layout: a library shelf of book spines (one per friend) that opens into full-width rooms:
+/* Layout: a library hallway of doors (one per friend) that open into full-width rooms:
    a patterned wall of framed pieces above a floorboard strip. */
 /* Colors come from the Bottega logo: printed paper, brown-black ink, rust and the blue underline. */
 :root {
@@ -114,27 +114,6 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .request { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
 .request .row { display: flex; gap: 8px; }
 
-.shelf {
-  display: grid; grid-template-columns: repeat(auto-fill, 70px); grid-auto-rows: 262px;
-  column-gap: 8px; align-items: end; padding: 0 18px;
-  background: repeating-linear-gradient(to bottom, transparent 0 248px, var(--wood) 248px 258px, var(--wood-dark) 258px 262px);
-  border-radius: 6px;
-}
-.spine {
-  margin-bottom: 14px; width: 70px; border: 0; border-radius: 3px 3px 2px 2px; padding: 14px 0 12px;
-  display: flex; flex-direction: column; align-items: center; justify-content: space-between;
-  background: var(--sp-wall); color: var(--sp-ink); text-decoration: none;
-  box-shadow: inset -6px 0 0 rgba(0,0,0,.12), inset 3px 0 0 rgba(255,255,255,.18), 0 2px 0 rgba(0,0,0,.15);
-  transition: transform .25s ease; position: relative; overflow: hidden;
-}
-.spine::after { content: ""; position: absolute; left: 0; right: 0; top: 22%; height: 6px; background: var(--sp-accent); opacity: .9; }
-.spine:hover, .spine:focus-visible { transform: translateY(-10px); }
-.spine .t { writing-mode: vertical-rl; transform: rotate(180deg); font: 400 21px/1 var(--font-display); max-height: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 18px; }
-.spine .h { font: 500 10px/1.2 var(--font-mono); letter-spacing: .04em; max-width: 62px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.spine.me .h::before { content: "★ "; color: var(--sp-accent); }
-.spine.add { background: transparent; color: var(--muted); border: 1.5px dashed var(--line); box-shadow: none; justify-content: center; }
-.spine.add::after { display: none; }
-.spine.add .t { margin: 0; font-size: 17px; }
 .lib-note { margin-top: 18px; color: var(--muted); font-size: 13.5px; max-width: 70ch; }
 
 /* room */
@@ -459,9 +438,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .update > span:nth-child(2), .update:not(.new) > span:first-child { flex: 1; min-width: 0; }
 .update b { font-weight: 600; }
 .update .when { color: var(--muted); font-size: 13px; white-space: nowrap; }
-.update .dot, .spine.new::before { width: 8px; height: 8px; border-radius: 50%; background: var(--brass); flex: none; align-self: center; }
-.spine.new { position: relative; }
-.spine.new::before { content: ""; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); box-shadow: 0 0 0 2px var(--sp-wall, #333); }
+.update .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brass); flex: none; align-self: center; }
 .email-switch { margin-top: 18px; color: var(--muted); }
 
 /* A new room: five things open the door. */
@@ -590,3 +567,64 @@ h1, h2, .brand b, .join-title, .dp-next, .panel-title, .door-open h2, .make-your
 .cart-mini span { font: 600 7px/1.05 var(--font-body); letter-spacing: 0; text-transform: none; overflow-wrap: normal; word-break: normal; hyphens: auto; }
 .dvd span { letter-spacing: .02em; }
 @media (max-width: 520px) { .landing-room .pieces { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Report and block. */
+.safety-options { display: grid; gap: 8px; }
+.safety-options .btn { text-align: left; padding: 12px 16px; }
+.danger-text { color: var(--danger) !important; }
+.btn.danger-solid { background: var(--danger); border-color: var(--danger); color: #fff; }
+.btn.more { padding-inline: 14px; font-size: 18px; line-height: 1; }
+
+.lib-foot { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--muted); }
+.lib-foot a { color: inherit; }
+.lib-foot .linkish { font-size: 13.5px; }
+
+/* Privacy, terms and help pages. */
+.legal { max-width: 640px; padding-block: 32px 48px; display: grid; gap: 14px; font-size: 16px; line-height: 1.6; }
+.legal h1 { font: 380 clamp(34px, 5vw, 48px)/1.05 var(--font-display); letter-spacing: -.015em; }
+.legal h2 { font: 420 22px/1.2 var(--font-display); margin-top: 14px; }
+.legal ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.legal-links { margin-top: 18px; color: var(--muted); }
+
+
+/* Library: a hallway of doors, one per room, painted in that room's wall color. */
+.hall { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 26px 18px; padding: 8px 4px 4px; }
+.hall-door { display: grid; justify-items: center; align-content: start; gap: 6px; min-width: 0; text-align: center; }
+.door-link { position: relative; display: grid; justify-items: center; width: 100%; max-width: 132px; padding: 18px 0 0; border: 0; background: none;
+  color: inherit; text-decoration: none; perspective: 700px; }
+.doorway { position: relative; display: block; width: 100%; aspect-ratio: 3 / 5; border-radius: 999px 999px 4px 4px; overflow: hidden;
+  background: var(--wood-dark); box-shadow: 0 0 0 6px var(--surface), 0 0 0 7px var(--line), 0 10px 22px rgba(47, 40, 34, .18); }
+.inside { position: absolute; inset: 0; background: radial-gradient(80% 60% at 50% 70%, #FFE2AE, color-mix(in srgb, var(--dr-paint) 60%, #F6C77E) 60%, var(--dr-floor)); }
+.leaf { position: absolute; inset: 0; border-radius: inherit; transform-origin: left center; transition: transform .42s cubic-bezier(.3, .7, .2, 1);
+  background: linear-gradient(100deg, color-mix(in srgb, var(--dr-paint) 92%, #fff), var(--dr-paint) 40%, color-mix(in srgb, var(--dr-paint) 88%, #000));
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+.dpanel { position: absolute; left: 16%; right: 16%; border-radius: 999px 999px 6px 6px; box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--dr-ink) 14%, transparent); }
+.dpanel.top { top: 12%; height: 30%; }
+.dpanel.bottom { top: 50%; height: 36%; border-radius: 6px; }
+.knob { position: absolute; right: 13%; top: 52%; width: 9px; height: 9px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #F3D99A, #A9782F); box-shadow: 0 1px 2px rgba(0,0,0,.35); }
+.plate { position: absolute; left: 50%; top: 44%; transform: translate(-50%, -50%); max-width: 76%; padding: 2px 6px; border-radius: 3px;
+  background: linear-gradient(#E9CF8C, #C9A253); color: #3A2A10; font-size: 10.5px; font-weight: 600; line-height: 1.3;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 1px 1px rgba(0,0,0,.25); }
+.step { display: block; width: 112%; height: 8px; margin-top: -1px; border-radius: 2px; background: var(--wood); box-shadow: 0 3px 6px rgba(0,0,0,.15); }
+.lamp { position: absolute; top: 2px; left: 50%; width: 10px; height: 10px; transform: translateX(-50%); border-radius: 50%; background: var(--line); }
+.hall-door.new .lamp { background: #FFB45A; box-shadow: 0 0 10px 3px rgba(255, 170, 70, .65); }
+.door-link:hover .leaf, .door-link:focus-visible .leaf { transform: rotateY(-16deg); }
+.door-link.opening .leaf { transform: rotateY(-78deg); }
+.door-name { font-weight: 500; font-size: 15px; line-height: 1.25; max-width: 100%; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.door-now { font-size: 13px; color: var(--muted); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: -4px; }
+.hall-door.mine .door-name { color: var(--brass); }
+.hall-door.add .doorway { background: transparent; box-shadow: none; outline: 1.5px dashed var(--line); outline-offset: -1px; }
+.hall-door.add .leaf { background: none; box-shadow: none; display: grid; place-items: center; }
+.hall-door.add .plus { font-size: 34px; color: var(--muted); font-weight: 300; }
+.hall-door.add .step { opacity: .35; }
+.hall-door.add .door-name { color: var(--muted); }
+@media (max-width: 520px) { .hall { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px 12px; } .plate { font-size: 9.5px; } .door-name { font-size: 13.5px; } }
+
+/* Long words (titles, usernames, pasted links) wrap instead of pushing the page wider. */
+body { overflow-wrap: anywhere; }
+h1, h2, .door-name, .plaque b, .paper b, .now b { hyphens: auto; -webkit-hyphens: auto; }
+.door > div, .door .actions, .piece, .corner, .now, .furniture > *, .sheet > *, .update > span, .request > span { min-width: 0; }
+.door > div:first-child { flex: 1 1 280px; }
+.cart-mini span { overflow-wrap: anywhere; hyphens: auto; -webkit-hyphens: auto; }
+.now { overflow-wrap: anywhere; }

@@ -27,6 +27,7 @@ import { PieceDetail } from "./piece-detail";
 import { PieceEditor } from "./piece-editor";
 import { PieceView } from "./piece-view";
 import { ScreenCorner } from "./screen-corner";
+import { SafetySheet } from "./safety-sheet";
 import { ShareSheet } from "./share-sheet";
 
 type Loaded =
@@ -53,6 +54,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
   const [customizing, setCustomizing] = useState(false);
   const [importing, setImporting] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [safety, setSafety] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   // The turntable and the TV.
   const [recordId, setRecordId] = useState<string | null>(null);
@@ -366,6 +368,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
               <button className={`btn ${relation === "none" || relation === "incoming" ? "" : "ghost"}`} type="button" onClick={friendAction}>
                 {friendLabel}
               </button>
+              <button className="btn ghost more" type="button" onClick={() => setSafety(true)} aria-label={`Report or block @${owner.username}`}>⋯</button>
             </>
           ) : (
             <>
@@ -508,6 +511,9 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
       )}
       {customizing && <Customize room={room} onClose={() => { setCustomizing(false); load(); }} />}
       {importing && <ImportSheet ownerId={owner.id} pieces={pieces} onClose={() => { setImporting(false); load(); }} />}
+      {safety && me && (
+        <SafetySheet meId={me.id} ownerId={owner.id} username={owner.username} onClose={() => setSafety(false)} />
+      )}
       {sharing && <ShareSheet room={room} username={owner.username} pieces={pieces} urls={urls} onClose={() => setSharing(false)} onChanged={load} />}
     </div>
   );

@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { isNativeApp } from "@/lib/native";
 import { useAuth } from "./auth";
+import { DeleteAccount } from "./delete-account";
 import { accept, befriend, unfriend } from "@/lib/friends";
-import { shareLink } from "@/lib/native";
+import { shareLink, tap } from "@/lib/native";
 import { joinDid, lastSeen, NOW_SLOTS, NOW_WORDS, nowAt, nowId, type NowPiece } from "@/lib/now";
 import { friendlyError, supabase } from "@/lib/supabase";
 import { track } from "@/lib/track";
@@ -43,6 +44,7 @@ function Library({ me }: { me: Profile }) {
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const load = useCallback(async () => {
     const sb = supabase();
@@ -164,7 +166,16 @@ function Library({ me }: { me: Profile }) {
     }
   }
 
-  if (!shelf) return <p className="loading">Dusting the shelves…</p>;
+  // The door swings open before you step through (skipped with Reduce Motion).
+  function openDoor(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    e.preventDefault();
+    tap();
+    e.currentTarget.classList.add("opening");
+    setTimeout(() => router.push(href), 420);
+  }
+
+  if (!shelf) return <p className="loading">Lighting the hallway…</p>;
   const friendCount = shelf.rooms.length - 1;
   const newIds = new Set(shelf.updates.filter((u) => u.isNew).map((u) => u.ownerId));
 
@@ -173,7 +184,7 @@ function Library({ me }: { me: Profile }) {
       <section className="lib-head">
         <div>
           <h1>Your library</h1>
-          <p>Every spine is someone&rsquo;s room. Pull one out to step inside.</p>
+          <p>Every door is someone&rsquo;s room. Step inside.</p>
         </div>
         <div className="addfriend">
           <form onSubmit={(e) => { e.preventDefault(); addFriend(); }}>
@@ -220,33 +231,58 @@ function Library({ me }: { me: Profile }) {
         </section>
       )}
 
-      <div className="shelf">
+      <div className="hall" role="list" aria-label="Rooms">
         {shelf.rooms.map((room) => {
           const t = THEMES[room.theme] ?? THEMES.oak;
           const username = room.profile?.username ?? "";
+          const mine = room.owner_id === me.id;
+          const update = shelf.updates.find((u) => u.ownerId === room.owner_id);
+          const fresh = newIds.has(room.owner_id);
           return (
-            <Link
-              key={room.owner_id}
-              href={`/r/${username}`}
-              className={`spine${room.owner_id === me.id ? " me" : ""}${newIds.has(room.owner_id) ? " new" : ""}`}
-              title={`${room.name} · @${username}`}
-              style={{
-                height: 176 + (hash(room.owner_id) % 50),
-                "--sp-wall": t.wall, "--sp-ink": t.ink, "--sp-accent": t.accent,
-              } as CSSProperties}
-            >
-              <span className="t">{room.name}</span>
-              <span className="h">@{username}</span>
-            </Link>
+            <div role="listitem" key={room.owner_id} className={`hall-door${mine ? " mine" : ""}${fresh ? " new" : ""}`}>
+              <Link
+                href={`/r/${username}`}
+                className="door-link"
+                aria-label={`${mine ? "Your room" : `@${username}'s room`}: ${room.name}${fresh ? ", something new" : ""}`}
+                onClick={(e) => openDoor(e, `/r/${username}`)}
+                style={{ "--dr-paint": t.wall, "--dr-ink": t.ink, "--dr-accent": t.accent, "--dr-floor": t.floor } as CSSProperties}
+              >
+                <span className="lamp" aria-hidden="true" />
+                <span className="doorway" aria-hidden="true">
+                  <span className="inside" />
+                  <span className="leaf">
+                    <span className="dpanel top" />
+                    <span className="dpanel bottom" />
+                    <span className="plate">@{username}</span>
+                    <span className="knob" />
+                  </span>
+                </span>
+                <span className="step" aria-hidden="true" />
+              </Link>
+              <p className="door-name">{mine ? "Your room" : room.name}</p>
+              {update ? (
+                <p className="door-now">{update.kind === "song" ? "♪" : update.kind === "film" ? "▶︎" : "❦"} {update.title}</p>
+              ) : mine ? <p className="door-now">{room.name}</p> : null}
+            </div>
           );
         })}
-        <button className="spine add" type="button" style={{ height: 200 }} onClick={() => inputRef.current?.focus()}>
-          <span className="t">+ a friend</span>
-        </button>
+        <div role="listitem" className="hall-door add">
+          <button type="button" className="door-link" onClick={() => inputRef.current?.focus()} aria-label="Add a friend by username">
+            <span className="doorway" aria-hidden="true"><span className="leaf"><span className="plus">+</span></span></span>
+            <span className="step" aria-hidden="true" />
+          </button>
+          <p className="door-name">Add a friend</p>
+        </div>
       </div>
       {friendCount > 0 && <PushAsk userId={me.id} />}
       <EmailSwitch userId={me.id} />
       <AppSignOut />
+      <footer className="lib-foot">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/support">Help</a>
+        <DeleteAccount username={me.username} />
+      </footer>
 
       {friendCount < 3 ? (
         <div className="invite">
@@ -263,11 +299,6 @@ function Library({ me }: { me: Profile }) {
   );
 }
 
-function hash(s: string): number {
-  let n = 0;
-  for (const c of s) n = (n * 31 + c.charCodeAt(0)) >>> 0;
-  return n;
-}
 
 /** "just now", "3h", "yesterday", "Tue". */
 function ago(iso: string): string {
