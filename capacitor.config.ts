@@ -1,4 +1,5 @@
 import type { CapacitorConfig } from "@capacitor/cli";
+import { KeyboardResize } from "@capacitor/keyboard";
 
 /**
  * The native apps load the live site, so a deploy to Vercel updates the apps too.
@@ -25,6 +26,11 @@ const config: CapacitorConfig = {
       launchAutoHide: true,
       backgroundColor: "#2F3B2C",
       showSpinner: false,
+    },
+    Keyboard: {
+      // The page shrinks to fit above the keyboard, like a native screen, instead of sliding under it.
+      resize: KeyboardResize.Native,
+      resizeOnFullScreen: true,
     },
     StatusBar: {
       overlaysWebView: true,

@@ -143,7 +143,7 @@ export function ImportSheet({ ownerId, pieces, onClose }: { ownerId: string; pie
           <label htmlFor="lb-user">Your Letterboxd username</label>
           <div className="addfriend" style={{ width: "100%" }}>
             <div style={{ display: "flex", gap: 8 }}>
-              <input id="lb-user" type="text" autoComplete="off" spellCheck={false} placeholder="e.g. davidehrlich" value={username}
+              <input id="lb-user" type="text" enterKeyHint="search" autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false} placeholder="e.g. davidehrlich" value={username}
                 onChange={(e) => setUsername(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); findFilms(); } }} />
               <button className="btn" type="button" disabled={busy} onClick={findFilms}>{busy && !candidates ? "Looking…" : "Find my films"}</button>
             </div>

@@ -50,7 +50,7 @@ export function SearchPicker({
   return (
     <div className="field">
       <label htmlFor={id}>{label}</label>
-      <input id={id} type="search" autoComplete="off" placeholder={placeholder} value={term}
+      <input id={id} type="search" enterKeyHint="search" autoComplete="off" placeholder={placeholder} value={term}
         onChange={(e) => { setTerm(e.target.value); if (e.target.value.trim().length < 2) setResults([]); }}
         aria-controls={`${id}-results`} />
       <span className="hint" aria-live="polite">

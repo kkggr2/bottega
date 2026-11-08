@@ -64,7 +64,7 @@ export function Onboard() {
           <div className="field">
             <label htmlFor="ob-handle">Username</label>
             <div className="at">
-              <input id="ob-handle" type="text" autoComplete="off" spellCheck={false} maxLength={20}
+              <input id="ob-handle" type="text" enterKeyHint="done" autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false} maxLength={20}
                 placeholder="yourname" value={username}
                 onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))} />
             </div>

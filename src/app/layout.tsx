@@ -1,14 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { Figtree, IBM_Plex_Mono, Instrument_Serif } from "next/font/google";
+import { Suspense } from "react";
+import { Fraunces } from "next/font/google";
 import { AuthProvider } from "@/components/auth";
 import { NativeLinks } from "@/components/native-links";
 import { PushSetup } from "@/components/push-setup";
+import { TabBar } from "@/components/tab-bar";
 import { TopBar } from "@/components/top-bar";
 import "./globals.css";
 
-const display = Instrument_Serif({ variable: "--ff-display", weight: "400", style: ["normal", "italic"], subsets: ["latin"] });
-const body = Figtree({ variable: "--ff-body", subsets: ["latin"] });
-const mono = IBM_Plex_Mono({ variable: "--ff-mono", weight: ["400", "500"], subsets: ["latin"] });
+// One family for everything: Fraunces, with its "soft" axis rounding the letters and the "wonky" axis
+// adding a hand-made quirk to big headlines. Optical sizing adjusts the shapes for each text size.
+const fraunces = Fraunces({
+  variable: "--ff-display",
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  axes: ["SOFT", "WONK", "opsz"],
+});
 
 export const metadata: Metadata = {
   title: { default: "Bottega", template: "%s · Bottega" },
@@ -28,7 +35,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
+    <html lang="en" className={fraunces.variable}>
       <body>
         <AuthProvider>
           <NativeLinks />
@@ -36,6 +43,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <div className="wrap">
             <TopBar />
             <main>{children}</main>
+            <Suspense fallback={null}>
+              <TabBar />
+            </Suspense>
           </div>
         </AuthProvider>
       </body>

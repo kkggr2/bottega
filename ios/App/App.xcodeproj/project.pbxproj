@@ -156,7 +156,6 @@
 				D0702AAF582CCA471DFD0F66 /* Info.plist */,
 				C3468CFCE43EB8835FE5B1F9 /* BottegaWidget.entitlements */,
 			);
-			name = BottegaWidget;
 			path = BottegaWidget;
 			sourceTree = "<group>";
 		};
@@ -320,6 +319,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = BottegaWidget/BottegaWidget.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SS8NYAS49K;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BottegaWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Bottega;
@@ -346,6 +346,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = BottegaWidget/BottegaWidget.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SS8NYAS49K;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BottegaWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Bottega;
@@ -483,6 +484,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SS8NYAS49K;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -506,6 +508,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SS8NYAS49K;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (

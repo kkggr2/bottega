@@ -207,7 +207,7 @@ export function SignIn() {
             </p>
             <div className="field">
               <label htmlFor="otp">Code</label>
-              <input id="otp" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={8}
+              <input id="otp" type="text" enterKeyHint="done" inputMode="numeric" autoComplete="one-time-code" maxLength={8}
                 value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} />
             </div>
             {pending.kind === "recovery" && (
@@ -245,13 +245,13 @@ export function SignIn() {
 
             <div className="field">
               <label htmlFor="email">Email</label>
-              <input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <input id="email" type="email" enterKeyHint={mode === "login" || mode === "create" ? "next" : "send"} autoCapitalize="none" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
 
             {(mode === "login" || mode === "create") && (
               <div className="field">
                 <label htmlFor="password">Password</label>
-                <input id="password" type="password" minLength={mode === "create" ? MIN_PASSWORD : undefined}
+                <input id="password" type="password" enterKeyHint="go" minLength={mode === "create" ? MIN_PASSWORD : undefined}
                   autoComplete={mode === "create" ? "new-password" : "current-password"}
                   value={password} onChange={(e) => setPassword(e.target.value)} />
                 {mode === "create" && <span className="hint">At least {MIN_PASSWORD} characters. We&rsquo;ll email a code to confirm it&rsquo;s you.</span>}

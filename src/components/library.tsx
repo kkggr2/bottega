@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
+import { isNativeApp } from "@/lib/native";
+import { useAuth } from "./auth";
 import { accept, befriend, unfriend } from "@/lib/friends";
 import { shareLink } from "@/lib/native";
 import { joinDid, lastSeen, NOW_SLOTS, NOW_WORDS, nowAt, nowId, type NowPiece } from "@/lib/now";
@@ -176,7 +178,7 @@ function Library({ me }: { me: Profile }) {
         <div className="addfriend">
           <form onSubmit={(e) => { e.preventDefault(); addFriend(); }}>
             <div className="at">
-              <input ref={inputRef} id="friend-input" type="text" autoComplete="off" spellCheck={false} maxLength={21}
+              <input ref={inputRef} id="friend-input" type="text" enterKeyHint="send" autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false} maxLength={21}
                 placeholder="friend's username" aria-label="Friend's username" value={draft}
                 onChange={(e) => setDraft(e.target.value)} />
             </div>
@@ -244,6 +246,7 @@ function Library({ me }: { me: Profile }) {
       </div>
       {friendCount > 0 && <PushAsk userId={me.id} />}
       <EmailSwitch userId={me.id} />
+      <AppSignOut />
 
       {friendCount < 3 ? (
         <div className="invite">
@@ -327,4 +330,12 @@ function PushAsk({ userId }: { userId: string }) {
       </div>
     </div>
   );
+}
+
+/** In the app the top links are replaced by the tab bar, so signing out lives here. */
+function AppSignOut() {
+  const auth = useAuth();
+  const native = useSyncExternalStore(() => () => {}, isNativeApp, () => false);
+  if (!native) return null;
+  return <p className="lib-note"><button className="linkish" type="button" onClick={() => auth.signOut()}>Sign out</button></p>;
 }

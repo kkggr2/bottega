@@ -5,6 +5,29 @@ import WidgetKit
 class BottegaViewController: CAPBridgeViewController {
     override open func capacitorDidLoad() {
         bridge?.registerPluginInstance(WidgetBridgePlugin())
+        // Swipe in from the left edge to go back, like any iPhone app.
+        webView?.allowsBackForwardNavigationGestures = true
+        applyTextSize()
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(applyTextSize),
+            name: UIContentSizeCategory.didChangeNotification, object: nil)
+    }
+
+    /// Follows Settings → Display & Brightness → Text Size (and the larger Accessibility sizes),
+    /// scaling the whole page so nothing overlaps.
+    @objc func applyTextSize() {
+        let zoom: CGFloat
+        switch traitCollection.preferredContentSizeCategory {
+        case .extraLarge: zoom = 1.08
+        case .extraExtraLarge: zoom = 1.16
+        case .extraExtraExtraLarge: zoom = 1.24
+        case .accessibilityMedium: zoom = 1.32
+        case .accessibilityLarge: zoom = 1.42
+        case .accessibilityExtraLarge: zoom = 1.52
+        case .accessibilityExtraExtraLarge, .accessibilityExtraExtraExtraLarge: zoom = 1.62
+        default: zoom = 1.0
+        }
+        webView?.pageZoom = zoom
     }
 }
 

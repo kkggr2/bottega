@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { befriend, friendshipWith, relationOf, unfriend, type Relation } from "@/lib/friends";
 import { removeMedia, signedUrls } from "@/lib/media";
 import { markSeen, NOW_WORDS, since, slotFor } from "@/lib/now";
+import { around, useNeighbors } from "@/lib/neighbors";
 import { dropNeedle } from "@/lib/needle";
 import { notifyFriends } from "@/lib/push";
 import { shareLink, tap } from "@/lib/native";
@@ -17,6 +19,7 @@ import { Bookcase } from "./bookcase";
 import { useAuth } from "./auth";
 import { Customize } from "./customize";
 import { DOOR_AT, DoorOpen, DoorProgress } from "./door-progress";
+import { ADD_EVENT, takeAddRequest } from "./tab-bar";
 import { Gate } from "./gate";
 import { ImportSheet } from "./import-sheet";
 import { MusicCorner } from "./music-corner";
@@ -136,6 +139,41 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
   }, [ownerId, load]);
 
   useEffect(() => () => audioRef.current?.pause(), []);
+
+  // Friends' rooms on either side, for swiping and the ‹ › links.
+  const router = useRouter();
+  const order = useNeighbors(meId, me?.username ?? null, data.state === "ready" ? data.owner.id : null);
+  const { prev, next } = around(order, username);
+  useEffect(() => {
+    if (prev) router.prefetch(`/r/${prev}`);
+    if (next) router.prefetch(`/r/${next}`);
+  }, [prev, next, router]);
+  const swipe = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    // Leave the left edge to the iPhone's own "swipe back".
+    swipe.current = t.clientX > 32 ? { x: t.clientX, y: t.clientY } : null;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = swipe.current;
+    swipe.current = null;
+    if (!start) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x, dy = t.clientY - start.y;
+    if (Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
+    const to = dx < 0 ? next : prev;
+    if (to) { tap(); router.push(`/r/${to}`); }
+  };
+
+  // The tab bar's "Add": open the add sheet in your own room.
+  const isMine = data.state === "ready" && data.owner.id === meId;
+  useEffect(() => {
+    if (!isMine) return;
+    const open = () => setEditing({ piece: null });
+    if (takeAddRequest()) open(); // arriving from "Add" elsewhere
+    window.addEventListener(ADD_EVENT, open);
+    return () => window.removeEventListener(ADD_EVENT, open);
+  }, [isMine]);
 
   const stopMusic = useCallback(() => {
     audioRef.current?.pause();
@@ -301,7 +339,15 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
     <div>
       <section className="door">
         <div>
-          <Link className="back mono" href="/">{me ? "← Library" : "← Bottega"}</Link>
+          <div className="room-nav">
+            <Link className="back mono" href="/">{me ? "← Library" : "← Bottega"}</Link>
+            {(prev || next) && (
+              <span className="neighbors">
+                {prev && <Link href={`/r/${prev}`} aria-label={`Previous room: @${prev}`}>‹ @{prev}</Link>}
+                {next && next !== prev && <Link href={`/r/${next}`} aria-label={`Next room: @${next}`}>@{next} ›</Link>}
+              </span>
+            )}
+          </div>
           <p className="who">{isOwner ? "Your room" : `@${owner.username}`}</p>
           <h1>{room.name}</h1>
           {room.tagline && <p className="tag">{room.tagline}</p>}
@@ -337,7 +383,8 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
         <DoorOpen onShare={() => { setDoorOpen(false); setSharing(true); }} onClose={() => setDoorOpen(false)} />
       )}
 
-      <section className="room" style={roomStyle(room)} aria-label={`${room.name}, @${owner.username}'s room`}>
+      <section className="room" style={roomStyle(room)} aria-label={`${room.name}, @${owner.username}'s room`}
+        onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         <div className={`wall p-${room.wallpaper}`}>
           {!canView ? (
             <div className="empty-wall">
