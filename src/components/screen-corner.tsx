@@ -115,10 +115,8 @@ export function ScreenCorner({
   // The TV is on when you walk in, sound off. Tapping turns the sound on (one sound at a time with the record).
   const quiet = useSyncExternalStore(subscribeMotion, quietPreferred, () => true);
   const withSound = tvOn && Boolean(playLink);
-  const src = !current ? null
-    : withSound ? sceneEmbed(playLink, clipStart, clipEnd)
-    : quiet ? null
-    : sceneEmbed(playLink, clipStart, clipEnd, true, true);
+  // Phones won't start a fresh player with sound, so it always starts muted and the sound is turned up inside it.
+  const src = !current || (quiet && !withSound) ? null : sceneEmbed(playLink, clipStart, clipEnd, true, true);
   const soundOn = () => { if (current) onInsert(current); };
   const span = current && current.clip_start != null
     ? `${formatTime(current.clip_start)}${current.clip_end != null ? `–${formatTime(current.clip_end)}` : ""}`
@@ -133,7 +131,7 @@ export function ScreenCorner({
             <div className={`tv-screen${src ? " on" : ""}`}>
               {src ? (
                 <Broadcast
-                  key={`${current!.id}${withSound ? ":sound" : ""}`}
+                  key={current!.id}
                   src={src}
                   still={still}
                   tall={tall}
@@ -229,7 +227,8 @@ const YT_ORIGIN = "https://www.youtube-nocookie.com";
  * The scene on the screen, filling the glass, without YouTube's loading screen and title bar.
  * The still stays up until the video is really playing, then fades. The muted player is three screens tall,
  * so its title bar and logo sit off the screen while the picture fills it.
- * If the phone won't start the video by itself (Low Power Mode, or sound without a tap inside the player),
+ * It always starts muted (phones won't autoplay sound); sound is turned on through the player's API.
+ * If the phone won't start the video by itself (Low Power Mode),
  * the still says Play and lets the tap through to the player underneath, so one tap starts it.
  */
 function Broadcast({ src, still, tall, muted, title, onSound }: {
@@ -263,15 +262,33 @@ function Broadcast({ src, still, tall, muted, title, onSound }: {
       }
     };
     window.addEventListener("message", onMessage);
-    const timer = setTimeout(() => { if (!started) setStuck(true); }, muted ? 3500 : 2500);
+    const timer = setTimeout(() => { if (!started) setStuck(true); }, 3500);
     return () => {
       window.removeEventListener("message", onMessage);
       clearTimeout(timer);
     };
-  }, [muted]);
+  }, []);
 
   // Ask the player to report when it starts.
-  const listen = () => frame.current?.contentWindow?.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), YT_ORIGIN);
+  const send = (message: object) => frame.current?.contentWindow?.postMessage(JSON.stringify(message), YT_ORIGIN);
+  const listen = () => send({ event: "listening", id: 1, channel: "widget" });
+  const command = (func: string, args: unknown[] = []) => send({ event: "command", func, args });
+  const sound = (on: boolean) => {
+    if (on) { command("unMute"); command("setVolume", [100]); command("playVideo"); }
+    else command("mute");
+  };
+
+  // The phone pauses a silent video scrolled off screen; start it again when the TV comes back into view.
+  useEffect(() => {
+    const el = frame.current;
+    if (!muted || !el || typeof IntersectionObserver === "undefined") return;
+    const seen = new IntersectionObserver(([entry]) => { if (entry?.isIntersecting) command("playVideo"); }, { threshold: 0.3 });
+    seen.observe(el);
+    return () => seen.disconnect();
+  }, [muted]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sound on or off without reloading the player. Sent again once it's playing, in case it wasn't ready.
+  useEffect(() => { sound(!muted); }, [muted, playing]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>
@@ -292,7 +309,7 @@ function Broadcast({ src, still, tall, muted, title, onSound }: {
         {stuck && <span className="tv-sound">{"\u25B6\uFE0E"} Play</span>}
       </span>
       {muted && playing && (
-        <button type="button" className="tv-tap" onClick={onSound} aria-label={`Play ${title} with sound`}>
+        <button type="button" className="tv-tap" onClick={() => { sound(true); onSound(); }} aria-label={`Play ${title} with sound`}>
           <span className="tv-sound">Tap for sound</span>
         </button>
       )}
