@@ -18,6 +18,7 @@ import { THEMES, USERNAME } from "@/lib/themes";
 import type { Friendship, Profile, RoomWithOwner } from "@/lib/types";
 import { Gate } from "./gate";
 import { QuizCard } from "./quiz";
+import { TonightRooms } from "./chat";
 
 export function LibraryScreen() {
   return <Gate>{(me) => <Library me={me} />}</Gate>;
@@ -228,6 +229,7 @@ function Library({ me }: { me: Profile }) {
       </section>
 
       <QuizCard />
+      <TonightRooms />
 
       {(shelf.incoming.length > 0 || shelf.outgoing.length > 0) && (
         <section className="requests" aria-label="Friend requests">

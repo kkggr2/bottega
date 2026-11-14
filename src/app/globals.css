@@ -745,3 +745,41 @@ h1, h2, .door-name, .plaque b, .paper b, .now b { hyphens: auto; -webkit-hyphens
 .clue.quote.long { font-size: clamp(18px, 4.6vw, 22px); }
 .quiz-option.picked { border-color: var(--fg); background: color-mix(in srgb, var(--fg) 12%, var(--surface)); }
 .quiz-option { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+
+/* Tonight's rooms and messages */
+.tonight { display: grid; gap: 10px; margin-bottom: 28px; }
+.tonight-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.tonight-head h2 { font: 400 26px/1.1 var(--font-display); }
+.tonight-list { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.tonight-room { display: grid; gap: 3px; padding: 14px 16px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); color: inherit; text-decoration: none; }
+.tonight-room b { font: 400 21px/1.15 var(--font-display); }
+.badge { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; margin-left: 6px; border-radius: 10px; background: var(--brass); color: #fff; font-size: 12px; font-weight: 600; }
+.chat { max-width: 680px; margin: 0 auto; padding-block: 24px 40px; display: grid; gap: 12px; }
+.chat .back { text-decoration: none; }
+.chat h1 { font: 400 clamp(30px, 7vw, 44px)/1.05 var(--font-display); }
+.chat h1 .plain { color: inherit; text-decoration: none; }
+.chat-members { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.chat-member { flex: none; display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: inherit; text-decoration: none; font-size: 13px; }
+.chat-member img, .chat-member .noart { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; background: var(--line); display: block; }
+.chat-log { display: grid; gap: 6px; align-content: start; min-height: 40vh; padding: 8px 0; }
+.chat-empty { padding: 24px 0; text-align: center; }
+.chat-msg { justify-self: start; max-width: 85%; display: grid; gap: 2px; text-align: left; padding: 9px 13px; border-radius: 16px 16px 16px 4px; background: var(--surface); border: 1px solid var(--line); color: var(--fg); font-size: 15.5px; }
+.chat-msg.mine { justify-self: end; border-radius: 16px 16px 4px 16px; background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.chat-msg .who { font-size: 12.5px; font-weight: 600; }
+.chat-msg .body { white-space: pre-wrap; overflow-wrap: anywhere; }
+.chat-msg .when { font-size: 11.5px; }
+.chat-msg.mine .muted { color: color-mix(in srgb, var(--bg) 70%, transparent); }
+.chat-send { position: sticky; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 8px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.chat-send input { border: 0; background: transparent; padding: 6px 10px; font-size: 16px; min-width: 0; }
+.chat-send input:focus { outline: none; }
+.thread-h { font: 400 22px/1.2 var(--font-display); margin-top: 8px; }
+.threads { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.threads a { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 12px 14px; border-radius: 12px; color: inherit; text-decoration: none; }
+.threads a:hover { background: var(--surface); }
+.threads a .muted:not(.when) { grid-column: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.threads a .when { grid-column: 2; grid-row: 1 / span 2; align-self: center; font-size: 12.5px; }
+.threads a.unread b { font-weight: 700; }
+.sheet-quote { font: italic 400 20px/1.3 var(--font-display); padding-left: 14px; border-left: 3px solid var(--brass); overflow-wrap: anywhere; }
+.tonight-head .btn { display: inline-flex; align-items: center; white-space: nowrap; flex: none; }
+.sheet-quote { padding-right: 44px; margin: 0; white-space: normal; }
+.sheet .stack > .btn { text-align: center; }

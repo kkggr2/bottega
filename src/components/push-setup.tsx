@@ -22,5 +22,9 @@ export function PushSetup() {
 export function pathFromUrl(url: string): string {
   // bottega://r/cagla (widget, notifications) or https://bottegarooms.com/r/cagla (a shared link).
   const m = url.match(/^(?:bottega:\/\/|https:\/\/(?:www\.)?bottegarooms\.com\/)r\/([a-z0-9_]{3,20})/i);
-  return m ? `/r/${m[1].toLowerCase()}` : "/";
+  if (m) return `/r/${m[1].toLowerCase()}`;
+  // bottega://messages/cagla — a private message notification.
+  const dm = url.match(/^bottega:\/\/messages\/([a-z0-9_]{3,20})/i);
+  if (dm) return `/messages?with=${dm[1].toLowerCase()}`;
+  return "/";
 }

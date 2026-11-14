@@ -18,6 +18,7 @@ export default function Privacy() {
         <li><b>Your account:</b> your email address and password (stored scrambled, never readable), and your username.</li>
         <li><b>Your room:</b> what you add (titles, your notes, links, images and sound clips you upload), your room&rsquo;s name and look, and what you leave on the turntable, in the TV or on the armchair.</li>
         <li><b>Your friends:</b> who you&rsquo;re friends with, requests, people you&rsquo;ve blocked, and reports you send.</li>
+        <li><b>Messages:</b> what you write in tonight&rsquo;s rooms (seen by others with the same artist, director or author on, and deleted after two days) and your private messages (seen only by you and the person you write to, kept until one of you deletes them or the account). Your daily quiz scores are shown on that day&rsquo;s high score table.</li>
         <li><b>How Bottega is used:</b> simple events such as opening the app, viewing a room, adding something or sharing a link, with a random ID for your device and, when signed in, your account. We use these only to see whether Bottega works for people, never for advertising.</li>
         <li><b>Notifications:</b> if you allow them, your phone&rsquo;s notification address, and whether you want the daily email.</li>
         <li><b>On your device:</b> small settings like that random ID and which friends&rsquo; rooms you&rsquo;ve already seen.</li>
@@ -39,7 +40,8 @@ export default function Privacy() {
       <h2>How long it&rsquo;s kept</h2>
       <p>
         Until you delete it. <b>Delete my account</b> at the bottom of your library removes your account, room, uploads,
-        friends and settings for good. Usage events are kept only in a form no longer linked to you.
+        friends, messages and settings for good. Usage events are kept only in a form no longer linked to you.
+        If someone reports a message, a copy of it is kept with the report so it can be reviewed.
       </p>
 
       <h2>Your rights</h2>

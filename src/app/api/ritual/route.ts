@@ -27,8 +27,12 @@ export async function GET(request: NextRequest) {
     return new Response("Not allowed", { status: 401 });
   }
   const db = supabaseAdmin();
-  if (!db || !apnsConfigured()) return Response.json({ sent: 0, reason: "not set up" });
+  if (!db) return Response.json({ sent: 0, reason: "not set up" });
 
+  // Chat rooms last a day; clear out anything older than two (reports keep their own copy).
+  await db.rpc("purge_chat");
+
+  if (!apnsConfigured()) return Response.json({ sent: 0, reason: "no push" });
   const { data, error } = await db.rpc("ritual_targets");
   if (error) return Response.json({ error: error.message }, { status: 500 });
   const targets = ((data ?? []) as { user_id: string; token: string; platform: string; slots: string[] }[])

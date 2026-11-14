@@ -26,7 +26,8 @@ export default function Terms() {
         <li>someone else&rsquo;s copyrighted work that you don&rsquo;t have the right to share</li>
       </ul>
       <p>
-        Anyone can <b>report</b> a room or <b>block</b> a person from the ⋯ button in their room. Reports are reviewed within
+        Anyone can <b>report</b> a room or <b>block</b> a person from the ⋯ button in their room, and any message by tapping it.
+        Messages with slurs are stopped before they&rsquo;re sent. Reports are reviewed within
         24 hours. Content that breaks these rules is removed, and the accounts behind it can be closed.
       </p>
 
