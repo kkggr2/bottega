@@ -2,7 +2,8 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { BANK } from "./bank";
 import type { Quiz } from "./bank-types";
-import { QUIZ_LIMIT_MS, type AnswerResult, type BoardRow, type QuizQuestion, type QuizState } from "./types";
+import { MEDIA } from "./media";
+import { limitFor, QUIZ_LIMIT_MS, type AnswerResult, type BoardRow, type QuizQuestion, type QuizState } from "./types";
 
 /*
  * The daily quiz, run on the server: which quiz is on today, the order each person sees the
@@ -38,9 +39,11 @@ function order(userId: string, quizId: string, index: number): number[] {
   return out;
 }
 
-function points(elapsed: number): number {
-  return 100 + Math.round((50 * Math.max(0, QUIZ_LIMIT_MS - elapsed)) / QUIZ_LIMIT_MS);
+function points(elapsed: number, limit: number): number {
+  return 100 + Math.round((50 * Math.max(0, limit - elapsed)) / limit);
 }
+
+const kindOf = (q: Quiz["qs"][number]) => q.kind ?? "fact";
 
 type Attempt = {
   user_id: string; day: string; quiz_id: string; q_index: number; q_started_at: string;
@@ -50,9 +53,20 @@ type Attempt = {
 function question(quiz: Quiz, userId: string, a: Attempt): QuizQuestion | null {
   if (a.finished_at || a.q_index >= quiz.qs.length) return null;
   const q = quiz.qs[a.q_index];
+  const kind = kindOf(q);
+  const limitMs = limitFor(kind);
   const shown = order(userId, quiz.id, a.q_index).map((i) => q.o[i]);
-  const remainingMs = QUIZ_LIMIT_MS - Math.max(0, Date.now() - Date.parse(a.q_started_at));
-  return { index: a.q_index, text: q.q, options: shown, remainingMs: Math.max(0, remainingMs) };
+  const remainingMs = limitMs - Math.max(0, Date.now() - Date.parse(a.q_started_at));
+  const media = q.media ? MEDIA[q.media] : undefined;
+  return {
+    index: a.q_index, text: q.q, options: shown, remainingMs: Math.max(0, remainingMs), limitMs, kind,
+    // A palette question shows only the colours, never the picture they came from.
+    ...(media && kind !== "palette" ? { image: media.img } : {}),
+    ...(media && kind === "palette" ? { palette: media.palette } : {}),
+    ...(q.crop ? { crop: q.crop } : {}),
+    ...(q.quote ? { quote: q.quote } : {}),
+    ...(q.emoji ? { emoji: q.emoji } : {}),
+  };
 }
 
 async function board(db: SupabaseClient, day: string, userId: string, mine: Attempt | null): Promise<{ rows: BoardRow[]; me: BoardRow | null }> {
@@ -108,7 +122,7 @@ export async function startQuiz(db: SupabaseClient, userId: string): Promise<Qui
     a = await load(db, userId, day);
   }
   // Away too long on the current question: it counts as unanswered, and the next one starts now.
-  if (a && !a.finished_at && Date.now() - Date.parse(a.q_started_at) > QUIZ_LIMIT_MS + GRACE_MS) {
+  if (a && !a.finished_at && Date.now() - Date.parse(a.q_started_at) > limitFor(kindOf(quiz.qs[a.q_index])) + GRACE_MS) {
     await answerQuiz(db, userId, a.q_index, null);
     a = await load(db, userId, day);
   }
@@ -125,9 +139,10 @@ export async function answerQuiz(db: SupabaseClient, userId: string, index: numb
   const q = quiz.qs[index];
   const shown = order(userId, quiz.id, index);
   const elapsed = Math.max(0, Date.now() - Date.parse(a.q_started_at));
-  const inTime = elapsed <= QUIZ_LIMIT_MS + GRACE_MS;
+  const limit = limitFor(kindOf(q));
+  const inTime = elapsed <= limit + GRACE_MS;
   const correct = inTime && choice != null && shown[choice] === q.a;
-  const got = correct ? points(elapsed) : 0;
+  const got = correct ? points(elapsed, limit) : 0;
   const last = index + 1 >= quiz.qs.length;
   const now = new Date().toISOString();
   const nextStarts = new Date(Date.now() + FEEDBACK_MS).toISOString();
@@ -138,7 +153,7 @@ export async function answerQuiz(db: SupabaseClient, userId: string, index: numb
     q_started_at: nextStarts,
     correct: a.correct + (correct ? 1 : 0),
     score: a.score + got,
-    time_ms: a.time_ms + Math.min(elapsed, QUIZ_LIMIT_MS),
+    time_ms: a.time_ms + Math.min(elapsed, limit),
     answers: [...(a.answers ?? []), { q: index, choice: choice == null ? null : shown[choice], ms: elapsed }],
     finished_at: last ? now : null,
   }).eq("user_id", userId).eq("day", day).eq("q_index", index).select("*").maybeSingle();

@@ -3,7 +3,25 @@
 export const QUIZ_LIMIT_MS = 15_000;
 export const QUIZ_LENGTH = 7;
 
-export type QuizQuestion = { index: number; text: string; options: string[]; remainingMs: number };
+export type QuizKind = "fact" | "still" | "cover" | "palette" | "quote" | "emoji";
+
+/** Picture questions get a little longer, for the picture to load and sink in. */
+export const limitFor = (kind: QuizKind): number => (kind === "still" || kind === "cover" || kind === "palette" ? 20_000 : QUIZ_LIMIT_MS);
+
+export type QuizQuestion = {
+  index: number;
+  text: string;
+  options: string[];
+  remainingMs: number;
+  limitMs: number;
+  kind: QuizKind;
+  /** A film still or album cover; for a cover, crop = [x%, y%, zoom]. */
+  image?: string;
+  crop?: [number, number, number];
+  palette?: string[];
+  quote?: string;
+  emoji?: string;
+};
 
 export type BoardRow = { rank: number; username: string; score: number; correct: number; timeMs: number; me: boolean };
 
