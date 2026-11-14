@@ -89,10 +89,11 @@ async function load(db: SupabaseClient, userId: string, day: string): Promise<At
   return (data as Attempt | null) ?? null;
 }
 
-async function stateOf(db: SupabaseClient, userId: string, day: string, a: Attempt | null): Promise<QuizState> {
+async function stateOf(db: SupabaseClient, userId: string, day: string, a: Attempt | null, withBoard = true): Promise<QuizState> {
   const quiz = quizFor(day);
   const tomorrow = quizFor(today(Date.parse(`${day}T00:00:00Z`) + 864e5));
-  const b = await board(db, day, userId, a);
+  // Mid-quiz the high score table isn't shown, so skip it and answer faster.
+  const b = withBoard ? await board(db, day, userId, a) : { rows: [], me: null };
   return {
     day,
     quiz: { id: quiz.id, title: quiz.title, blurb: quiz.blurb, count: quiz.qs.length, limitMs: QUIZ_LIMIT_MS },
@@ -164,6 +165,6 @@ export async function answerQuiz(db: SupabaseClient, userId: string, index: numb
     answer: shown.indexOf(q.a),
     note: q.n ?? null,
     points: got,
-    state: await stateOf(db, userId, day, after),
+    state: await stateOf(db, userId, day, after, Boolean(after?.finished_at)),
   };
 }

@@ -36,6 +36,8 @@ export function QuizGame() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [shown, setShown] = useState<Shown | null>(null);
+  // The answer you tapped, lit up at once while the server marks it.
+  const [picked, setPicked] = useState<number | null>(null);
   const [left, setLeft] = useState(0);
   const deadline = useRef(0);
   const sent = useRef(-1);
@@ -61,16 +63,17 @@ export function QuizGame() {
   const answer = useCallback(async (choice: number | null) => {
     if (!state || !q || sent.current === q.index) return;
     sent.current = q.index;
+    setPicked(choice);
     setBusy(true);
     const r = await call("POST", { action: "answer", index: q.index, choice }).catch(() => null);
     setBusy(false);
     if (!r) return setError("Can't reach Bottega. Check your connection.");
     const data = (await r.json()) as AnswerResult | { error: string; state: QuizState };
-    if ("error" in data) { setState(data.state); return; }
+    if ("error" in data) { setPicked(null); setState(data.state); return; }
     setShown({ picked: choice, answer: data.answer, correct: data.correct, note: data.note, points: data.points });
     if (data.state.attempt?.done) track("quiz_done", { detail: `${data.state.quiz.id}:${data.state.attempt.correct}` });
     // Show right or wrong for a moment; the next question's clock starts after it.
-    setTimeout(() => { setShown(null); setState(data.state); }, 1800);
+    setTimeout(() => { setShown(null); setPicked(null); setState(data.state); }, 1800);
   }, [state, q]);
 
   // Out of time.
@@ -114,15 +117,18 @@ export function QuizGame() {
             <span className="mono">{attempt!.score} points</span>
           </div>
           <div className="quiz-timer" aria-hidden="true">
-            <span style={{ width: `${shown ? 0 : Math.min(100, (left / q.limitMs) * 100)}%` }} className={left < 5000 ? "low" : ""} />
+            <span style={{ width: `${shown ? 0 : Math.min(100, (left / q.limitMs) * 100)}%`, transition: picked != null ? "none" : undefined }} className={left < 5000 ? "low" : ""} />
           </div>
           <Clue q={q} />
           <h2>{q.text}</h2>
           <div className="quiz-options">
             {q.options.map((o, i) => {
-              const cls = shown ? (i === shown.answer ? "right" : i === shown.picked ? "wrong" : "dim") : "";
+              const cls = shown ? (i === shown.answer ? "right" : i === shown.picked ? "wrong" : "dim")
+                : picked != null ? (i === picked ? "picked" : "dim") : "";
               return (
-                <button key={i} type="button" className={`quiz-option ${cls}`} disabled={busy || Boolean(shown)} onClick={() => answer(i)}>
+                <button key={i} type="button" className={`quiz-option ${cls}`} disabled={busy || Boolean(shown) || picked != null}
+                  onPointerDown={() => { if (picked == null && !shown) navigator.vibrate?.(8); }}
+                  onClick={() => answer(i)}>
                   {o}
                 </button>
               );

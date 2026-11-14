@@ -1,5 +1,5 @@
 import { answerQuiz, quizState, startQuiz } from "@/lib/quiz/server";
-import { callerId } from "@/lib/server-auth";
+import { callerIdQuick } from "@/lib/server-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 /*
@@ -12,7 +12,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 async function who(request: Request) {
   const db = supabaseAdmin();
   if (!db) return { error: Response.json({ error: "Not set up" }, { status: 500 }) } as const;
-  const userId = await callerId(db, request);
+  const userId = await callerIdQuick(db, request);
   if (!userId) return { error: Response.json({ error: "Sign in first" }, { status: 401 }) } as const;
   return { db, userId } as const;
 }
