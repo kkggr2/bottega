@@ -7,6 +7,8 @@ export type Found = {
   cover_url: string | null;
   preview_url?: string | null;
   link?: string | null;
+  /** Shown only in search results, to tell versions apart (album, length). */
+  detail?: string;
 };
 
 const year = (date?: string | number | null) => (date ? String(date).slice(0, 4) : "");
@@ -21,6 +23,7 @@ export async function searchSongs(term: string, signal?: AbortSignal): Promise<F
     results: {
       trackId: number; trackName: string; artistName: string; releaseDate?: string;
       artworkUrl100?: string; previewUrl?: string; trackViewUrl?: string;
+      collectionName?: string; trackTimeMillis?: number;
     }[];
   };
   return data.results.map((r) => ({
@@ -31,6 +34,7 @@ export async function searchSongs(term: string, signal?: AbortSignal): Promise<F
     cover_url: r.artworkUrl100?.replace(/\/\d+x\d+bb\./, "/600x600bb.") ?? null,
     preview_url: r.previewUrl?.startsWith("https://audio-ssl.itunes.apple.com/") ? r.previewUrl : null,
     link: r.trackViewUrl?.replace(/[?&]uo=\d+$/, "") ?? null,
+    detail: join(r.collectionName, r.trackTimeMillis ? formatTime(Math.round(r.trackTimeMillis / 1000)) : null),
   }));
 }
 

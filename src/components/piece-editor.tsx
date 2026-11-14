@@ -36,6 +36,14 @@ type Draft = {
 const TYPE_ORDER: PieceType[] = ["song", "book", "scene", "poster", "poem", "game"];
 const SEARCHABLE: PieceType[] = ["song", "book", "scene", "poster"];
 
+/** The number pad has no colon, so digits fill in as a time: 1 → 1, 132 → 1:32, 10405 → 1:04:05. */
+function typeTime(text: string): string {
+  const d = text.replace(/\D/g, "").replace(/^0+(?=\d{3})/, "").slice(0, 6);
+  if (d.length <= 2) return d;
+  if (d.length <= 4) return `${d.slice(0, -2)}:${d.slice(-2)}`;
+  return `${d.slice(0, -4)}:${d.slice(-4, -2)}:${d.slice(-2)}`;
+}
+
 export function PieceEditor({
   ownerId,
   existing,
@@ -274,15 +282,15 @@ export function PieceEditor({
             <div className="field">
               <label htmlFor="ed-start">Starts at</label>
               <input id="ed-start" type="text" inputMode="numeric" placeholder="1:32" value={draft.clipStart}
-                onChange={(e) => set({ clipStart: e.target.value })} />
+                onChange={(e) => set({ clipStart: typeTime(e.target.value) })} />
             </div>
             <div className="field">
               <label htmlFor="ed-end">Ends at</label>
               <input id="ed-end" type="text" inputMode="numeric" placeholder="2:10" value={draft.clipEnd}
-                onChange={(e) => set({ clipEnd: e.target.value })} />
+                onChange={(e) => set({ clipEnd: typeTime(e.target.value) })} />
             </div>
           </div>
-          <span className="hint">The old TV plays just this part. Leave the times empty to play from the start.</span>
+          <span className="hint">Type 132 for 1:32. The old TV plays just this part; leave the times empty to play from the start.</span>
         </div>
       )}
 

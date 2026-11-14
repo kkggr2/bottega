@@ -32,7 +32,7 @@ export function Sheet({
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     };
     document.addEventListener("keydown", onKey);
-    ref.current?.querySelector<HTMLElement>("input, textarea, button")?.focus();
+    ref.current?.querySelector<HTMLElement>("input, textarea, button:not(.sheet-close)")?.focus();
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
@@ -42,10 +42,12 @@ export function Sheet({
     };
   }, [onClose]);
 
+  // Every sheet can be closed from the top, even when it's taller than the screen.
+  const close = <button type="button" className="sheet-close" onClick={onClose} aria-label="Close">{"\u00D7"}</button>;
   const body = onSubmit ? (
-    <form className="sheet" onSubmit={(e) => { e.preventDefault(); onSubmit(e); }}>{children}</form>
+    <form className="sheet" onSubmit={(e) => { e.preventDefault(); onSubmit(e); }}>{close}{children}</form>
   ) : (
-    <div className="sheet">{children}</div>
+    <div className="sheet">{close}{children}</div>
   );
 
   return (

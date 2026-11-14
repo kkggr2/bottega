@@ -20,6 +20,7 @@ export function PushSetup() {
 }
 
 export function pathFromUrl(url: string): string {
-  const m = url.match(/^bottega:\/\/r\/([a-z0-9_]{3,20})/i);
+  // bottega://r/cagla (widget, notifications) or https://bottegarooms.com/r/cagla (a shared link).
+  const m = url.match(/^(?:bottega:\/\/|https:\/\/(?:www\.)?bottegarooms\.com\/)r\/([a-z0-9_]{3,20})/i);
   return m ? `/r/${m[1].toLowerCase()}` : "/";
 }

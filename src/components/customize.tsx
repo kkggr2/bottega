@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { friendlyError, supabase } from "@/lib/supabase";
-import { VISIBILITY, WALLPAPERS } from "@/lib/themes";
+import { roomStyle, VISIBILITY, WALLPAPERS } from "@/lib/themes";
 import type { Room, Visibility, Wallpaper } from "@/lib/types";
 import { Sheet } from "./sheet";
 import { ThemeSwatches } from "./theme-swatches";
@@ -32,6 +32,14 @@ export function Customize({ room, onClose }: { room: Room; onClose: () => void }
   return (
     <Sheet onClose={onClose} onSubmit={save} label="Customize your room">
       <h2>Customize your room</h2>
+      {/* How it will look, updated as you pick. */}
+      <div className="cz-preview" style={roomStyle(draft)} aria-hidden="true">
+        <div className={`wall p-${draft.wallpaper}`}>
+          <span className="cz-frame" />
+          <span className="cz-shelf" />
+          <span className="cz-name">{draft.name.trim() || room.name}{draft.tagline.trim() && <small>{draft.tagline}</small>}</span>
+        </div>
+      </div>
       <div className="field">
         <label htmlFor="cz-name">Room name</label>
         <input id="cz-name" type="text" maxLength={48} value={draft.name}

@@ -73,6 +73,8 @@ p { margin: 0; }
 .btn.small { padding: 5px 12px; font-size: 13.5px; }
 .field { display: grid; gap: 6px; }
 .field label, .field .label { font-size: 13px; font-weight: 500; }
+/* A form label, not the turntable's round record label (which shares the class name). */
+.field .label { width: auto; aspect-ratio: auto; border-radius: 0; overflow: visible; background: none; }
 .hint { font-size: 12.5px; color: var(--muted); }
 input[type="text"], input[type="email"], input[type="password"], input[type="url"], input[type="search"], textarea {
   width: 100%; border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
@@ -168,7 +170,14 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .overlay { position: fixed; inset: 0; z-index: 50; background: rgba(10, 12, 11, .55); display: grid; place-items: center;
   padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
 .sheet { background: var(--surface); color: var(--fg); border-radius: 16px; width: min(620px, 100%); max-height: 100%; overflow: auto; padding: 26px; box-shadow: 0 20px 60px rgba(0,0,0,.35); display: grid; gap: 18px; }
-.sheet h2 { font: 400 32px/1.1 var(--font-display); }
+.sheet h2 { font: 400 32px/1.1 var(--font-display); padding-right: 44px; }
+.sheet-close { position: sticky; top: 0; z-index: 3; justify-self: end; width: 36px; height: 36px; margin-bottom: -54px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--fg); font-size: 20px; line-height: 1; display: grid; place-items: center; padding: 0; }
+.cz-preview { position: sticky; top: 0; z-index: 2; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 18px rgba(0,0,0,.18); }
+.cz-preview .wall { min-height: 0; height: 128px; padding: 14px 16px; display: flex; align-items: flex-end; gap: 14px; color: var(--rink); }
+.cz-preview .cz-frame { width: 44px; height: 62px; align-self: flex-start; border: 4px solid color-mix(in srgb, var(--rink) 80%, transparent); background: var(--raccent); border-radius: 2px; }
+.cz-preview .cz-shelf { width: 70px; height: 34px; margin-bottom: 14px; border-bottom: 5px solid var(--floor); background: repeating-linear-gradient(90deg, var(--raccent) 0 8px, color-mix(in srgb, var(--rink) 70%, transparent) 8px 15px, transparent 15px 18px); background-size: 54px 100%; background-repeat: no-repeat; }
+.cz-preview .cz-name { margin: 0 0 18px auto; text-align: right; font: 400 18px/1.15 var(--font-display); max-width: 55%; overflow-wrap: anywhere; }
+.cz-preview .cz-name small { display: block; font: italic 12px/1.3 var(--font-display); opacity: .75; }
 .sheet .row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .sheet .row.split { justify-content: space-between; }
 .detail-media { border-radius: 10px; overflow: hidden; background: #111; }
@@ -192,6 +201,11 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 
 /* ---------- editor: search ---------- */
 .results { list-style: none; margin: 4px 0 0; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); max-height: 320px; overflow: auto; display: grid; gap: 2px; }
+.results li { display: flex; align-items: center; gap: 4px; }
+.results li > button:first-child { flex: 1; min-width: 0; }
+.results .listen { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; padding: 0; font-size: 14px; margin-right: 4px; }
+.results .listen[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.results .detail { display: block; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .8; }
 .results button { width: 100%; display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left; background: none; border: 0; border-radius: 8px; padding: 6px; }
 .results button:hover, .results button:focus-visible { background: var(--surface); }
 .results img, .results .noart { width: 44px; height: 44px; object-fit: cover; border-radius: 4px; background: var(--line); display: block; }

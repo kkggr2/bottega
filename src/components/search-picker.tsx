@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Found } from "@/lib/lookup";
 
 /* eslint-disable @next/next/no-img-element -- remote cover thumbnails */
@@ -47,6 +47,21 @@ export function SearchPicker({
 
   const showResults = term.trim().length >= 2 && results.length > 0;
 
+  // Listen to a result before picking it, so you can find the right version.
+  const audio = useRef<HTMLAudioElement | null>(null);
+  const [listening, setListening] = useState<string | null>(null);
+  const stop = () => { audio.current?.pause(); setListening(null); };
+  const listen = (r: Found) => {
+    if (listening === r.id) return stop();
+    audio.current?.pause();
+    const a = new Audio(r.preview_url!);
+    a.onended = () => setListening(null);
+    audio.current = a;
+    setListening(r.id);
+    a.play().catch(() => setListening(null));
+  };
+  useEffect(() => () => audio.current?.pause(), []);
+
   return (
     <div className="field">
       <label htmlFor={id}>{label}</label>
@@ -63,11 +78,16 @@ export function SearchPicker({
         <ul className="results" id={`${id}-results`}>
           {results.map((r) => (
             <li key={r.id}>
-              <button type="button" onClick={() => { onPick(r); setTerm(""); setResults([]); }}>
+              <button type="button" onClick={() => { stop(); onPick(r); setTerm(""); setResults([]); }}>
                 {r.cover_url ? <img src={r.cover_url} alt="" loading="lazy" /> : <span className="noart" aria-hidden="true" />}
-                <span><b>{r.title}</b><span className="muted">{r.subtitle}</span></span>
-                {r.preview_url && <span className="mono muted">preview</span>}
+                <span><b>{r.title}</b><span className="muted">{r.subtitle}</span>{r.detail && <span className="detail muted">{r.detail}</span>}</span>
               </button>
+              {r.preview_url && (
+                <button type="button" className="listen" aria-pressed={listening === r.id} onClick={() => listen(r)}
+                  aria-label={listening === r.id ? `Stop ${r.title}` : `Listen to ${r.title}`}>
+                  {listening === r.id ? "\u25A0" : "\u25B6\uFE0E"}
+                </button>
+              )}
             </li>
           ))}
         </ul>

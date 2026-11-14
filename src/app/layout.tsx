@@ -22,6 +22,8 @@ export const metadata: Metadata = {
   description: "Everyone gets one room. Fill it with your taste and step into your friends'.",
   applicationName: "Bottega",
   appleWebApp: { capable: true, title: "Bottega", statusBarStyle: "black-translucent" },
+  // Safari on iPhone shows an "Open in the Bottega app" banner.
+  itunes: { appId: "6832240962" },
   formatDetection: { telephone: false },
 };
 
