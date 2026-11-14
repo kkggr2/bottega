@@ -17,6 +17,7 @@ import { pathFromUrl } from "./push-setup";
 import { THEMES, USERNAME } from "@/lib/themes";
 import type { Friendship, Profile, RoomWithOwner } from "@/lib/types";
 import { Gate } from "./gate";
+import { QuizCard } from "./quiz";
 
 export function LibraryScreen() {
   return <Gate>{(me) => <Library me={me} />}</Gate>;
@@ -225,6 +226,8 @@ function Library({ me }: { me: Profile }) {
           <p className={`msg ${msg?.kind ?? ""}`} aria-live="polite">{msg?.text}</p>
         </div>
       </section>
+
+      <QuizCard />
 
       {(shelf.incoming.length > 0 || shelf.outgoing.length > 0) && (
         <section className="requests" aria-label="Friend requests">

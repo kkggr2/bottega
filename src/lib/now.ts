@@ -29,6 +29,19 @@ export const NOW_WORDS: Record<NowSlot, { put: string; take: string; did: (title
   book: { put: "Leave it on the armchair", take: "Put it back on the shelf", did: (t) => `left ${t} on the armchair`, where: "On the armchair" },
 };
 
+/**
+ * Once a day: a slot can change again 24 hours after it was last filled
+ * (with 10 minutes to change your mind). Matches public.check_now_playing in the database.
+ * Returns how long is left, like "5 hours" or "40 minutes", or null if it can change now.
+ */
+export function waitFor(at: string | null | undefined, now = Date.now()): string | null {
+  if (!at) return null;
+  const age = now - new Date(at).getTime();
+  if (age < 10 * 60e3 || age >= 24 * 3600e3) return null;
+  const left = 24 * 3600e3 - age;
+  return left >= 3600e3 ? `${Math.ceil(left / 3600e3)} hours` : `${Math.max(1, Math.ceil(left / 60e3))} minutes`;
+}
+
 /** "today", "yesterday", "since Tuesday", or a date for anything older than a week. */
 export function since(iso: string | null | undefined, now = new Date()): string {
   if (!iso) return "";

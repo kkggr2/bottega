@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { befriend, friendshipWith, relationOf, unfriend, type Relation } from "@/lib/friends";
 import { removeMedia, signedUrls } from "@/lib/media";
-import { markSeen, NOW_WORDS, since, slotFor } from "@/lib/now";
+import { markSeen, NOW_WORDS, since, slotFor, waitFor } from "@/lib/now";
 import { around, useNeighbors } from "@/lib/neighbors";
 import { loadRecommendations, type Recommendation } from "@/lib/wall";
 import { dropNeedle } from "@/lib/needle";
@@ -311,6 +311,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
     if (!slot) return;
     const { error } = await supabase().from("rooms").update({ [`now_${slot}`]: on ? piece.id : null }).eq("owner_id", owner.id);
     if (error) {
+      if (/once a day/i.test(error.message)) return setNotice(error.message);
       return setNotice(/now_/.test(error.message)
         ? "The database needs its latest update. Run the newest file in supabase/migrations in the Supabase SQL editor."
         : friendlyError(error, "Couldn't change that. Try again."));
@@ -513,6 +514,8 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
             put: NOW_WORDS[detailSlot].put,
             take: NOW_WORDS[detailSlot].take,
             set: (on) => setNow(detail, on),
+            wait: waitFor(room[`now_${detailSlot}_at`]),
+            what: detailSlot === "song" ? "record" : detailSlot,
           } : undefined}
         />
       )}
