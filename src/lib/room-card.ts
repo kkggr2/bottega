@@ -1,3 +1,4 @@
+import qrcode from "qrcode-generator";
 import { imageOf } from "./piece-media";
 import { THEMES } from "./themes";
 import type { Piece, Room } from "./types";
@@ -262,14 +263,35 @@ export async function drawRoomCard(room: Room, username: string, pieces: Piece[]
   ctx.fill();
   shadow(ctx, false);
   ctx.fillStyle = "#2A2420";
-  ctx.font = `400 52px ${display}`;
-  ctx.fillText("Step into my room on Bottega", 120, floorY + 135);
-  ctx.font = `400 30px ${body}`;
+  ctx.font = `400 46px ${display}`;
+  ctx.fillText("Step into my room on Bottega", 120, floorY + 128);
+  ctx.font = `400 28px ${body}`;
   ctx.globalAlpha = 0.7;
-  ctx.fillText([counts, link.replace(/^https?:\/\//, "")].filter(Boolean).join("  ·  "), 120, floorY + 195);
+  ctx.fillText(counts, 120, floorY + 180);
+  ctx.fillText(link.replace(/^https?:\/\//, ""), 120, floorY + 218);
   ctx.globalAlpha = 1;
+  // A QR code, so anyone who sees the story can point their camera and step in.
+  drawQr(ctx, link, W - 80 - 24 - 140, floorY + 80, 140);
 
   return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("encode"))), "image/png"));
+}
+
+/** A QR code for the link, dark on the card's paper colour, with a quiet margin around it. */
+function drawQr(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number) {
+  const qr = qrcode(0, "M");
+  qr.addData(text);
+  qr.make();
+  const n = qr.getModuleCount();
+  const cell = Math.floor(size / n);
+  const used = cell * n;
+  const ox = x + Math.floor((size - used) / 2);
+  const oy = y + Math.floor((size - used) / 2);
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillRect(x - 8, y - 8, size + 16, size + 16);
+  ctx.fillStyle = "#1E1915";
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) if (qr.isDark(r, c)) ctx.fillRect(ox + c * cell, oy + r * cell, cell, cell);
+  }
 }
 
 /** The piece the card leads with: one with the owner's words and a picture, films first. */

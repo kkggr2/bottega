@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AnswerResult, BoardRow, QuizQuestion, QuizState } from "@/lib/quiz/types";
 import { supabase } from "@/lib/supabase";
+import { askForReviewSoon } from "@/lib/review";
 import { track } from "@/lib/track";
 import { Gate } from "./gate";
 
@@ -71,7 +72,10 @@ export function QuizGame() {
     const data = (await r.json()) as AnswerResult | { error: string; state: QuizState };
     if ("error" in data) { setPicked(null); setState(data.state); return; }
     setShown({ picked: choice, answer: data.answer, correct: data.correct, note: data.note, points: data.points });
-    if (data.state.attempt?.done) track("quiz_done", { detail: `${data.state.quiz.id}:${data.state.attempt.correct}` });
+    if (data.state.attempt?.done) {
+      track("quiz_done", { detail: `${data.state.quiz.id}:${data.state.attempt.correct}` });
+      if (data.state.attempt.correct >= 5) askForReviewSoon();
+    }
     // Show right or wrong for a moment; the next question's clock starts after it.
     setTimeout(() => { setShown(null); setPicked(null); setState(data.state); }, 1800);
   }, [state, q]);
