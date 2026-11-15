@@ -15,7 +15,11 @@ export function PieceView({ piece, urls, onOpen }: { piece: Piece; urls: Record<
     <div className="piece">
       {piece.type === "poem" ? (
         <button className="obj" type="button" onClick={onOpen} aria-label={`Poem: ${piece.title}`}>
-          <div className="paper"><b>{piece.title}</b><p>{piece.body.slice(0, 600)}</p></div>
+          <div className="paper">
+            <b>{piece.title}</b>
+            <p>{firstStanza(piece.body)}</p>
+            {firstStanza(piece.body).length < piece.body.trim().length && <span className="read-on">Read on</span>}
+          </div>
         </button>
       ) : (
         <button className="obj" type="button" onClick={onOpen} aria-label={`Poster: ${piece.title}`}>
@@ -26,10 +30,16 @@ export function PieceView({ piece, urls, onOpen }: { piece: Piece; urls: Record<
           </div>
         </button>
       )}
-      <button className="plaque" type="button" onClick={onOpen} tabIndex={-1} aria-hidden="true">
-        <b>{piece.title}</b>
-        {words ? <q>{words}</q> : piece.subtitle ? <span>{piece.subtitle}</span> : null}
-      </button>
+      {piece.type !== "poem" ? (
+        // A small museum card: the title, the maker and year in small capitals, then the owner's words.
+        <button className="plaque" type="button" onClick={onOpen} tabIndex={-1} aria-hidden="true">
+          <b>{piece.title}</b>
+          {piece.subtitle && <span className="smallcaps">{piece.subtitle}</span>}
+          {words && <q>{words}</q>}
+        </button>
+      ) : piece.subtitle ? (
+        <span className="smallcaps plaque-note">{piece.subtitle}</span>
+      ) : null}
     </div>
   );
 }
@@ -38,5 +48,10 @@ export function PieceView({ piece, urls, onOpen }: { piece: Piece; urls: Record<
 function firstLine(body: string): string {
   const text = body.trim().split(/\n/)[0] ?? "";
   const sentence = text.match(/^.*?[.!?…](\s|$)/)?.[0]?.trim() ?? text;
-  return sentence.length > 90 ? `${sentence.slice(0, 87).trimEnd()}…` : sentence;
+  return sentence.length > 150 ? `${sentence.slice(0, 147).trimEnd()}…` : sentence;
+}
+
+/** A poem on the wall shows its first stanza, at most six lines, so it never stops mid-line. */
+function firstStanza(body: string): string {
+  return (body.trim().split(/\n\s*\n/)[0] ?? "").split("\n").slice(0, 6).join("\n");
 }

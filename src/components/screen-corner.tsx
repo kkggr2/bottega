@@ -257,6 +257,14 @@ function Broadcast({ src, still, tall, muted, title, onSound }: {
           setPlaying(true);
           setStuck(false);
         }
+        // At the end, go round again from the scene's start, instead of showing YouTube's replay screen.
+        if (state === 0) {
+          const start = Number(new URL(src).searchParams.get("start") ?? 0) || 0;
+          const post = (func: string, args: unknown[] = []) =>
+            frame.current?.contentWindow?.postMessage(JSON.stringify({ event: "command", func, args }), YT_ORIGIN);
+          post("seekTo", [start, true]);
+          post("playVideo");
+        }
       } catch {
         // Not a player message.
       }
@@ -267,7 +275,7 @@ function Broadcast({ src, still, tall, muted, title, onSound }: {
       window.removeEventListener("message", onMessage);
       clearTimeout(timer);
     };
-  }, []);
+  }, [src]);
 
   // Ask the player to report when it starts.
   const send = (message: object) => frame.current?.contentWindow?.postMessage(JSON.stringify(message), YT_ORIGIN);

@@ -9,6 +9,7 @@ export function TopBar() {
   return (
     <header className="bar">
       <Link href="/" className="brand">
+        <DoorMark />
         <b>Bottega</b>
       </Link>
       {/* The current path is only known at request time, so the nav streams in. */}
@@ -30,5 +31,18 @@ function Nav() {
       <Link href={mine} aria-current={pathname === mine ? "page" : undefined}>My room</Link>
       <button type="button" onClick={() => auth.signOut()}>Sign out</button>
     </nav>
+  );
+}
+
+/** The door, slightly open, with warm light coming out: "step inside". */
+function DoorMark() {
+  return (
+    <svg className="door-mark" viewBox="0 0 24 30" aria-hidden="true">
+      <path d="M3 29V11a9 9 0 0 1 18 0v18" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M6.5 28V12.5a5.5 5.5 0 0 1 5.5-5.5" fill="none" stroke="currentColor" strokeWidth="1.2" opacity=".55" />
+      <path d="M12 7a5.5 5.5 0 0 1 5.5 5.5V28H12z" fill="var(--brass)" opacity=".9" />
+      <path d="M12 7l-3.2 2.4V29.2L12 28z" fill="currentColor" />
+      <circle cx="10.4" cy="18.5" r=".8" fill="var(--bg)" />
+    </svg>
   );
 }

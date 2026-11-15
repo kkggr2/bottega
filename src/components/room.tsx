@@ -14,6 +14,7 @@ import { shareLink, tap } from "@/lib/native";
 import { audioOf } from "@/lib/piece-media";
 import { friendlyError, supabase } from "@/lib/supabase";
 import { rememberInvite } from "@/lib/clubs";
+import { useRoomColors } from "@/lib/room-colors";
 import { rememberCameFrom, track } from "@/lib/track";
 import { MAX_PIECES, PIECE_TYPES, roomStyle } from "@/lib/themes";
 import type { Piece, PieceType, Profile, Room } from "@/lib/types";
@@ -177,6 +178,8 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
 
   // The tab bar's "Add": open the add sheet in your own room.
   const isMine = data.state === "ready" && data.owner.id === meId;
+  // Inside a room you can see, the whole screen takes on its colours.
+  useRoomColors(data.state === "ready" && data.canView ? data.room.theme : null);
   useEffect(() => {
     if (!isMine) return;
     const open = () => setEditing({ piece: null });

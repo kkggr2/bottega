@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { NOW_WORDS } from "@/lib/now";
 import { dropNeedle } from "@/lib/needle";
 import { audioOf } from "@/lib/piece-media";
+import { useRoomColors } from "@/lib/room-colors";
 import { roomStyle } from "@/lib/themes";
 import { track } from "@/lib/track";
 import type { Piece, PieceType, Room } from "@/lib/types";
@@ -61,15 +62,16 @@ const PIECES: Piece[] = [
   piece("book", "The Secret History", "Donna Tartt · 1992", { cover_url: ol(744854) }),
   piece("book", "Normal People", "Sally Rooney · 2018", { cover_url: ol(8794265) }),
   piece("book", "A Little Life", "Hanya Yanagihara · 2015", { cover_url: ol(12065783) }),
-  piece("scene", "Big Buck Bunny", "Blender Foundation · 2008", {
-    link: "https://www.youtube.com/watch?v=aqz-KE-bpKQ", cover_url: "https://i.ytimg.com/vi/aqz-KE-bpKQ/hqdefault.jpg",
-    clip_start: 72, clip_end: 120, body: "The butterflies. Pure morning.",
+  piece("scene", "Chungking Express", "Wong Kar-wai · 1994", {
+    link: "https://www.youtube.com/watch?v=P9Mxf_6pVA0", cover_url: "https://image.tmdb.org/t/p/w780/vuglA60RqvpHK9rIcG8sXaiWw1L.jpg",
+    body: "California Dreamin' on repeat behind a snack bar counter. Nobody has ever looked this hopeful.",
   }),
-  piece("scene", "Sintel", "Blender Foundation · 2010", {
-    link: "https://www.youtube.com/watch?v=eRsGyueVLvQ", cover_url: "https://i.ytimg.com/vi/eRsGyueVLvQ/hqdefault.jpg", clip_start: 300, clip_end: 370,
+  piece("scene", "Past Lives", "Celine Song · 2023", {
+    link: "https://www.youtube.com/watch?v=t3hH1bRFm5A", cover_url: "https://image.tmdb.org/t/p/w780/rron9HAuS9s7zBF8iCX1tsafxUo.jpg",
+    body: "Two people waiting for a car, and twenty-four years in the quiet between them.",
   }),
-  piece("scene", "Spring", "Blender Studio · 2019", {
-    link: "https://www.youtube.com/watch?v=WhWc3b3KhnY", cover_url: "https://i.ytimg.com/vi/WhWc3b3KhnY/hqdefault.jpg", clip_start: 0, clip_end: 60,
+  piece("scene", "Aftersun", "Charlotte Wells · 2022", {
+    link: "https://www.youtube.com/watch?v=xfbrY5RxPi8", cover_url: "https://image.tmdb.org/t/p/w780/hhICjHximfBciqxX09d91GgghV8.jpg",
   }),
   piece("game", "Outer Wilds", "Mobius Digital · 2019", { body: "Twenty-two minutes, then the sun goes out. You learn the universe by losing it." }),
   piece("game", "Journey", "thatgamecompany · 2012"),
@@ -86,6 +88,8 @@ const NOW_BOOK = PIECES.find((p) => p.title === "Normal People")!;
  * and "Make my own room" scrolls to the sign-up form instead.
  */
 export function ExampleRoom({ embedded = false, onMakeYours }: { embedded?: boolean; onMakeYours?: () => void } = {}) {
+  // On its own page the example room fills the screen with its colours; embedded on the landing page it doesn't.
+  useRoomColors(embedded ? null : ROOM.theme);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [recordId, setRecordId] = useState<string | null>(NOW_SONG.id);
   const [playingId, setPlayingId] = useState<string | null>(null);

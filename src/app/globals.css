@@ -807,3 +807,26 @@ h1, h2, .door-name, .plaque b, .paper b, .now b { hyphens: auto; -webkit-hyphens
 .link-field span { color: var(--muted); font-size: 14px; white-space: nowrap; padding-left: 12px; }
 .link-field input { min-width: 0; flex: 1; border: 0; background: transparent; padding-left: 2px; }
 .link-field input:focus { outline: none; }
+
+/* Museum cards under the pieces, and small capitals for small details. */
+.smallcaps { font-family: var(--font-display); font-size: 11px; font-weight: 500; letter-spacing: .09em; text-transform: uppercase; font-variant-numeric: lining-nums; }
+.plaque { width: 100%; max-width: 240px; text-align: left; display: grid; gap: 3px; padding: 9px 12px 11px; border-radius: 2px;
+  background: linear-gradient(#F3EBD8, #E8DCC0); color: #2B2216; box-shadow: 0 1px 1px rgba(0,0,0,.18), 0 6px 14px rgba(0,0,0,.14); }
+.plaque b { font: 450 15.5px/1.15 var(--font-display); }
+.plaque .smallcaps { opacity: .62; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plaque q { -webkit-line-clamp: 4; margin-top: 3px; font-size: 13px; line-height: 1.35; opacity: .9; }
+.plaque-note { color: var(--rink, var(--fg)); opacity: .7; }
+.paper p { mask-image: none; -webkit-mask-image: none; }
+.paper .read-on { position: absolute; right: 14px; bottom: 10px; font: 500 10.5px/1 var(--font-display); letter-spacing: .09em; text-transform: uppercase; opacity: .5; }
+.paper { position: relative; }
+/* The "NOW PLAYING" style for small details: usernames over a room, the maker and year, times. */
+p.who { font: 500 11.5px/1.4 var(--font-display); letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+.chat-msg .when, .threads a .when { letter-spacing: .06em; text-transform: uppercase; font-size: 10.5px; }
+.brand { align-items: center; gap: 9px; color: inherit; }
+.door-mark { width: 21px; height: 26px; flex: none; margin-top: -3px; }
+html.in-room body { background: var(--bg); transition: background .4s ease; }
+/* The poem paper grows to fit its first stanza, so nothing is cut mid-line; "Read on" sits under it. */
+.paper { aspect-ratio: auto; min-height: 0; display: grid; align-content: start; }
+.paper p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 9; overflow: hidden; }
+.paper .read-on { position: static; justify-self: end; margin-top: 8px; }
+.plaque .smallcaps { white-space: normal; overflow: visible; }
