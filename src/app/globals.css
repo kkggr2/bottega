@@ -830,3 +830,52 @@ html.in-room body { background: var(--bg); transition: background .4s ease; }
 .paper p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 9; overflow: hidden; }
 .paper .read-on { position: static; justify-self: end; margin-top: 8px; }
 .plaque .smallcaps { white-space: normal; overflow: visible; }
+
+/* ---------------------------------------------------------------------------
+   Room first. On a wide screen the room takes most of the first view, with the headline beside it;
+   on a phone a short headline, then straight into the room.
+   --------------------------------------------------------------------------- */
+.wrap:has(.landing) { max-width: 1280px; }
+@media (min-width: 960px) {
+  .landing { display: grid; grid-template-columns: minmax(280px, 360px) minmax(0, 1fr); column-gap: clamp(28px, 4vw, 56px); align-items: start; }
+  .landing-hero { position: sticky; top: 24px; padding-block: 48px 0; }
+  .landing-hero h1 { font-size: clamp(44px, 4.6vw, 64px); }
+  .landing-room { padding-top: 24px; }
+  .landing .onboard { grid-column: 1 / -1; }
+  .landing-room .pieces { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+}
+@media (max-width: 959px) {
+  .landing-hero { padding-block: 18px 14px; }
+  .landing-hero h1 { font-size: clamp(34px, 9vw, 48px); }
+  .landing-hero .lede { margin: 8px 0 14px; font-size: 16.5px; }
+  .landing-room .try { display: none; }
+}
+
+/* On a phone the wall stays a wall: one row you swipe along, not a tall stack of posters. */
+.swipe-hint { display: none; }
+@media (max-width: 640px) {
+  .pieces { display: flex; gap: 18px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory;
+    margin-inline: calc(-1 * clamp(16px, 4vw, 48px)); padding: 6px clamp(16px, 4vw, 48px) 10px; scrollbar-width: none; align-items: end; }
+  .pieces::-webkit-scrollbar { display: none; }
+  .pieces > .piece { flex: 0 0 58%; scroll-snap-align: center; }
+  .pieces > .piece:has(.hang) { flex-basis: 46%; }
+  .landing-room .pieces { grid-template-columns: none; }
+  .swipe-hint { display: block; margin: 2px 0 0; text-align: center; font: 500 10.5px/1 var(--font-display); letter-spacing: .1em; text-transform: uppercase;
+    color: color-mix(in srgb, var(--rink) 55%, transparent); }
+  .swipe-hint::after { content: " →"; }
+}
+
+/* Warmth: a lamp's pool of light high on the wall, a faint paper grain, and deeper shadows behind the frames. */
+.wall { isolation: isolate; }
+.wall::before { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: -1;
+  background:
+    radial-gradient(38% 46% at 50% -4%, rgba(255, 214, 150, .30), transparent 70%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .07 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  mix-blend-mode: multiply; opacity: .9; }
+.frame { box-shadow: inset 0 0 0 3px #E9E1CF, 0 2px 3px rgba(0,0,0,.25), 0 14px 26px -6px rgba(20,10,0,.45); }
+.paper { box-shadow: 0 2px 3px rgba(0,0,0,.18), 0 14px 24px -6px rgba(20,10,0,.35); }
+@media (max-width: 640px) {
+  .pieces { scroll-padding-inline: clamp(16px, 4vw, 48px); }
+  .pieces > .piece { flex-basis: 62%; scroll-snap-align: start; }
+}
+@media (max-width: 640px) { .pieces, .landing-room .pieces { justify-content: flex-start; } }
