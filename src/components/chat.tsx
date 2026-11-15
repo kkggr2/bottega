@@ -69,52 +69,14 @@ export function ChatView({ me }: { me: Profile }) {
   const key = params.get("room") ?? "";
   const [room, setRoom] = useState<ChatRoom | null | undefined>(undefined);
   const [members, setMembers] = useState<ChatMember[]>([]);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [draft, setDraft] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [picked, setPicked] = useState<ChatMessage | null>(null);
-  const end = useRef<HTMLDivElement>(null);
-
-  const load = useCallback(async () => {
-    const [rooms, mem, msgs] = await Promise.all([myChatRooms(), chatMembers(key), chatMessages(key)]);
-    setRoom(rooms.find((r) => r.room_key === key) ?? null);
-    setMembers(mem);
-    setMessages(msgs);
-  }, [key]);
 
   useEffect(() => {
-    void load(); // eslint-disable-line react-hooks/set-state-in-effect -- fetching on open
+    Promise.all([myChatRooms(), chatMembers(key)]).then(([rooms, mem]) => {
+      setRoom(rooms.find((r) => r.room_key === key) ?? null);
+      setMembers(mem);
+    }).catch(() => setRoom(null));
     track("chat_open", { detail: key });
-    // New messages arrive live. The database only sends rooms you can read; this keeps to this one.
-    const sb = supabase();
-    const channel = sb.channel(`chat-${key}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages" }, (p) => {
-        const row = (p.new ?? p.old) as ChatMessage;
-        if (row?.room_key !== key) return;
-        if (p.eventType === "INSERT") setMessages((m) => (m.some((x) => x.id === row.id) ? m : [...m, row]));
-        if (p.eventType === "DELETE") setMessages((m) => m.filter((x) => x.id !== row.id));
-      })
-      .subscribe();
-    return () => { sb.removeChannel(channel); };
-  }, [key, load]);
-
-  useEffect(() => { end.current?.scrollIntoView({ block: "end" }); }, [messages.length]);
-
-  async function send() {
-    if (!draft.trim() || busy) return;
-    setBusy(true);
-    const err = await sendChat(key, me.id, draft);
-    setBusy(false);
-    if (err) return setError(err);
-    track("chat_send", { detail: key });
-    setDraft("");
-    setError(null);
-    void load();
-  }
-
-  const nameOf = (id: string) => members.find((m) => m.user_id === id)?.username ?? "someone";
-  const titleOf = (id: string) => members.find((m) => m.user_id === id)?.title;
+  }, [key]);
 
   if (room === undefined) return <p className="loading">Opening the door…</p>;
   if (room === null) {
@@ -140,9 +102,65 @@ export function ChatView({ me }: { me: Profile }) {
           </Link>
         ))}
       </div>
+      <ChatLog me={me} roomKey={key} people={members} placeholder={`Say something about ${room.creator}…`}
+        empty="Nobody has said anything yet tonight. Start with what you have on, and why." />
+    </section>
+  );
+}
 
+/** A live chat: the messages, a box to write in, and the tap-a-message menu. Used by tonight's rooms and clubs. */
+export function ChatLog({ me, roomKey, people, placeholder, empty }: {
+  me: Profile;
+  roomKey: string;
+  people: { user_id: string; username: string; title?: string | null }[];
+  placeholder: string;
+  empty: string;
+}) {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [draft, setDraft] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [picked, setPicked] = useState<ChatMessage | null>(null);
+  const end = useRef<HTMLDivElement>(null);
+
+  const load = useCallback(async () => setMessages(await chatMessages(roomKey)), [roomKey]);
+
+  useEffect(() => {
+    void load(); // eslint-disable-line react-hooks/set-state-in-effect -- fetching on open
+    // New messages arrive live. The database only sends rooms you can read; this keeps to this one.
+    const sb = supabase();
+    const channel = sb.channel(`chat-${roomKey}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages" }, (p) => {
+        const row = (p.new ?? p.old) as ChatMessage;
+        if (row?.room_key !== roomKey) return;
+        if (p.eventType === "INSERT") setMessages((m) => (m.some((x) => x.id === row.id) ? m : [...m, row]));
+        if (p.eventType === "DELETE") setMessages((m) => m.filter((x) => x.id !== row.id));
+      })
+      .subscribe();
+    return () => { sb.removeChannel(channel); };
+  }, [roomKey, load]);
+
+  useEffect(() => { end.current?.scrollIntoView({ block: "end" }); }, [messages.length]);
+
+  async function send() {
+    if (!draft.trim() || busy) return;
+    setBusy(true);
+    const err = await sendChat(roomKey, me.id, draft);
+    setBusy(false);
+    if (err) return setError(err);
+    track("chat_send", { detail: roomKey.slice(0, 40) });
+    setDraft("");
+    setError(null);
+    void load();
+  }
+
+  const nameOf = (id: string) => people.find((m) => m.user_id === id)?.username ?? "someone";
+  const titleOf = (id: string) => people.find((m) => m.user_id === id)?.title;
+
+  return (
+    <>
       <div className="chat-log" aria-live="polite">
-        {messages.length === 0 && <p className="muted chat-empty">Nobody has said anything yet tonight. Start with what you have on, and why.</p>}
+        {messages.length === 0 && <p className="muted chat-empty">{empty}</p>}
         {messages.map((m) => {
           const mine = m.author === me.id;
           return (
@@ -157,7 +175,7 @@ export function ChatView({ me }: { me: Profile }) {
       </div>
 
       <form className="chat-send" onSubmit={(e) => { e.preventDefault(); void send(); }}>
-        <input type="text" value={draft} maxLength={500} placeholder={`Say something about ${room.creator}…`} enterKeyHint="send"
+        <input type="text" value={draft} maxLength={500} placeholder={placeholder} enterKeyHint="send"
           onChange={(e) => setDraft(e.target.value)} aria-label="Message" />
         <button className="btn" type="submit" disabled={busy || !draft.trim()}>Send</button>
       </form>
@@ -167,7 +185,7 @@ export function ChatView({ me }: { me: Profile }) {
         <MessageSheet me={me} message={picked} username={nameOf(picked.author)} kind="chat"
           onClose={() => setPicked(null)} onChanged={() => { setPicked(null); void load(); }} />
       )}
-    </section>
+    </>
   );
 }
 

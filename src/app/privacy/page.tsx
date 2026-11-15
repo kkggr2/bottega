@@ -21,6 +21,7 @@ export default function Privacy() {
         <li><b>Messages:</b> what you write in tonight&rsquo;s rooms (seen by others with the same artist, director or author on, and deleted after two days) and your private messages (seen only by you and the person you write to, kept until one of you deletes them or the account). Your daily quiz scores are shown on that day&rsquo;s high score table.</li>
         <li><b>How Bottega is used:</b> simple events such as opening the app, viewing a room, adding something or sharing a link, with a random ID for your device and, when signed in, your account. We use these only to see whether Bottega works for people, never for advertising.</li>
         <li><b>Notifications:</b> if you allow them, your phone&rsquo;s notification address, and whether you want the daily email.</li>
+        <li><b>Clubs and invites:</b> the clubs you join, and when. When you open a club or room link in a browser, we keep a scrambled (hashed) form of your network address for one hour, so that if you install the app and sign up within that hour, the invite still reaches you. It&rsquo;s deleted after the hour and can&rsquo;t be turned back into your address.</li>
         <li><b>On your device:</b> small settings like that random ID and which friends&rsquo; rooms you&rsquo;ve already seen.</li>
       </ul>
 

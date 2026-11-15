@@ -13,6 +13,7 @@ import { notifyFriends } from "@/lib/push";
 import { shareLink, tap } from "@/lib/native";
 import { audioOf } from "@/lib/piece-media";
 import { friendlyError, supabase } from "@/lib/supabase";
+import { rememberInvite } from "@/lib/clubs";
 import { rememberCameFrom, track } from "@/lib/track";
 import { MAX_PIECES, PIECE_TYPES, roomStyle } from "@/lib/themes";
 import type { Piece, PieceType, Profile, Room } from "@/lib/types";
@@ -80,7 +81,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
     const { data: owner } = await sb.from("profiles").select("id, username").eq("username", username).maybeSingle();
     // Signed out, only owners of public rooms are visible.
     if (!owner) {
-      if (!meId) rememberCameFrom({ id: "", username });
+      if (!meId) { rememberCameFrom({ id: "", username }); rememberInvite({ inviter: username }); }
       return setData({ state: meId ? "missing" : "hidden" });
     }
     const [{ data: room }, { data: canView }, friendship] = await Promise.all([
@@ -123,7 +124,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
       const relation = meId ? relationOf(friendship, meId) : "none";
       const as = owner.id === meId ? "owner" : !meId ? "signed_out" : relation === "friends" ? "friend" : "member";
       track("room_view", { room: owner.id, detail: as });
-      if (!meId) rememberCameFrom({ id: owner.id, username: owner.username });
+      if (!meId) { rememberCameFrom({ id: owner.id, username: owner.username }); rememberInvite({ inviter: owner.username }); }
     }
   }, [username, meId]);
 

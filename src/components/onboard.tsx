@@ -1,6 +1,8 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { claimInvite, forgetClub, joinClub, pendingClub } from "@/lib/clubs";
 import { befriend } from "@/lib/friends";
 import { friendlyError, supabase } from "@/lib/supabase";
 import { cameFrom, forgetCameFrom, track } from "@/lib/track";
@@ -10,6 +12,7 @@ import { useAuth } from "./auth";
 export function Onboard() {
   const auth = useAuth();
   const { refreshProfile } = auth;
+  const router = useRouter();
   // Someone who arrived through a friend's room starts with a friend request to them.
   const [from] = useState(cameFrom);
   const [addFrom, setAddFrom] = useState(true);
@@ -49,8 +52,26 @@ export function Onboard() {
         // The room still opens; they can add the friend from the library.
       }
     }
+    // A club link opened before signing up (on this device, or in a browser just before installing the app).
+    let landing: string | null = null;
+    try {
+      const here = pendingClub();
+      const fromInstall = await claimInvite();
+      const slug = here ?? fromInstall.club;
+      if (slug && !(await joinClub(slug, here ? "link" : "app-install"))) {
+        track("club_join", { detail: slug });
+        landing = `/club/${slug}`;
+      } else if (!from && fromInstall.inviter && auth.userId) {
+        const { data } = await supabase().from("profiles").select("id").eq("username", fromInstall.inviter).maybeSingle();
+        if (data?.id && data.id !== auth.userId) await befriend(auth.userId, data.id as string);
+      }
+    } catch {
+      // Their room still opens; they can join from the link again.
+    }
+    forgetClub();
     forgetCameFrom();
     await refreshProfile();
+    if (landing) router.push(landing);
   }
 
   return (
