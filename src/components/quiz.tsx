@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { AnswerResult, BoardRow, QuizQuestion, QuizState } from "@/lib/quiz/types";
+import type { AnswerResult, BoardRow, ClubQuizCard, QuizQuestion, QuizState } from "@/lib/quiz/types";
 import { supabase } from "@/lib/supabase";
 import { askForReviewSoon } from "@/lib/review";
 import { track } from "@/lib/track";
 import { Gate } from "./gate";
+import { myClubs, type MyClub } from "@/lib/clubs";
+import { QUIZ_ROOM, usePalette } from "@/lib/room-colors";
 
 /* eslint-disable @next/next/no-img-element -- remote film stills and album covers */
 
@@ -39,6 +41,7 @@ type Shown = { picked: number | null; answer: number; correct: boolean; note: st
 export function QuizGame({ quizRef: given = null }: { quizRef?: QuizRef } = {}) {
   const clubName = given?.club, quizName = given?.quiz;
   const quizRef = useMemo<QuizRef>(() => (clubName && quizName ? { club: clubName, quiz: quizName } : null), [clubName, quizName]);
+  usePalette(QUIZ_ROOM, "quiz");
   const [state, setState] = useState<QuizState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -116,7 +119,7 @@ export function QuizGame({ quizRef: given = null }: { quizRef?: QuizRef } = {}) 
         </>
       ) : (
         <>
-          <Link href="/" className="mono muted back">&larr; Library</Link>
+          <Link href="/quiz" className="mono muted back">&larr; Quiz room</Link>
           <p className="mono muted">Today&rsquo;s quiz</p>
         </>
       )}
@@ -230,15 +233,74 @@ export function QuizCard() {
   useEffect(() => {
     call("GET").then(async (r) => r.ok && setState(await r.json())).catch(() => {});
   }, []);
-  if (!state) return null;
+  if (!state) return <div className="quiz-hero placeholder" aria-hidden="true" />;
   const a = state.attempt;
   return (
-    <Link href="/quiz" className="quiz-card">
-      <span className="mono">Today&rsquo;s quiz</span>
+    <Link href="/quiz/today" className={`quiz-hero${a?.done ? " played" : ""}`}>
+      <span className="smallcaps">Today&rsquo;s quiz</span>
       <b>{state.quiz.title}</b>
-      <span className="muted">
-        {a?.done ? `${a.score} points · ${a.correct}/7${state.me ? ` · #${state.me.rank}` : ""}` : a ? "You started this one. Keep going →" : `${state.quiz.blurb} 7 questions →`}
+      <span className="quiz-hero-blurb">{state.quiz.blurb.replace(/[.!?]$/, "")}</span>
+      <span className="quiz-hero-foot">
+        {a?.done
+          ? <>{a.score} points · {a.correct} of {state.quiz.count} right{state.me ? ` · #${state.me.rank} today` : ""}</>
+          : a ? <>You started this one · Keep going</> : <>{state.quiz.count} questions · About 2 minutes</>}
+        <span className="quiz-hero-go" aria-hidden="true">{a?.done ? "See the table" : "Play"}</span>
       </span>
     </Link>
+  );
+}
+
+/** The Quiz room: today's quiz on the table, then every quiz from your clubs. */
+export function QuizRoomScreen() {
+  return <Gate>{() => <QuizRoomView />}</Gate>;
+}
+
+export function QuizRoomView() {
+  usePalette(QUIZ_ROOM, "quiz");
+  const [clubs, setClubs] = useState<{ club: MyClub; quizzes: ClubQuizCard[] }[] | null>(null);
+  useEffect(() => {
+    (async () => {
+      const mine = await myClubs();
+      const { data } = await supabase().auth.getSession();
+      const headers: Record<string, string> = data.session ? { Authorization: `Bearer ${data.session.access_token}` } : {};
+      const lists = await Promise.all(mine.map(async (club) => {
+        const res = await fetch(`/api/quiz?club=${encodeURIComponent(club.slug)}`, { headers, cache: "no-store" }).catch(() => null);
+        return { club, quizzes: res?.ok ? ((await res.json()) as ClubQuizCard[]) : [] };
+      }));
+      setClubs(lists.filter((l) => l.quizzes.length));
+    })().catch(() => setClubs([]));
+  }, []);
+
+  return (
+    <div className="place">
+      <header className="place-head">
+        <p className="smallcaps muted">The Quiz room</p>
+        <h1>Test your taste</h1>
+        <p className="lede">A new quiz every day for everyone, and your clubs&rsquo; own.</p>
+      </header>
+      <QuizCard />
+      {clubs && clubs.length > 0 && clubs.map(({ club, quizzes }) => (
+        <section key={club.id} className="tonight" aria-label={`${club.name} quizzes`}>
+          <div className="tonight-head">
+            <h2>{club.emoji} {club.name}</h2>
+            <Link href={`/club/${club.slug}`} className="btn ghost small">The club</Link>
+          </div>
+          <div className="club-quizzes">
+            {quizzes.map((q) => (
+              <Link key={q.id} href={`/club/${club.slug}/quiz/${q.id}`} className={`quiz-row${q.mine?.done ? " played" : ""}`}>
+                <b>{q.title}</b>
+                <span className="muted">
+                  {q.mine?.done ? `${q.mine.score} points · ${q.mine.correct} of ${q.count} right` : `${q.count} questions${q.played ? ` · ${q.played} played` : ""}`}
+                </span>
+                <span className="smallcaps quiz-row-go">{q.mine?.done ? "Played" : "Play"}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ))}
+      {clubs && clubs.length === 0 && (
+        <p className="muted place-note">Clubs get their own quizzes and high score tables. Start one in the Salon, or join one from a friend&rsquo;s link.</p>
+      )}
+    </div>
   );
 }

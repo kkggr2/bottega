@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { QuizScreen } from "@/components/quiz";
+import { QuizRoomScreen } from "@/components/quiz";
 
-export const metadata: Metadata = { title: "Today's quiz" };
+export const metadata: Metadata = { title: "The Quiz room" };
 
-export default function QuizPage() {
-  return <QuizScreen />;
+export default function QuizRoomPage() {
+  return <QuizRoomScreen />;
 }

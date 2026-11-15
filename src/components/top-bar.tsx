@@ -28,6 +28,8 @@ function Nav() {
   return (
     <nav className="nav" aria-label="Main">
       <Link href="/" aria-current={pathname === "/" ? "page" : undefined}>Library</Link>
+      <Link href="/salon" aria-current={pathname.startsWith("/salon") ? "page" : undefined}>Salon</Link>
+      <Link href="/quiz" aria-current={pathname.startsWith("/quiz") ? "page" : undefined}>Quiz</Link>
       <Link href={mine} aria-current={pathname === mine ? "page" : undefined}>My room</Link>
       <button type="button" onClick={() => auth.signOut()}>Sign out</button>
     </nav>

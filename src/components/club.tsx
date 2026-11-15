@@ -16,6 +16,7 @@ import { track } from "@/lib/track";
 import type { Profile } from "@/lib/types";
 import { useAuth } from "./auth";
 import { ChatLog } from "./chat";
+import { SALON, usePalette } from "@/lib/room-colors";
 import { Gate } from "./gate";
 import { Sheet } from "./sheet";
 
@@ -106,6 +107,7 @@ export function ClubScreen({ slug }: { slug: string }) {
 }
 
 export function ClubView({ me, slug }: { me: Profile; slug: string }) {
+  usePalette(SALON, "salon");
   const [club, setClub] = useState<MyClub | null | undefined>(undefined);
   const [people, setPeople] = useState<RosterRow[]>([]);
   const [stats, setStats] = useState<ClubStats | null>(null);
@@ -144,7 +146,7 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
   if (club === null) {
     return (
       <section className="chat">
-        <Link href="/" className="mono muted back">&larr; Library</Link>
+        <Link href="/salon" className="mono muted back">&larr; Salon</Link>
         <h1>You&rsquo;re not in this club yet.</h1>
         <Link className="btn" href={`/join/${slug}`}>See the invitation</Link>
       </section>
@@ -156,7 +158,7 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
 
   return (
     <section className="chat club">
-      <Link href="/" className="mono muted back">&larr; Library</Link>
+      <Link href="/salon" className="mono muted back">&larr; Salon</Link>
       <p className="join-emoji small" aria-hidden="true">{club.emoji}</p>
       <h1>{club.name}</h1>
       <div className="row club-actions">

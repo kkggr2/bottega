@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ago, chatMembers, chatMessages, myChatRooms, myThreads, reportMessage, sendChat, SLOT_PLACE,
+  ago, chatMembers, chatMessages, myChatRooms, reportMessage, sendChat, SLOT_PLACE,
   type ChatMember, type ChatMessage, type ChatRoom,
 } from "@/lib/chat";
 import { befriend } from "@/lib/friends";
@@ -12,6 +12,7 @@ import { blockPerson } from "@/lib/safety";
 import { supabase } from "@/lib/supabase";
 import { track } from "@/lib/track";
 import type { Profile } from "@/lib/types";
+import { SALON, usePalette } from "@/lib/room-colors";
 import { Gate } from "./gate";
 import { Sheet } from "./sheet";
 
@@ -24,20 +25,17 @@ import { Sheet } from "./sheet";
 
 const roomHref = (key: string) => `/chat?room=${encodeURIComponent(key)}`;
 
-/** For the library: the rooms you can walk into right now, and a way to your messages. */
+/** For the Salon: the rooms you can walk into right now. */
 export function TonightRooms() {
   const [rooms, setRooms] = useState<ChatRoom[] | null>(null);
-  const [unread, setUnread] = useState(0);
   useEffect(() => {
     myChatRooms().then(setRooms).catch(() => setRooms([]));
-    myThreads().then((t) => setUnread(t.reduce((n, x) => n + x.unread, 0))).catch(() => {});
   }, []);
   if (!rooms) return null;
   return (
     <section className="tonight" aria-label="Tonight's rooms">
       <div className="tonight-head">
         <h2>Tonight&rsquo;s rooms</h2>
-        <Link href="/messages" className="btn ghost small">Messages{unread ? <span className="badge">{unread}</span> : null}</Link>
       </div>
       {rooms.length === 0 ? (
         <p className="muted">Put a record on your turntable, a film in your TV or a book on your armchair, and you can talk with everyone who has the same artist, director or author on tonight.</p>
@@ -65,6 +63,7 @@ export function ChatScreen() {
 }
 
 export function ChatView({ me }: { me: Profile }) {
+  usePalette(SALON, "salon");
   const params = useSearchParams();
   const key = params.get("room") ?? "";
   const [room, setRoom] = useState<ChatRoom | null | undefined>(undefined);
@@ -82,7 +81,7 @@ export function ChatView({ me }: { me: Profile }) {
   if (room === null) {
     return (
       <section className="chat">
-        <Link href="/" className="mono muted back">&larr; Library</Link>
+        <Link href="/salon" className="mono muted back">&larr; Salon</Link>
         <h1>This room is closed to you tonight.</h1>
         <p className="muted">You can be in a room while something by that artist, director or author is on in your own room.</p>
       </section>
@@ -91,7 +90,7 @@ export function ChatView({ me }: { me: Profile }) {
 
   return (
     <section className="chat">
-      <Link href="/" className="mono muted back">&larr; Library</Link>
+      <Link href="/salon" className="mono muted back">&larr; Salon</Link>
       <h1>{room.creator} tonight</h1>
       <p className="muted">Everyone here has {room.creator} {SLOT_PLACE[room.slot]}. Messages last a day.</p>
       <div className="chat-members" aria-label="Who's here">

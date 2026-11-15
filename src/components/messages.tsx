@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { track } from "@/lib/track";
 import type { Profile } from "@/lib/types";
 import { MessageSheet } from "./chat";
+import { SALON, usePalette } from "@/lib/room-colors";
 import { Gate } from "./gate";
 
 /*
@@ -20,6 +21,7 @@ export function MessagesScreen() {
 }
 
 export function MessagesView({ me }: { me: Profile }) {
+  usePalette(SALON, "salon");
   const params = useSearchParams();
   const withName = params.get("with");
   return withName ? <Conversation me={me} username={withName.toLowerCase()} /> : <Inbox me={me} />;
@@ -42,7 +44,7 @@ function Inbox({ me }: { me: Profile }) {
   const talks = threads.filter((t) => !t.is_request);
   return (
     <section className="chat">
-      <Link href="/" className="mono muted back">&larr; Library</Link>
+      <Link href="/salon" className="mono muted back">&larr; Salon</Link>
       <h1>Messages</h1>
       {threads.length === 0 && (
         <p className="muted">No messages yet. Tap someone&rsquo;s message in tonight&rsquo;s rooms to write to them privately.</p>
