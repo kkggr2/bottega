@@ -153,7 +153,6 @@ export function ExampleRoom({ embedded = false, onMakeYours }: { embedded?: bool
               <PieceView key={p.id} piece={p} urls={urls} onOpen={() => open(p)} />
             ))}
           </div>
-          {of("poster").length + of("poem").length > 1 && <p className="swipe-hint" aria-hidden="true">Swipe along the wall</p>}
           <div className="furniture">
             <Bookcase books={of("book")} isOwner={false} onOpen={open} onAdd={() => {}}
               chairBook={NOW_BOOK} note={`${NOW_WORDS.book.where} since Sunday`} />

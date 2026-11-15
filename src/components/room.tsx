@@ -437,7 +437,6 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
                   </div>
                 </div>
               ) : null}
-              {wall.length > 1 && <p className="swipe-hint" aria-hidden="true">Swipe along the wall</p>}
 
               <div className="furniture">
                 {showBooks && (

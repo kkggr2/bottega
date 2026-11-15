@@ -851,22 +851,17 @@ html.in-room body { background: var(--bg); transition: background .4s ease; }
   .landing-room .try { display: none; }
 }
 
-/* On a phone the wall stays a wall: one row you swipe along, not a tall stack of posters. */
-.swipe-hint { display: none; }
+/* On a phone the wall is a calm, centred grid of two: every piece whole, nothing cut off at the edges. */
+.swipe-hint { display: none !important; }
 @media (max-width: 640px) {
-  .pieces { display: flex; gap: 18px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory;
-    margin-inline: calc(-1 * clamp(16px, 4vw, 48px)); padding: 6px clamp(16px, 4vw, 48px) 10px; scrollbar-width: none; align-items: end; }
-  .pieces::-webkit-scrollbar { display: none; }
-  .pieces > .piece { flex: 0 0 58%; scroll-snap-align: center; }
-  .pieces > .piece:has(.hang) { flex-basis: 46%; }
-  .landing-room .pieces { grid-template-columns: none; }
-  .swipe-hint { display: block; margin: 2px 0 0; text-align: center; font: 500 10.5px/1 var(--font-display); letter-spacing: .1em; text-transform: uppercase;
-    color: color-mix(in srgb, var(--rink) 55%, transparent); }
-  .swipe-hint::after { content: " →"; }
+  .pieces, .landing-room .pieces { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 16px;
+    justify-content: stretch; justify-items: center; align-items: start; overflow: visible; margin-inline: 0; padding: 0; }
+  .pieces > .piece { width: 100%; max-width: 200px; }
+  .pieces > .piece:only-child { grid-column: 1 / -1; max-width: 220px; }
 }
 
 /* Warmth: a lamp's pool of light high on the wall, a faint paper grain, and deeper shadows behind the frames. */
-.wall { isolation: isolate; }
+.wall { isolation: isolate; z-index: 2; }
 .wall::before { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: -1;
   background:
     radial-gradient(38% 46% at 50% -4%, rgba(255, 214, 150, .30), transparent 70%),
@@ -875,7 +870,6 @@ html.in-room body { background: var(--bg); transition: background .4s ease; }
 .frame { box-shadow: inset 0 0 0 3px #E9E1CF, 0 2px 3px rgba(0,0,0,.25), 0 14px 26px -6px rgba(20,10,0,.45); }
 .paper { box-shadow: 0 2px 3px rgba(0,0,0,.18), 0 14px 24px -6px rgba(20,10,0,.35); }
 @media (max-width: 640px) {
-  .pieces { scroll-padding-inline: clamp(16px, 4vw, 48px); }
-  .pieces > .piece { flex-basis: 62%; scroll-snap-align: start; }
+  /* An odd one out at the end sits centred, not alone on the left. */
+  .pieces > .piece:last-child:nth-child(odd) { grid-column: 1 / -1; max-width: calc(50% - 8px); }
 }
-@media (max-width: 640px) { .pieces, .landing-room .pieces { justify-content: flex-start; } }
