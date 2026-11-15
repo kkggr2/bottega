@@ -1,13 +1,23 @@
-import { answerQuiz, quizState, startQuiz } from "@/lib/quiz/server";
+import {
+  answerClubQuiz, answerQuiz, clubQuizList, clubQuizState, quizState, startClubQuiz, startQuiz,
+} from "@/lib/quiz/server";
 import { callerIdQuick } from "@/lib/server-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 /*
- * The daily quiz.
- * GET  /api/quiz                                → today's quiz, your progress and the high score table
- * POST /api/quiz { action: "start" }            → start (or pick up) today's quiz
- * POST /api/quiz { action: "answer", index, choice } → answer the current question (choice null = time ran out)
+ * The quizzes.
+ * Daily (everyone):
+ *   GET  /api/quiz                                        → today's quiz, your progress and the high score table
+ *   POST /api/quiz { action: "start" }                    → start (or pick up) today's quiz
+ *   POST /api/quiz { action: "answer", index, choice }    → answer the current question (choice null = time ran out)
+ * A club's own quizzes (members only): add club (its link name) and quiz (the quiz's id):
+ *   GET  /api/quiz?club=gray-fox                          → the club's quizzes, with your result on each
+ *   GET  /api/quiz?club=gray-fox&quiz=baldwin             → that quiz, your progress and the club's table
+ *   POST /api/quiz { action, club, quiz, … }              → start or answer it
  */
+
+const SLUG = /^[a-z0-9-]{3,40}$/;
+const QUIZ = /^[a-z0-9-]{2,60}$/;
 
 async function who(request: Request) {
   const db = supabaseAdmin();
@@ -17,23 +27,49 @@ async function who(request: Request) {
   return { db, userId } as const;
 }
 
+const noStore = { headers: { "Cache-Control": "no-store" } };
+
 export async function GET(request: Request) {
   const w = await who(request);
   if ("error" in w) return w.error;
-  return Response.json(await quizState(w.db, w.userId), { headers: { "Cache-Control": "no-store" } });
+  const url = new URL(request.url);
+  const club = url.searchParams.get("club");
+  const quiz = url.searchParams.get("quiz");
+  if (club) {
+    if (!SLUG.test(club)) return Response.json({ error: "No such club." }, { status: 404 });
+    if (!quiz) {
+      const list = await clubQuizList(w.db, w.userId, club);
+      return list ? Response.json(list, noStore) : Response.json({ error: "Only for the club's members." }, { status: 403 });
+    }
+    if (!QUIZ.test(quiz)) return Response.json({ error: "No such quiz." }, { status: 404 });
+    const state = await clubQuizState(w.db, w.userId, club, quiz);
+    return "error" in state && !("quiz" in state) ? Response.json(state, { status: 403 }) : Response.json(state, noStore);
+  }
+  return Response.json(await quizState(w.db, w.userId), noStore);
 }
 
 export async function POST(request: Request) {
   const w = await who(request);
   if ("error" in w) return w.error;
-  const body = (await request.json().catch(() => ({}))) as { action?: string; index?: number; choice?: number | null };
-  if (body.action === "start") return Response.json(await startQuiz(w.db, w.userId));
+  const body = (await request.json().catch(() => ({}))) as { action?: string; index?: number; choice?: number | null; club?: string; quiz?: string };
+  const forClub = body.club != null;
+  if (forClub && !(SLUG.test(body.club ?? "") && QUIZ.test(body.quiz ?? ""))) {
+    return Response.json({ error: "No such quiz." }, { status: 404 });
+  }
+
+  if (body.action === "start") {
+    const state = forClub ? await startClubQuiz(w.db, w.userId, body.club!, body.quiz!) : await startQuiz(w.db, w.userId);
+    return "error" in state && !("quiz" in state) ? Response.json(state, { status: 403 }) : Response.json(state);
+  }
   if (body.action === "answer" && Number.isInteger(body.index)) {
     const choice = body.choice == null ? null : Number(body.choice);
     if (choice != null && !(Number.isInteger(choice) && choice >= 0 && choice <= 3)) {
       return Response.json({ error: "Pick one of the four answers." }, { status: 400 });
     }
-    const result = await answerQuiz(w.db, w.userId, body.index!, choice);
+    const result = forClub
+      ? await answerClubQuiz(w.db, w.userId, body.club!, body.quiz!, body.index!, choice)
+      : await answerQuiz(w.db, w.userId, body.index!, choice);
+    if ("error" in result && !("state" in result)) return Response.json(result, { status: 403 });
     return Response.json(result, { status: "error" in result ? 409 : 200 });
   }
   return Response.json({ error: "Unknown action" }, { status: 400 });

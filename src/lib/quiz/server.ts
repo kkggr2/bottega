@@ -2,13 +2,15 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { BANK } from "./bank";
 import type { Quiz } from "./bank-types";
+import { CLUB_QUIZZES } from "./club-quizzes";
 import { MEDIA } from "./media";
-import { limitFor, QUIZ_LIMIT_MS, type AnswerResult, type BoardRow, type QuizQuestion, type QuizState } from "./types";
+import { limitFor, QUIZ_LIMIT_MS, type AnswerResult, type BoardRow, type ClubQuizCard, type QuizQuestion, type QuizState } from "./types";
 
 /*
- * The daily quiz, run on the server: which quiz is on today, the order each person sees the
- * options in, timing and marking. Everyone gets the same quiz each day (UTC); the bank repeats
- * once it runs out, so keep adding to it.
+ * The quizzes, run on the server: which quiz it is, the order each person sees the options in,
+ * timing and marking. Two kinds share one engine:
+ * - the daily quiz: the same for everyone each day (UTC); the bank repeats once it runs out
+ * - club quizzes: written for one club (club-quizzes.ts), for its members only, one try each
  */
 
 const FIRST_DAY = Date.UTC(2026, 10, 14);
@@ -46,9 +48,61 @@ function points(elapsed: number, limit: number): number {
 const kindOf = (q: Quiz["qs"][number]) => q.kind ?? "fact";
 
 type Attempt = {
-  user_id: string; day: string; quiz_id: string; q_index: number; q_started_at: string;
+  user_id: string; quiz_id: string; q_index: number; q_started_at: string;
   correct: number; score: number; time_ms: number; answers: unknown[]; finished_at: string | null;
 };
+
+/** Where one quiz's tries are kept and ranked. */
+type Track = {
+  quiz: Quiz;
+  /** The quiz id stored on the row: the quiz's own id for the daily one, "club/quiz" for a club's. */
+  rowQuizId: string;
+  table: "quiz_attempts" | "club_quiz_attempts";
+  /** The columns that pick this quiz's row for a person, besides user_id. */
+  key: Record<string, string>;
+  /** Extra columns for a new row. */
+  insert: Record<string, string>;
+  board: { fn: "quiz_board" | "club_quiz_board"; args: Record<string, unknown> };
+  day: string;
+  next: string;
+  club?: QuizState["club"];
+};
+
+function dailyTrack(): Track {
+  const day = today();
+  const quiz = quizFor(day);
+  return {
+    quiz, rowQuizId: quiz.id, table: "quiz_attempts", key: { day }, insert: { quiz_id: quiz.id },
+    board: { fn: "quiz_board", args: { p_day: day, p_limit: 20 } },
+    day, next: quizFor(today(Date.parse(`${day}T00:00:00Z`) + 864e5)).title,
+  };
+}
+
+/** A club's quizzes, newest first: its own, then the starter quiz every club gets. Hidden until their day. */
+function quizzesFor(clubSlug: string) {
+  const open = (c: (typeof CLUB_QUIZZES)[number]) => !c.opens || c.opens <= today();
+  return [
+    ...CLUB_QUIZZES.filter((c) => c.club === clubSlug && open(c)).reverse(),
+    ...CLUB_QUIZZES.filter((c) => c.club === "*" && open(c)),
+  ];
+}
+
+/** A club quiz, if it exists and this person is in the club. */
+async function clubTrack(db: SupabaseClient, userId: string, clubSlug: string, quizId: string): Promise<Track | null> {
+  const entry = quizzesFor(clubSlug).find((c) => c.quiz.id === quizId);
+  if (!entry) return null;
+  const rowQuizId = `${clubSlug}/${quizId}`;
+  const { data: club } = await db.from("clubs").select("id, slug, name, emoji").eq("slug", clubSlug).maybeSingle();
+  if (!club) return null;
+  const { data: member } = await db.from("club_members").select("user_id").eq("club_id", club.id).eq("user_id", userId).maybeSingle();
+  if (!member) return null;
+  return {
+    quiz: entry.quiz, rowQuizId, table: "club_quiz_attempts", key: { quiz_id: rowQuizId }, insert: { club_id: club.id as string },
+    board: { fn: "club_quiz_board", args: { p_quiz: rowQuizId, p_limit: 50 } },
+    day: today(), next: "",
+    club: { slug: club.slug as string, name: club.name as string, emoji: club.emoji as string },
+  };
+}
 
 function question(quiz: Quiz, userId: string, a: Attempt): QuizQuestion | null {
   if (a.finished_at || a.q_index >= quiz.qs.length) return null;
@@ -69,73 +123,66 @@ function question(quiz: Quiz, userId: string, a: Attempt): QuizQuestion | null {
   };
 }
 
-async function board(db: SupabaseClient, day: string, userId: string, mine: Attempt | null): Promise<{ rows: BoardRow[]; me: BoardRow | null }> {
-  const { data } = await db.rpc("quiz_board", { p_day: day, p_limit: 20 });
+async function load(db: SupabaseClient, userId: string, t: Track): Promise<Attempt | null> {
+  let query = db.from(t.table).select("*").eq("user_id", userId);
+  for (const [k, v] of Object.entries(t.key)) query = query.eq(k, v);
+  const { data } = await query.maybeSingle();
+  return (data as Attempt | null) ?? null;
+}
+
+async function board(db: SupabaseClient, t: Track, userId: string, mine: Attempt | null): Promise<{ rows: BoardRow[]; me: BoardRow | null }> {
+  const { data } = await db.rpc(t.board.fn, t.board.args);
   const rows = ((data ?? []) as { rank: number; user_id: string; username: string; score: number; correct: number; time_ms: number }[])
     .map((r) => ({ rank: Number(r.rank), username: r.username, score: r.score, correct: r.correct, timeMs: r.time_ms, me: r.user_id === userId }));
   let me = rows.find((r) => r.me) ?? null;
   if (!me && mine?.finished_at) {
-    const { count } = await db.from("quiz_attempts").select("user_id", { count: "exact", head: true })
-      .eq("day", day).not("finished_at", "is", null)
+    let query = db.from(t.table).select("user_id", { count: "exact", head: true }).not("finished_at", "is", null)
       .or(`score.gt.${mine.score},and(score.eq.${mine.score},time_ms.lt.${mine.time_ms})`);
+    for (const [k, v] of Object.entries(t.key)) query = query.eq(k, v);
+    const { count } = await query;
     const { data: p } = await db.from("profiles").select("username").eq("id", userId).maybeSingle();
     me = { rank: (count ?? 0) + 1, username: (p?.username as string) ?? "you", score: mine.score, correct: mine.correct, timeMs: mine.time_ms, me: true };
   }
   return { rows, me };
 }
 
-async function load(db: SupabaseClient, userId: string, day: string): Promise<Attempt | null> {
-  const { data } = await db.from("quiz_attempts").select("*").eq("user_id", userId).eq("day", day).maybeSingle();
-  return (data as Attempt | null) ?? null;
-}
-
-async function stateOf(db: SupabaseClient, userId: string, day: string, a: Attempt | null, withBoard = true): Promise<QuizState> {
-  const quiz = quizFor(day);
-  const tomorrow = quizFor(today(Date.parse(`${day}T00:00:00Z`) + 864e5));
+async function stateOf(db: SupabaseClient, userId: string, t: Track, a: Attempt | null, withBoard = true): Promise<QuizState> {
   // Mid-quiz the high score table isn't shown, so skip it and answer faster.
-  const b = withBoard ? await board(db, day, userId, a) : { rows: [], me: null };
+  const b = withBoard ? await board(db, t, userId, a) : { rows: [], me: null };
   return {
-    day,
-    quiz: { id: quiz.id, title: quiz.title, blurb: quiz.blurb, count: quiz.qs.length, limitMs: QUIZ_LIMIT_MS },
-    next: tomorrow.title,
+    day: t.day,
+    quiz: { id: t.quiz.id, title: t.quiz.title, blurb: t.quiz.blurb, count: t.quiz.qs.length, limitMs: QUIZ_LIMIT_MS },
+    next: t.next,
     attempt: a ? { done: Boolean(a.finished_at), index: a.q_index, correct: a.correct, score: a.score, timeMs: a.time_ms } : null,
-    question: a ? question(quiz, userId, a) : null,
+    question: a ? question(t.quiz, userId, a) : null,
     board: b.rows,
     me: b.me,
+    ...(t.club ? { club: t.club } : {}),
   };
 }
 
-export async function quizState(db: SupabaseClient, userId: string): Promise<QuizState> {
-  const day = today();
-  return stateOf(db, userId, day, await load(db, userId, day));
-}
-
-/** Start today's quiz (once), or pick up where you left off. The clock doesn't stop if you leave. */
-export async function startQuiz(db: SupabaseClient, userId: string): Promise<QuizState> {
-  const day = today();
-  const quiz = quizFor(day);
-  let a = await load(db, userId, day);
+async function start(db: SupabaseClient, userId: string, t: Track): Promise<QuizState> {
+  let a = await load(db, userId, t);
   if (!a) {
-    await db.from("quiz_attempts").upsert(
-      { user_id: userId, day, quiz_id: quiz.id, q_started_at: new Date().toISOString() },
-      { onConflict: "user_id,day", ignoreDuplicates: true },
+    await db.from(t.table).upsert(
+      { user_id: userId, ...t.key, ...t.insert, q_started_at: new Date().toISOString() },
+      { onConflict: `user_id,${Object.keys(t.key).join(",")}`, ignoreDuplicates: true },
     );
-    a = await load(db, userId, day);
+    a = await load(db, userId, t);
   }
   // Away too long on the current question: it counts as unanswered, and the next one starts now.
-  if (a && !a.finished_at && Date.now() - Date.parse(a.q_started_at) > limitFor(kindOf(quiz.qs[a.q_index])) + GRACE_MS) {
-    await answerQuiz(db, userId, a.q_index, null);
-    a = await load(db, userId, day);
+  if (a && !a.finished_at && Date.now() - Date.parse(a.q_started_at) > limitFor(kindOf(t.quiz.qs[a.q_index])) + GRACE_MS) {
+    await answer(db, userId, t, a.q_index, null);
+    a = await load(db, userId, t);
   }
-  return stateOf(db, userId, day, a);
+  return stateOf(db, userId, t, a);
 }
 
-export async function answerQuiz(db: SupabaseClient, userId: string, index: number, choice: number | null): Promise<AnswerResult | { error: string; state: QuizState }> {
-  const day = today();
-  const quiz = quizFor(day);
-  const a = await load(db, userId, day);
-  if (!a || a.finished_at || a.q_index !== index || a.quiz_id !== quiz.id) {
-    return { error: "That question is over.", state: await stateOf(db, userId, day, a) };
+async function answer(db: SupabaseClient, userId: string, t: Track, index: number, choice: number | null): Promise<AnswerResult | { error: string; state: QuizState }> {
+  const quiz = t.quiz;
+  const a = await load(db, userId, t);
+  if (!a || a.finished_at || a.q_index !== index || a.quiz_id !== t.rowQuizId) {
+    return { error: "That question is over.", state: await stateOf(db, userId, t, a) };
   }
   const q = quiz.qs[index];
   const shown = order(userId, quiz.id, index);
@@ -149,7 +196,7 @@ export async function answerQuiz(db: SupabaseClient, userId: string, index: numb
   const nextStarts = new Date(Date.now() + FEEDBACK_MS).toISOString();
 
   // Only counts once: the row moves on only if it's still on this question.
-  const { data: moved } = await db.from("quiz_attempts").update({
+  let update = db.from(t.table).update({
     q_index: index + 1,
     q_started_at: nextStarts,
     correct: a.correct + (correct ? 1 : 0),
@@ -157,14 +204,75 @@ export async function answerQuiz(db: SupabaseClient, userId: string, index: numb
     time_ms: a.time_ms + Math.min(elapsed, limit),
     answers: [...(a.answers ?? []), { q: index, choice: choice == null ? null : shown[choice], ms: elapsed }],
     finished_at: last ? now : null,
-  }).eq("user_id", userId).eq("day", day).eq("q_index", index).select("*").maybeSingle();
+  }).eq("user_id", userId).eq("q_index", index);
+  for (const [k, v] of Object.entries(t.key)) update = update.eq(k, v);
+  const { data: moved } = await update.select("*").maybeSingle();
 
-  const after = (moved as Attempt | null) ?? (await load(db, userId, day));
+  const after = (moved as Attempt | null) ?? (await load(db, userId, t));
   return {
     correct,
     answer: shown.indexOf(q.a),
     note: q.n ?? null,
     points: got,
-    state: await stateOf(db, userId, day, after, Boolean(after?.finished_at)),
+    state: await stateOf(db, userId, t, after, Boolean(after?.finished_at)),
   };
+}
+
+// --- The daily quiz ---------------------------------------------------------------------------
+
+export async function quizState(db: SupabaseClient, userId: string): Promise<QuizState> {
+  const t = dailyTrack();
+  return stateOf(db, userId, t, await load(db, userId, t));
+}
+
+/** Start today's quiz (once), or pick up where you left off. The clock doesn't stop if you leave. */
+export async function startQuiz(db: SupabaseClient, userId: string): Promise<QuizState> {
+  return start(db, userId, dailyTrack());
+}
+
+export async function answerQuiz(db: SupabaseClient, userId: string, index: number, choice: number | null) {
+  return answer(db, userId, dailyTrack(), index, choice);
+}
+
+// --- Club quizzes -----------------------------------------------------------------------------
+
+const NOT_FOUND = { error: "This quiz is only for the club's members." } as const;
+
+export async function clubQuizState(db: SupabaseClient, userId: string, club: string, quizId: string) {
+  const t = await clubTrack(db, userId, club, quizId);
+  return t ? stateOf(db, userId, t, await load(db, userId, t)) : NOT_FOUND;
+}
+
+export async function startClubQuiz(db: SupabaseClient, userId: string, club: string, quizId: string) {
+  const t = await clubTrack(db, userId, club, quizId);
+  return t ? start(db, userId, t) : NOT_FOUND;
+}
+
+export async function answerClubQuiz(db: SupabaseClient, userId: string, club: string, quizId: string, index: number, choice: number | null) {
+  const t = await clubTrack(db, userId, club, quizId);
+  return t ? answer(db, userId, t, index, choice) : NOT_FOUND;
+}
+
+/** A club's quizzes, newest first, with this member's result on each. Only for members. */
+export async function clubQuizList(db: SupabaseClient, userId: string, clubSlug: string): Promise<ClubQuizCard[] | null> {
+  const { data: club } = await db.from("clubs").select("id").eq("slug", clubSlug).maybeSingle();
+  if (!club) return null;
+  const { data: member } = await db.from("club_members").select("user_id").eq("club_id", club.id).eq("user_id", userId).maybeSingle();
+  if (!member) return null;
+  const entries = quizzesFor(clubSlug);
+  if (!entries.length) return [];
+  const rowId = (id: string) => `${clubSlug}/${id}`;
+  const ids = entries.map((e) => rowId(e.quiz.id));
+  const [{ data: mine }, { data: all }] = await Promise.all([
+    db.from("club_quiz_attempts").select("quiz_id, score, correct, finished_at").eq("user_id", userId).in("quiz_id", ids),
+    db.from("club_quiz_attempts").select("quiz_id").in("quiz_id", ids).not("finished_at", "is", null),
+  ]);
+  return entries.map((e) => {
+    const m = (mine ?? []).find((x) => x.quiz_id === rowId(e.quiz.id));
+    return {
+      id: e.quiz.id, title: e.quiz.title, blurb: e.quiz.blurb, count: e.quiz.qs.length,
+      played: (all ?? []).filter((x) => x.quiz_id === rowId(e.quiz.id)).length,
+      mine: m ? { done: Boolean(m.finished_at), score: m.score as number, correct: m.correct as number } : null,
+    };
+  });
 }

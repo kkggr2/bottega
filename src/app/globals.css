@@ -873,3 +873,8 @@ html.in-room body { background: var(--bg); transition: background .4s ease; }
   /* An odd one out at the end sits centred, not alone on the left. */
   .pieces > .piece:last-child:nth-child(odd) { grid-column: 1 / -1; max-width: calc(50% - 8px); }
 }
+.club-quizzes { display: grid; gap: 10px; }
+.club-quizzes .quiz-card { margin-bottom: 0; }
+.quiz-card.played { background: var(--surface); color: var(--fg); border: 1px solid var(--line); box-shadow: none; }
+.quiz-card.played .muted { color: var(--muted); }
+.club .chat-send { position: static; box-shadow: none; }

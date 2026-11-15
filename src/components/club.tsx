@@ -10,6 +10,8 @@ import {
 } from "@/lib/clubs";
 import { befriend } from "@/lib/friends";
 import { isNativeApp, shareLink } from "@/lib/native";
+import type { ClubQuizCard } from "@/lib/quiz/types";
+import { supabase } from "@/lib/supabase";
 import { track } from "@/lib/track";
 import type { Profile } from "@/lib/types";
 import { useAuth } from "./auth";
@@ -172,6 +174,8 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
         </div>
       )}
 
+      <ClubQuizzes slug={club.slug} />
+
       <h2 className="thread-h">Members</h2>
       <ul className="roster">
         {people.map((p) => (
@@ -194,6 +198,39 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
 
       {sharing && <InviteSheet club={club} onClose={() => setSharing(false)} />}
     </section>
+  );
+}
+
+/** The club's own quizzes: one try each, with a high score table only the club sees. */
+function ClubQuizzes({ slug }: { slug: string }) {
+  const [quizzes, setQuizzes] = useState<ClubQuizCard[] | null>(null);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase().auth.getSession();
+      const res = await fetch(`/api/quiz?club=${encodeURIComponent(slug)}`, {
+        headers: data.session ? { Authorization: `Bearer ${data.session.access_token}` } : {}, cache: "no-store",
+      });
+      setQuizzes(res.ok ? ((await res.json()) as ClubQuizCard[]) : []);
+    })().catch(() => setQuizzes([]));
+  }, [slug]);
+  if (!quizzes?.length) return null;
+  return (
+    <>
+      <h2 className="thread-h">Club quizzes</h2>
+      <div className="club-quizzes">
+        {quizzes.map((q) => (
+          <Link key={q.id} href={`/club/${slug}/quiz/${q.id}`} className={`quiz-card${q.mine?.done ? " played" : ""}`}>
+            <span className="mono">{q.mine?.done ? "Played" : q.mine ? "Started" : "New"}</span>
+            <b>{q.title}</b>
+            <span className="muted">
+              {q.mine?.done
+                ? `${q.mine.score} points · ${q.mine.correct} of ${q.count} right${q.played > 1 ? ` · ${q.played} played` : ""}`
+                : `${q.blurb.replace(/[.!?]$/, "")} · ${q.count} questions${q.played ? ` · ${q.played} played` : ""}`}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </>
   );
 }
 

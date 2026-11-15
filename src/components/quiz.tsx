@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AnswerResult, BoardRow, QuizQuestion, QuizState } from "@/lib/quiz/types";
 import { supabase } from "@/lib/supabase";
 import { askForReviewSoon } from "@/lib/review";
@@ -16,23 +16,29 @@ import { Gate } from "./gate";
  * The server times and marks everything; this screen only shows it.
  */
 
-async function call(method: "GET" | "POST", body?: object): Promise<Response> {
+/** Which quiz: today's, or one of a club's own (its link name and the quiz's id). */
+export type QuizRef = { club: string; quiz: string } | null;
+
+async function call(method: "GET" | "POST", body?: object, ref: QuizRef = null): Promise<Response> {
   const { data } = await supabase().auth.getSession();
-  return fetch("/api/quiz", {
+  const url = ref && method === "GET" ? `/api/quiz?club=${encodeURIComponent(ref.club)}&quiz=${encodeURIComponent(ref.quiz)}` : "/api/quiz";
+  return fetch(url, {
     method,
     headers: { "Content-Type": "application/json", ...(data.session ? { Authorization: `Bearer ${data.session.access_token}` } : {}) },
-    body: body ? JSON.stringify(body) : undefined,
+    body: body ? JSON.stringify(ref ? { ...body, ...ref } : body) : undefined,
     cache: "no-store",
   });
 }
 
-export function QuizScreen() {
-  return <Gate>{() => <QuizGame />}</Gate>;
+export function QuizScreen({ quizRef = null }: { quizRef?: QuizRef } = {}) {
+  return <Gate>{() => <QuizGame quizRef={quizRef} />}</Gate>;
 }
 
 type Shown = { picked: number | null; answer: number; correct: boolean; note: string | null; points: number };
 
-export function QuizGame() {
+export function QuizGame({ quizRef: given = null }: { quizRef?: QuizRef } = {}) {
+  const clubName = given?.club, quizName = given?.quiz;
+  const quizRef = useMemo<QuizRef>(() => (clubName && quizName ? { club: clubName, quiz: quizName } : null), [clubName, quizName]);
   const [state, setState] = useState<QuizState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -44,9 +50,10 @@ export function QuizGame() {
   const sent = useRef(-1);
 
   useEffect(() => {
-    call("GET").then(async (r) => (r.ok ? setState(await r.json()) : setError("Couldn't load today's quiz. Try again.")))
+    call("GET", undefined, quizRef).then(async (r) => (r.ok ? setState(await r.json())
+      : setError(r.status === 403 ? "This quiz is only for the club's members." : "Couldn't load the quiz. Try again.")))
       .catch(() => setError("Can't reach Bottega. Check your connection."));
-  }, []);
+  }, [quizRef]);
 
   const q = state?.question ?? null;
   const playing = Boolean(state?.attempt && !state.attempt.done && q);
@@ -66,7 +73,7 @@ export function QuizGame() {
     sent.current = q.index;
     setPicked(choice);
     setBusy(true);
-    const r = await call("POST", { action: "answer", index: q.index, choice }).catch(() => null);
+    const r = await call("POST", { action: "answer", index: q.index, choice }, quizRef).catch(() => null);
     setBusy(false);
     if (!r) return setError("Can't reach Bottega. Check your connection.");
     const data = (await r.json()) as AnswerResult | { error: string; state: QuizState };
@@ -78,7 +85,7 @@ export function QuizGame() {
     }
     // Show right or wrong for a moment; the next question's clock starts after it.
     setTimeout(() => { setShown(null); setPicked(null); setState(data.state); }, 1800);
-  }, [state, q]);
+  }, [state, q, quizRef]);
 
   // Out of time.
   useEffect(() => {
@@ -87,7 +94,7 @@ export function QuizGame() {
 
   async function start() {
     setBusy(true);
-    const r = await call("POST", { action: "start" }).catch(() => null);
+    const r = await call("POST", { action: "start" }, quizRef).catch(() => null);
     setBusy(false);
     if (!r?.ok) return setError("Couldn't start the quiz. Try again.");
     track("quiz_start");
@@ -102,14 +109,23 @@ export function QuizGame() {
 
   return (
     <section className="quiz" aria-live="polite">
-      <Link href="/" className="mono muted back">&larr; Library</Link>
-      <p className="mono muted">Today&rsquo;s quiz</p>
+      {state.club ? (
+        <>
+          <Link href={`/club/${state.club.slug}`} className="mono muted back">&larr; {state.club.name}</Link>
+          <p className="mono muted">{state.club.emoji} A {state.club.name} quiz</p>
+        </>
+      ) : (
+        <>
+          <Link href="/" className="mono muted back">&larr; Library</Link>
+          <p className="mono muted">Today&rsquo;s quiz</p>
+        </>
+      )}
       <h1>{quiz.title}</h1>
 
       {!attempt && (
         <div className="quiz-intro">
           <p className="blurb">{quiz.blurb}</p>
-          <p className="muted">{quiz.count} questions: stills, colours, lines and a few facts. 15–20 seconds each, one try a day; faster right answers score more.</p>
+          <p className="muted">{quiz.count} questions: stills, colours, lines and a few facts. 15–20 seconds each, {state.club ? "one try each" : "one try a day"}; faster right answers score more.</p>
           <button className="btn" type="button" disabled={busy} onClick={start}>{busy ? "Starting…" : "Start the quiz"}</button>
         </div>
       )}
@@ -148,12 +164,12 @@ export function QuizGame() {
       {done && attempt && (
         <div className="quiz-done">
           <p className="quiz-score"><b>{attempt.score}</b> points</p>
-          <p className="muted">{attempt.correct} of {quiz.count} right · {(attempt.timeMs / 1000).toFixed(1)} seconds in all{state.me ? ` · #${state.me.rank} today` : ""}</p>
-          <p className="muted">Tomorrow: <b>{state.next}</b></p>
+          <p className="muted">{attempt.correct} of {quiz.count} right · {(attempt.timeMs / 1000).toFixed(1)} seconds in all{state.me ? ` · #${state.me.rank}${state.club ? " in the club" : " today"}` : ""}</p>
+          {state.next && <p className="muted">Tomorrow: <b>{state.next}</b></p>}
         </div>
       )}
 
-      {(done || !attempt) && <Board rows={state.board} me={state.me} />}
+      {(done || !attempt) && <Board rows={state.board} me={state.me} club={Boolean(state.club)} count={quiz.count} />}
     </section>
   );
 }
@@ -183,26 +199,26 @@ export function Clue({ q }: { q: QuizQuestion }) {
   return null;
 }
 
-function Board({ rows, me }: { rows: BoardRow[]; me: BoardRow | null }) {
-  if (!rows.length) return <p className="muted quiz-empty">No scores yet today. Be the first on the board.</p>;
+function Board({ rows, me, club = false, count = 7 }: { rows: BoardRow[]; me: BoardRow | null; club?: boolean; count?: number }) {
+  if (!rows.length) return <p className="muted quiz-empty">{club ? "Nobody in the club has played yet. Be the first on the board." : "No scores yet today. Be the first on the board."}</p>;
   const showMe = me && !rows.some((r) => r.me);
   return (
     <div className="quiz-board">
-      <h3>Today&rsquo;s high scores</h3>
+      <h3>{club ? "The club’s high scores" : "Today’s high scores"}</h3>
       <ol>
-        {rows.map((r) => <Row key={r.username} r={r} />)}
-        {showMe && <><li className="gap" aria-hidden="true">…</li><Row r={me} /></>}
+        {rows.map((r) => <Row key={r.username} r={r} count={count} />)}
+        {showMe && <><li className="gap" aria-hidden="true">…</li><Row r={me} count={count} /></>}
       </ol>
     </div>
   );
 }
 
-function Row({ r }: { r: BoardRow }) {
+function Row({ r, count = 7 }: { r: BoardRow; count?: number }) {
   return (
     <li className={r.me ? "me" : ""}>
       <span className="rank">{r.rank}</span>
       <Link href={`/r/${r.username}`}>@{r.username}</Link>
-      <span className="muted">{r.correct}/7</span>
+      <span className="muted">{r.correct}/{count}</span>
       <b>{r.score}</b>
     </li>
   );

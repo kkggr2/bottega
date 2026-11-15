@@ -34,6 +34,14 @@ export type QuizState = {
   question: QuizQuestion | null;
   board: BoardRow[];
   me: BoardRow | null;
+  /** Set for a club's own quiz. */
+  club?: { slug: string; name: string; emoji: string };
+};
+
+/** A quiz on a club's page, with your result if you've played. */
+export type ClubQuizCard = {
+  id: string; title: string; blurb: string; count: number; played: number;
+  mine: { done: boolean; score: number; correct: number } | null;
 };
 
 export type AnswerResult = {
