@@ -64,6 +64,9 @@ Wave 1: the six starred ones. Wave 2 (a week later): the rest, using whatever wo
 
 ## When a club says yes
 
+If they start it themselves at bottegarooms.com/start, they're the host straight away and see a checklist (invite, shelf, what's next, ask for a quiz). Their quiz request reaches hello@bottegarooms.com: forward it to Claude.
+
+If they'd rather you set it up:
 1. **Ask them two things:** what they'd like their club called, and what to put on their shelf / their quiz theme (e.g. their next book or film).
 2. **Start their club** in the app: Salon → Clubs → Start a club, with their name and a sign (📚 🎬).
 3. **Send Claude** the club's link name and their theme. Claude writes their quiz the same day.

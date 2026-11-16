@@ -185,7 +185,7 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
       </div>
       <p className="msg ok" aria-live="polite">{note}</p>
 
-      {stats && (
+      {stats && stats.members > 0 && (
         <div className="club-stats" aria-label="How the link is doing">
           <span><b>{stats.members}</b> joined</span>
           <span><b>{stats.joined_7d}</b> this week</span>
@@ -193,6 +193,8 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
           <span><b>{stats.active_7d}</b> active this week</span>
         </div>
       )}
+
+      {club.is_host && <FirstSteps club={club} onInvite={() => setSharing(true)} />}
 
       <NextUp clubId={club.id} isHost={club.is_host} onShelved={() => setShelfTick((n) => n + 1)} />
 
@@ -221,6 +223,33 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
         placeholder={`Write to ${club.name}…`} empty="Nobody has written yet. Say hello, or ask what everyone's into this week." />
 
       {sharing && <InviteSheet club={club} onClose={() => setSharing(false)} />}
+    </section>
+  );
+}
+
+/** For a new club's host: four first steps, until they're done with it. */
+function FirstSteps({ club, onInvite }: { club: MyClub; onInvite: () => void }) {
+  const key = `bottega.firstSteps.${club.slug}`;
+  const [hidden, setHidden] = useState(true);
+  useEffect(() => {
+    try { setHidden(localStorage.getItem(key) === "done"); } catch { setHidden(false); } // eslint-disable-line react-hooks/set-state-in-effect -- reading a saved preference once
+  }, [key]);
+  if (hidden || club.members > 5) return null;
+  const quizMail = `mailto:hello@bottegarooms.com?subject=${encodeURIComponent(`A quiz for ${club.name}`)}&body=${encodeURIComponent(
+    `Hi Çağla,\n\nWe'd love a quiz for ${club.name} (${joinUrl(club.slug)}).\n\nTheme (our next book or film, a director, an author…): \n\nAnything we love or joke about: \n`)}`;
+  const done = () => { try { localStorage.setItem(key, "done"); } catch {} setHidden(true); };
+  return (
+    <section className="first-steps" aria-label="First steps">
+      <div className="tonight-head">
+        <h2>Your club is ready</h2>
+        <button type="button" className="btn ghost small" onClick={done}>Done</button>
+      </div>
+      <ol>
+        <li><button type="button" className="linkish" onClick={onInvite}>Invite your members</button><span>One link, or a QR code for your next meeting.</span></li>
+        <li><a href="#shelf" className="linkish">Fill the shelf</a><span>Add a few books or films you&rsquo;ve done together.</span></li>
+        <li><a href="#next" className="linkish">Ask what&rsquo;s next</a><span>Put up two to four choices and let everyone vote.</span></li>
+        <li><a href={quizMail} className="linkish">Ask for your club&rsquo;s quiz</a><span>Tell us your theme; your quiz appears here, usually within a day.</span></li>
+      </ol>
     </section>
   );
 }
@@ -323,7 +352,8 @@ export function ClubsSection() {
 
 const EMOJI = ["🎬", "📚", "🎞️", "💿", "🎷", "🍿", "🌙", "☕"];
 
-function StartClubSheet({ onClose, onDone }: { onClose: () => void; onDone: (slug: string) => void }) {
+/** The fields for starting a club: name, link and sign. Shared by the sheet in the Salon and the start page. */
+function useClubForm(onDone: (slug: string) => void) {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
@@ -331,8 +361,10 @@ function StartClubSheet({ onClose, onDone }: { onClose: () => void; onDone: (slu
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const link = slugTouched ? slug : slugify(name);
+  const ready = name.trim().length >= 2 && link.length >= 3;
 
   async function start() {
+    if (!ready || busy) return;
     setBusy(true);
     const err = await createClub(link, name, emoji);
     setBusy(false);
@@ -341,31 +373,52 @@ function StartClubSheet({ onClose, onDone }: { onClose: () => void; onDone: (slu
     onDone(link);
   }
 
-  return (
-    <Sheet onClose={onClose} onSubmit={start} label="Start a club">
-      <h2>Start a club</h2>
+  const fields = (
+    <>
       <div className="field">
-        <label htmlFor="club-name">Name</label>
+        <label htmlFor="club-name">Your club&rsquo;s name</label>
         <input id="club-name" type="text" maxLength={60} placeholder="Gray Fox Book Club" value={name} onChange={(e) => setName(e.target.value)} />
       </div>
       <div className="field">
-        <label htmlFor="club-slug">Link</label>
+        <label htmlFor="club-slug">Its link</label>
         <div className="link-field"><span>bottegarooms.com/join/</span>
           <input id="club-slug" type="text" maxLength={40} autoCapitalize="none" autoCorrect="off" spellCheck={false} value={link}
             onChange={(e) => { setSlugTouched(true); setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "")); }} />
         </div>
       </div>
       <div className="field">
-        <span className="label">Sign</span>
+        <span className="label">Its sign</span>
         <div className="chips">
           {EMOJI.map((e) => <button key={e} type="button" className="chip" aria-pressed={emoji === e} onClick={() => setEmoji(e)}>{e}</button>)}
         </div>
       </div>
       <p className="msg err">{error}</p>
+    </>
+  );
+  return { fields, start, busy, ready };
+}
+
+function StartClubSheet({ onClose, onDone }: { onClose: () => void; onDone: (slug: string) => void }) {
+  const form = useClubForm(onDone);
+  return (
+    <Sheet onClose={onClose} onSubmit={form.start} label="Start a club">
+      <h2>Start a club</h2>
+      {form.fields}
       <div className="row">
         <button className="btn ghost" type="button" onClick={onClose}>Cancel</button>
-        <button className="btn" type="submit" disabled={busy || name.trim().length < 2 || link.length < 3}>{busy ? "Starting…" : "Start the club"}</button>
+        <button className="btn" type="submit" disabled={form.busy || !form.ready}>{form.busy ? "Starting…" : "Start the club"}</button>
       </div>
     </Sheet>
+  );
+}
+
+/** The same form on a page of its own (bottegarooms.com/start). */
+export function StartClubForm({ onDone }: { onDone: (slug: string) => void }) {
+  const form = useClubForm(onDone);
+  return (
+    <form className="panel stack" onSubmit={(e) => { e.preventDefault(); void form.start(); }}>
+      {form.fields}
+      <button className="btn big" type="submit" disabled={form.busy || !form.ready}>{form.busy ? "Starting…" : "Start the club"}</button>
+    </form>
   );
 }

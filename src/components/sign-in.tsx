@@ -19,7 +19,8 @@ type Pending = { email: string; kind: "signup" | "code" | "recovery" };
 const MIN_PASSWORD = 8;
 const looksLikeEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 
-export function SignIn() {
+/** `forClub`: the short version on the start page — just the form, about starting a club. */
+export function SignIn({ forClub = false }: { forClub?: boolean } = {}) {
   // Most people here are new, so the form starts on "Create account".
   const [mode, setMode] = useState<Mode>("create");
   const [from] = useState(cameFrom);
@@ -170,7 +171,8 @@ export function SignIn() {
   };
 
   return (
-    <div className="landing">
+    <div className={forClub ? "landing for-club" : "landing"}>
+      {!forClub && <>
       <section className="landing-hero">
         <h1>Step into your friends&rsquo; taste.</h1>
         <p className="lede">Fill one room with what you love. Then visit theirs.</p>
@@ -184,12 +186,15 @@ export function SignIn() {
         <p className="try">This room is real. Tap the records, or a DVD.</p>
         <ExampleRoom embedded onMakeYours={() => goToForm("create")} />
       </section>
+      </>}
 
       <section className="onboard" id="join" ref={joinRef}>
         <div>
-          <h2 className="join-title">{mode === "create" ? "Five things open your door." : "Your room is waiting."}</h2>
+          <h2 className="join-title">{forClub ? (mode === "create" ? "First, your account." : "Welcome back.") : mode === "create" ? "Five things open your door." : "Your room is waiting."}</h2>
           <p className="lede">
-            {from
+            {forClub
+              ? mode === "create" ? "It takes a minute. Then you name your club and get its link." : "Log in, then name your club and get its link."
+              : from
               ? <>You came from <b>@{from.username}</b>&rsquo;s room. Make yours and we&rsquo;ll send them a friend request so your rooms sit side by side.</>
               : mode === "create"
                 ? "Pick a username, hang five things you love, and send the link to a friend. Bring in Letterboxd films or Goodreads books in one tap."

@@ -153,3 +153,15 @@ export async function closePoll(pollId: string, shelve: boolean): Promise<string
   const { error } = await supabase().rpc("close_club_poll", { p_poll: pollId, p_shelve: shelve });
   return error ? rpcError(error.message) : null;
 }
+
+// Someone on their way to starting a club (bottegarooms.com/start), kept for a day across sign-up.
+const START = "bottega.startClub";
+export function rememberStartClub(): void {
+  try { localStorage.setItem(START, String(Date.now())); } catch {}
+}
+export function pendingStartClub(): boolean {
+  try { return Date.now() - Number(localStorage.getItem(START) ?? 0) < 864e5; } catch { return false; }
+}
+export function forgetStartClub(): void {
+  try { localStorage.removeItem(START); } catch {}
+}

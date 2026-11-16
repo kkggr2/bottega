@@ -1,6 +1,6 @@
 # Writing to film and book clubs
 
-**The idea:** write first, prepare nothing. Offer the club a home on Bottega and set it up only if they say yes.
+**The idea:** write first, prepare nothing. Organisers can start their club themselves at bottegarooms.com/start (account, then name the club, then a checklist), or ask you to set it up.
 
 Send one email per club, to the organiser, from your own address. Never one email to many clubs (no BCC lists):
 it lands in spam, and in Germany unsolicited bulk emails can count as advertising under the UWG.
@@ -24,9 +24,9 @@ Fill in every [bracket], especially the honest line about them. That line is wha
 >
 > Everyone also gets their own room for the films, books and records they love, so members get to know each other's taste.
 >
-> It's free and there are no ads. If you'd like it, I'll set everything up for you — you'd just get one link to share with your members. I'm also happy to come to a [meeting / screening] and show it.
->
-> Have a look: https://bottegarooms.com
+> It's free and there are no ads. You can start your club yourself in about a minute here:
+> **https://bottegarooms.com/start**
+> — or, if you'd rather, I'll set it up for you and send you the link. I'm also happy to come to a [meeting / screening] and show it.
 >
 > Warmly,
 > Çağla
@@ -34,7 +34,7 @@ Fill in every [bracket], especially the honest line about them. That line is wha
 
 **Follow-up (one, after about a week, only if no reply):**
 
-> Hi [first name], just bringing this back up in case it got buried. If a home for [club name] on Bottega sounds good, I'd be glad to set it up — and if it's not for you, no problem at all!
+> Hi [first name], just bringing this back up in case it got buried. If a home for [club name] on Bottega sounds good, you can start it in a minute at bottegarooms.com/start, or I'd be glad to set it up for you — and if it's not for you, no problem at all!
 
 ---
 
@@ -54,9 +54,9 @@ Fill in every [bracket], especially the honest line about them. That line is wha
 >
 > Außerdem bekommt jede:r einen eigenen Raum für die Filme, Bücher und Platten, die man liebt — so lernt ihr den Geschmack der anderen kennen.
 >
-> Kostenlos und ohne Werbung. Wenn ihr mögt, richte ich alles für euch ein — ihr bekommt einfach einen Link für eure Mitglieder. Ich komme auch gern zu einem [Treffen / Filmabend] und zeige es kurz.
->
-> Hier zum Anschauen: https://bottegarooms.com
+> Kostenlos und ohne Werbung. Euren Club könnt ihr hier in etwa einer Minute selbst starten:
+> **https://bottegarooms.com/start**
+> — oder ich richte ihn für euch ein und schicke dir den Link. Ich komme auch gern zu einem [Treffen / Filmabend] und zeige es kurz.
 >
 > Liebe Grüße
 > Çağla
@@ -64,7 +64,7 @@ Fill in every [bracket], especially the honest line about them. That line is wha
 
 **Nachfassen (einmal, nach etwa einer Woche):**
 
-> Hallo [Vorname], ich hole das nur noch einmal hoch, falls es untergegangen ist. Wenn euch ein Zuhause für [Clubname] auf Bottega gefällt, richte ich es gern ein — und falls nicht, ist das völlig in Ordnung!
+> Hallo [Vorname], ich hole das nur noch einmal hoch, falls es untergegangen ist. Wenn euch ein Zuhause für [Clubname] auf Bottega gefällt: unter bottegarooms.com/start ist es in einer Minute gestartet, oder ich richte es gern für euch ein — und falls nicht, ist das völlig in Ordnung!
 
 ---
 
@@ -84,9 +84,9 @@ Fill in every [bracket], especially the honest line about them. That line is wha
 >
 > Ayrıca herkesin sevdiği filmler, kitaplar ve plaklar için kendi odası var; böylece birbirinizin zevkini tanıyorsunuz.
 >
-> Ücretsiz ve reklamsız. İsterseniz her şeyi sizin için kurayım — üyelerinizle paylaşacağınız tek bir link olur. Bir [buluşmanıza / gösteriminize] gelip kısaca göstermekten de mutlu olurum.
->
-> Göz atmak için: https://bottegarooms.com
+> Ücretsiz ve reklamsız. Kulübünüzü yaklaşık bir dakikada buradan kendiniz kurabilirsiniz:
+> **https://bottegarooms.com/start**
+> — ya da isterseniz ben kurup linki size göndereyim. Bir [buluşmanıza / gösteriminize] gelip kısaca göstermekten de mutlu olurum.
 >
 > Sevgiyle,
 > Çağla
@@ -94,4 +94,4 @@ Fill in every [bracket], especially the honest line about them. That line is wha
 
 **Hatırlatma (bir kez, yaklaşık bir hafta sonra):**
 
-> Merhaba [isim], gözden kaçmış olabilir diye tekrar yazıyorum. [Kulüp adı] için Bottega'da bir ev kulağa hoş geliyorsa kurmaktan mutluluk duyarım — uygun değilse de hiç sorun değil!
+> Merhaba [isim], gözden kaçmış olabilir diye tekrar yazıyorum. [Kulüp adı] için Bottega'da bir ev kulağa hoş geliyorsa bottegarooms.com/start adresinden bir dakikada kurabilirsiniz, ya da ben memnuniyetle kurarım — uygun değilse de hiç sorun değil!

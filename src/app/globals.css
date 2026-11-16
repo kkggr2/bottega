@@ -964,3 +964,22 @@ html[data-mood] .tonight-room { background: color-mix(in srgb, var(--bg) 82%, va
 .ink { color: var(--fg); font-weight: 500; }
 .join-shelf { display: grid; gap: 8px; width: 100%; }
 .join-shelf > div { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Starting a club: the start page and the new club's first steps. */
+.start-club { max-width: 620px; margin: 0 auto; padding-block: 28px 48px; display: grid; gap: 28px; }
+.start-head { display: grid; gap: 10px; }
+.start-head h1 { font: 400 clamp(36px, 8vw, 54px)/1.02 var(--font-display); }
+.start-head .lede { color: var(--muted); font-size: 17px; }
+.start-perks { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 10px; }
+.start-perks li { display: grid; gap: 2px; padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); }
+.start-perks b { font: 400 18px/1.2 var(--font-display); }
+.start-perks span { color: var(--muted); font-size: 14.5px; }
+.start-form { display: grid; gap: 14px; }
+.start-club .landing.for-club { display: block; }
+.start-club .landing.for-club .onboard { padding-top: 0; }
+.first-steps { display: grid; gap: 10px; padding: 16px 18px; border-radius: 16px; background: var(--surface); border: 1px solid var(--brass); }
+.first-steps h2 { font: 400 22px/1.2 var(--font-display); }
+.first-steps ol { margin: 0; padding-left: 22px; display: grid; gap: 10px; }
+.first-steps li { display: grid; gap: 1px; }
+.first-steps li span { color: var(--muted); font-size: 13.5px; }
+.first-steps .linkish { justify-self: start; font-weight: 500; }

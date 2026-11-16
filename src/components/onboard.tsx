@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { claimInvite, forgetClub, joinClub, pendingClub } from "@/lib/clubs";
+import { claimInvite, forgetClub, joinClub, pendingClub, pendingStartClub } from "@/lib/clubs";
 import { befriend } from "@/lib/friends";
 import { friendlyError, supabase } from "@/lib/supabase";
 import { cameFrom, forgetCameFrom, track } from "@/lib/track";
@@ -68,6 +68,8 @@ export function Onboard() {
     } catch {
       // Their room still opens; they can join from the link again.
     }
+    // On the way to starting a club: back to naming it.
+    if (!landing && pendingStartClub()) landing = "/start";
     forgetClub();
     forgetCameFrom();
     await refreshProfile();

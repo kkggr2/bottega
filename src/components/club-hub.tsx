@@ -70,7 +70,7 @@ export function NextUp({ clubId, isHost, onShelved }: { clubId: string; isHost: 
   const max = poll ? Math.max(1, ...poll.counts) : 1;
 
   return (
-    <section className="hub-section" aria-label="What's next">
+    <section className="hub-section" id="next" aria-label="What's next">
       <div className="tonight-head">
         <h2>{open ? poll.question : "What's next?"}</h2>
         {isHost && !open && <button className="btn small" type="button" onClick={() => setAsking(true)}>Ask the club</button>}
@@ -179,7 +179,7 @@ export function ClubShelf({ clubId, me, isHost, refresh }: { clubId: string; me:
 
   if (!items) return null;
   return (
-    <section className="hub-section" aria-label="The club's shelf">
+    <section className="hub-section" id="shelf" aria-label="The club's shelf">
       <div className="tonight-head">
         <h2>The shelf</h2>
         {isHost && <button className="btn ghost small" type="button" onClick={() => setAdding(true)}>Add to the shelf</button>}
