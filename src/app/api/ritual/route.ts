@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { apnsConfigured, sendApns } from "@/lib/apns";
+import { quizFor, today } from "@/lib/quiz/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 /*
@@ -7,6 +8,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
  * Your record, film and book can each change once every 24 hours. When one has opened up again,
  * your phone gets one quiet line: "Your turntable is free again. What are you playing today?"
  * Only for people who used it in the last week, and at most once a day.
+ * Anyone else who used Bottega in the last two weeks and hasn't played today gets today's quiz instead.
  */
 
 const WHERE: Record<string, string> = { song: "turntable", film: "TV", book: "armchair" };
@@ -50,5 +52,23 @@ export async function GET(request: NextRequest) {
     sent += results.filter((r) => r.ok).length;
     await Promise.all(results.filter((r) => r.gone).map((r) => db.rpc("drop_push_token", { p_token: r.token })));
   }
-  return Response.json({ sent });
+
+  // Everyone else who's been around lately and hasn't played: today's quiz. Still one line a day at most.
+  const told = new Set(targets.map((t) => t.user_id));
+  const day = today();
+  const { data: quizData } = await db.rpc("quiz_nudge_targets", { p_day: day });
+  const quizTokens = ((quizData ?? []) as { user_id: string; token: string; platform: string }[])
+    .filter((t) => t.platform === "ios" && !told.has(t.user_id)).map((t) => t.token);
+  let quizSent = 0;
+  if (quizTokens.length) {
+    const quiz = quizFor(day);
+    const results = await sendApns(quizTokens, {
+      title: "Bottega",
+      body: `Today's quiz: ${quiz.title}. ${quiz.qs.length} questions, about 2 minutes.`,
+      url: "bottega://quiz",
+    });
+    quizSent = results.filter((r) => r.ok).length;
+    await Promise.all(results.filter((r) => r.gone).map((r) => db.rpc("drop_push_token", { p_token: r.token })));
+  }
+  return Response.json({ sent, quizSent });
 }

@@ -67,4 +67,54 @@ export const BOOKS: Quiz[] = [
       { q: "In Chekhov's Three Sisters, where do the sisters long to go?", o: ["Moscow", "Paris", "St Petersburg", "Italy"], a: 0 },
     ],
   },
+
+  // Second batch (November 2026).
+  {
+    id: "agatha-christie", title: "The Agatha Christie quiz", blurb: "Who did it, and with what.",
+    qs: [
+      { kind: "emoji", emoji: "🚂❄️🔪", q: "Which Christie novel is this?", o: ["Murder on the Orient Express", "Death on the Nile", "The ABC Murders", "Evil Under the Sun"], a: 0 },
+      { q: "What does Poirot credit for solving his cases?", o: ["His little grey cells", "His nose for lies", "His notebook", "His moustache"], a: 0 },
+      { q: "In which village does Miss Marple live?", o: ["St Mary Mead", "Chipping Cleghorn", "Market Basing", "King's Abbot"], a: 0 },
+      { kind: "emoji", emoji: "🏝️🔟😨", q: "And this one?", o: ["And Then There Were None", "Evil Under the Sun", "Peril at End House", "Crooked House"], a: 0, n: "Ten strangers on an island, one by one." },
+      { q: "Which Christie play has run in London since 1952?", o: ["The Mousetrap", "Witness for the Prosecution", "Black Coffee", "Spider's Web"], a: 0 },
+      { q: "For how long did Christie famously disappear in 1926?", o: ["Eleven days", "Three days", "A month", "Six months"], a: 0 },
+      { kind: "emoji", emoji: "🚢🐫🔫", q: "Which novel is this?", o: ["Death on the Nile", "Murder in Mesopotamia", "Appointment with Death", "Cat Among the Pigeons"], a: 0 },
+    ],
+  },
+  {
+    id: "jane-austen", title: "The Jane Austen quiz", blurb: "Balls, letters and second chances.",
+    qs: [
+      { kind: "quote", quote: "Emma Woodhouse, handsome, clever, and rich", q: "Which novel opens like this?", o: ["Emma", "Persuasion", "Mansfield Park", "Northanger Abbey"], a: 0 },
+      { q: "Which novel did Austen first call First Impressions?", o: ["Pride and Prejudice", "Sense and Sensibility", "Persuasion", "Emma"], a: 0 },
+      { kind: "emoji", emoji: "🏰📖😱", q: "Which Austen novel is this?", o: ["Northanger Abbey", "Mansfield Park", "Persuasion", "Sanditon"], a: 0, n: "A young reader who sees a gothic novel in everything." },
+      { q: "In Persuasion, who writes Anne the famous letter?", o: ["Captain Wentworth", "Mr Elliot", "Admiral Croft", "Captain Benwick"], a: 0 },
+      { kind: "emoji", emoji: "👭💔🌧️", q: "And this one?", o: ["Sense and Sensibility", "Pride and Prejudice", "Emma", "Lady Susan"], a: 0, n: "Two sisters; one is caught in the rain." },
+      { q: "Where is Jane Austen buried?", o: ["Winchester Cathedral", "Westminster Abbey", "Bath Abbey", "St Paul's Cathedral"], a: 0 },
+      { q: "Which Bank of England note carries her portrait?", o: ["£10", "£5", "£20", "£50"], a: 0 },
+    ],
+  },
+  {
+    id: "latin-american", title: "The Latin American books quiz", blurb: "Magic, memory and long families.",
+    qs: [
+      { kind: "emoji", emoji: "🏘️🦋💛⏳", q: "Which novel is this?", o: ["One Hundred Years of Solitude", "Love in the Time of Cholera", "Chronicle of a Death Foretold", "The Autumn of the Patriarch"], a: 0, n: "Yellow butterflies follow Mauricio Babilonia." },
+      { q: "What is the town in One Hundred Years of Solitude called?", o: ["Macondo", "Comala", "Santa María", "Aracataca"], a: 0, n: "Aracataca is García Márquez's real birthplace." },
+      { kind: "emoji", emoji: "💌⛵👴👵", q: "And this one?", o: ["Love in the Time of Cholera", "No One Writes to the Colonel", "Of Love and Other Demons", "Leaf Storm"], a: 0, n: "He waits more than fifty years for her." },
+      { q: "In which year did García Márquez win the Nobel Prize?", o: ["1982", "1967", "1990", "1971"], a: 0 },
+      { q: "Which Argentine writer made Ficciones?", o: ["Jorge Luis Borges", "Julio Cortázar", "Adolfo Bioy Casares", "Ernesto Sabato"], a: 0 },
+      { kind: "emoji", emoji: "🔪📜⏰", q: "Which García Márquez book is this?", o: ["Chronicle of a Death Foretold", "The General in His Labyrinth", "One Hundred Years of Solitude", "News of a Kidnapping"], a: 0, n: "Everyone in town knows the murder is coming." },
+      { q: "Which Mexican novel is set in the ghost town of Comala?", o: ["Pedro Páramo", "Aura", "Like Water for Chocolate", "The Labyrinth of Solitude"], a: 0, n: "Juan Rulfo, 1955." },
+    ],
+  },
+  {
+    id: "turkish-literature", title: "The Turkish literature quiz", blurb: "From İnce Memed to the Museum of Innocence.",
+    qs: [
+      { q: "Which Turkish writer won the Nobel Prize in 2006?", o: ["Orhan Pamuk", "Yaşar Kemal", "Elif Şafak", "Ahmet Hamdi Tanpınar"], a: 0 },
+      { kind: "emoji", emoji: "🦅🏔️🔫", q: "Which novel is this?", o: ["İnce Memed", "Kuyucaklı Yusuf", "Tutunamayanlar", "Saatleri Ayarlama Enstitüsü"], a: 0, n: "Yaşar Kemal's bandit of the Taurus mountains." },
+      { q: "Who wrote Saatleri Ayarlama Enstitüsü (The Time Regulation Institute)?", o: ["Ahmet Hamdi Tanpınar", "Oğuz Atay", "Sait Faik Abasıyanık", "Halit Ziya Uşaklıgil"], a: 0 },
+      { kind: "emoji", emoji: "🏛️🚬💔", q: "Which Pamuk novel is this?", o: ["Masumiyet Müzesi", "Kar", "Benim Adım Kırmızı", "Kara Kitap"], a: 0, n: "The Museum of Innocence: a real museum in Istanbul too." },
+      { q: "Who wrote Kürk Mantolu Madonna (Madonna in a Fur Coat)?", o: ["Sabahattin Ali", "Sait Faik Abasıyanık", "Orhan Kemal", "Peyami Safa"], a: 0 },
+      { q: "Which poet wrote Memleketimden İnsan Manzaraları?", o: ["Nazım Hikmet", "Orhan Veli", "Cemal Süreya", "Attilâ İlhan"], a: 0 },
+      { kind: "emoji", emoji: "❄️🏙️✍️", q: "And this Pamuk novel?", o: ["Kar", "Masumiyet Müzesi", "Beyaz Kale", "Kafamda Bir Tuhaflık"], a: 0, n: "Snow: a poet stuck in Kars." },
+    ],
+  },
 ];

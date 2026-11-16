@@ -26,5 +26,8 @@ export function pathFromUrl(url: string): string {
   // bottega://messages/cagla — a private message notification.
   const dm = url.match(/^bottega:\/\/messages\/([a-z0-9_]{3,20})/i);
   if (dm) return `/messages?with=${dm[1].toLowerCase()}`;
+  // bottega://quiz — the daily quiz reminder.
+  if (/^bottega:\/\/quiz\b/i.test(url)) return "/quiz/today";
+  // bottega://room — your own room (the "your turntable is free" nudge); the home screen leads there.
   return "/";
 }

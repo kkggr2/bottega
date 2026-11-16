@@ -80,4 +80,54 @@ export const MUSIC: Quiz[] = [
       { q: "In which year did Dylan win the Nobel Prize in Literature?", o: ["2016", "2012", "2019", "2008"], a: 0 },
     ],
   },
+
+  // Second batch (November 2026).
+  {
+    id: "radiohead", title: "The Radiohead quiz", blurb: "Everything in its right place.",
+    qs: [
+      { kind: "cover", media: "kid-a", crop: [50, 74, 1.9], q: "Which Radiohead cover is this?", o: ["Kid A", "Amnesiac", "Hail to the Thief", "The Bends"], a: 0 },
+      { q: "Which band member scored There Will Be Blood?", o: ["Jonny Greenwood", "Thom Yorke", "Ed O'Brien", "Colin Greenwood"], a: 0 },
+      { kind: "palette", media: "in-rainbows", q: "Whose cover colours are these?", o: ["In Rainbows", "A Moon Shaped Pool", "OK Computer", "The King of Limbs"], a: 0 },
+      { kind: "emoji", emoji: "😰🤖", q: "Which Radiohead song is this?", o: ["Paranoid Android", "Karma Police", "Idioteque", "No Surprises"], a: 0 },
+      { q: "How did Radiohead first release In Rainbows in 2007?", o: ["As a download, pay what you want", "Only on vinyl", "Free with a newspaper", "As a surprise CD in shops"], a: 0 },
+      { q: "Which album opens with \"Airbag\"?", o: ["OK Computer", "The Bends", "Kid A", "Pablo Honey"], a: 0 },
+      { kind: "emoji", emoji: "🪴🧴🌲", q: "And this song?", o: ["Fake Plastic Trees", "Everything in Its Right Place", "Street Spirit", "High and Dry"], a: 0 },
+    ],
+  },
+  {
+    id: "kate-bush", title: "The Kate Bush quiz", blurb: "Running up that hill, at last.",
+    qs: [
+      { kind: "cover", media: "hounds-of-love", crop: [50, 46, 2.6], q: "Which Kate Bush cover is this?", o: ["Hounds of Love", "The Dreaming", "Never for Ever", "The Sensual World"], a: 0 },
+      { q: "Her first single (1978) was named after a novel. Which one?", o: ["Wuthering Heights", "Jane Eyre", "Rebecca", "Great Expectations"], a: 0 },
+      { kind: "palette", media: "kick-inside", q: "Whose cover colours are these?", o: ["The Kick Inside", "Lionheart", "Never for Ever", "Aerial"], a: 0 },
+      { kind: "emoji", emoji: "🏃‍♀️⛰️🤝", q: "Which Kate Bush song is this?", o: ["Running Up That Hill", "Cloudbusting", "This Woman's Work", "Wow"], a: 0 },
+      { q: "Which TV series sent \"Running Up That Hill\" back to number one in 2022?", o: ["Stranger Things", "Euphoria", "The Crown", "Wednesday"], a: 0 },
+      { q: "Which musician helped her get her first record deal as a teenager?", o: ["David Gilmour", "Peter Gabriel", "Elton John", "Brian Eno"], a: 0 },
+      { kind: "emoji", emoji: "☁️👨‍👦🔧", q: "And this song?", o: ["Cloudbusting", "Wow", "Moments of Pleasure", "The Man with the Child in His Eyes"], a: 0, n: "About a father and his rain-making machine." },
+    ],
+  },
+  {
+    id: "noughties-indie", title: "The 2000s indie quiz", blurb: "Skinny jeans and loud guitars.",
+    qs: [
+      { kind: "cover", media: "funeral", crop: [44, 56, 1.7], q: "Whose album cover is this?", o: ["Arcade Fire, Funeral", "Arcade Fire, Neon Bible", "Fleet Foxes, Fleet Foxes", "Sufjan Stevens, Illinois"], a: 0 },
+      { q: "Which band made Is This It (2001)?", o: ["The Strokes", "Interpol", "The Libertines", "Yeah Yeah Yeahs"], a: 0 },
+      { kind: "palette", media: "bright-lights", q: "Whose cover colours are these?", o: ["Interpol, Turn On the Bright Lights", "The Strokes, Room on Fire", "The National, Boxer", "Editors, The Back Room"], a: 0 },
+      { kind: "emoji", emoji: "🗺️", q: "Which 2000s song is this?", o: ["Maps", "Mr. Brightside", "Last Nite", "Take Me Out"], a: 0, n: "Yeah Yeah Yeahs, 2003." },
+      { q: "Who recorded \"Mr. Brightside\"?", o: ["The Killers", "Franz Ferdinand", "Bloc Party", "Kings of Leon"], a: 0 },
+      { kind: "emoji", emoji: "7️⃣🌍⚔️", q: "And this one?", o: ["Seven Nation Army", "Fell in Love with a Girl", "Icky Thump", "Hotel Yorba"], a: 0, n: "The White Stripes, 2003." },
+      { q: "Which city did The Strokes come from?", o: ["New York", "London", "Detroit", "Montreal"], a: 0 },
+    ],
+  },
+  {
+    id: "soul", title: "The soul quiz", blurb: "Motown, Memphis and a lot of feeling.",
+    qs: [
+      { kind: "cover", media: "whats-going-on", crop: [28, 62, 1.8], q: "Whose album cover is this?", o: ["Marvin Gaye, What's Going On", "Marvin Gaye, Let's Get It On", "Stevie Wonder, Innervisions", "Curtis Mayfield, Superfly"], a: 0 },
+      { q: "Motown was founded in which city?", o: ["Detroit", "Memphis", "Chicago", "Philadelphia"], a: 0 },
+      { kind: "palette", media: "aretha-never", q: "Whose cover colours are these?", o: ["Aretha Franklin, I Never Loved a Man the Way I Love You", "Aretha Franklin, Lady Soul", "Nina Simone, Wild Is the Wind", "Etta James, At Last!"], a: 0 },
+      { kind: "emoji", emoji: "🧍🫂", q: "Which soul classic is this?", o: ["Stand by Me", "Lean on Me", "My Girl", "Ain't No Sunshine"], a: 0, n: "Ben E. King, 1961." },
+      { q: "Who wrote and first recorded \"Respect\", before Aretha made it hers?", o: ["Otis Redding", "Sam Cooke", "Ray Charles", "Smokey Robinson"], a: 0 },
+      { kind: "emoji", emoji: "☀️🚫", q: "And this one?", o: ["Ain't No Sunshine", "Lovely Day", "Sunny", "Here Comes the Sun"], a: 0, n: "Bill Withers, 1971." },
+      { q: "How old was Stevie Wonder when he signed to Motown?", o: ["11", "15", "18", "9"], a: 0 },
+    ],
+  },
 ];

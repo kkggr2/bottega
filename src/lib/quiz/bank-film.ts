@@ -128,4 +128,78 @@ export const FILM: Quiz[] = [
       { q: "Who wrote and directed Past Lives?", o: ["Celine Song", "Lulu Wang", "Chloé Zhao", "Kogonada"], a: 0 },
     ],
   },
+
+  // Second batch (November 2026).
+  {
+    id: "tarantino", title: "The Tarantino quiz", blurb: "Long talks, sudden endings.",
+    qs: [
+      { kind: "still", media: "pulp-fiction", q: "Which Tarantino film is this?", o: ["Pulp Fiction", "Jackie Brown", "Reservoir Dogs", "Death Proof"], a: 0 },
+      { q: "In Reservoir Dogs, which colour name does Steve Buscemi's character hate?", o: ["Mr. Pink", "Mr. Brown", "Mr. Orange", "Mr. Blonde"], a: 0 },
+      { kind: "emoji", emoji: "🎞️🎟️🔥🇩🇪", q: "Which Tarantino film is this?", o: ["Inglourious Basterds", "Django Unchained", "The Hateful Eight", "Kill Bill: Vol. 2"], a: 0, n: "It ends with a Paris cinema in flames." },
+      { kind: "palette", media: "kill-bill", q: "Whose colours are these?", o: ["Kill Bill: Vol. 1", "Death Proof", "Jackie Brown", "Django Unchained"], a: 0 },
+      { q: "Tarantino has two Oscars for Best Original Screenplay: Pulp Fiction and…", o: ["Django Unchained", "Inglourious Basterds", "Once Upon a Time in Hollywood", "The Hateful Eight"], a: 0 },
+      { kind: "quote", quote: "Say \"what\" again.", q: "Who says it?", o: ["Jules Winnfield", "Vincent Vega", "Marsellus Wallace", "Butch Coolidge"], a: 0 },
+      { q: "In Pulp Fiction, what's in the glowing briefcase?", o: ["It's never revealed", "Gold bars", "Diamonds", "A stack of cash"], a: 0 },
+    ],
+  },
+  {
+    id: "wong-kar-wai", title: "The Wong Kar-wai quiz", blurb: "Neon, rain and missed chances.",
+    qs: [
+      { kind: "still", media: "fallen-angels", q: "Which Wong Kar-wai film is this?", o: ["Fallen Angels", "Chungking Express", "Days of Being Wild", "2046"], a: 0 },
+      { q: "Which film follows on from In the Mood for Love?", o: ["2046", "Happy Together", "Ashes of Time", "My Blueberry Nights"], a: 0 },
+      { kind: "emoji", emoji: "🍍🥫📅👮", q: "Which film is this?", o: ["Chungking Express", "Fallen Angels", "As Tears Go By", "Happy Together"], a: 0, n: "A heartbroken cop buys tins of pineapple that expire on 1 May." },
+      { kind: "palette", media: "mood-for-love", q: "Whose colours are these?", o: ["In the Mood for Love", "2046", "Happy Together", "The Grandmaster"], a: 0 },
+      { q: "Who shot most of his 1990s films?", o: ["Christopher Doyle", "Roger Deakins", "Emmanuel Lubezki", "Darius Khondji"], a: 0 },
+      { q: "Happy Together takes place mostly in which city?", o: ["Buenos Aires", "Hong Kong", "Taipei", "Lisbon"], a: 0 },
+      { q: "Which song plays over and over in Chungking Express?", o: ["California Dreamin'", "Dream a Little Dream of Me", "Monday, Monday", "Creeque Alley"], a: 0 },
+    ],
+  },
+  {
+    id: "sofia-coppola", title: "The Sofia Coppola quiz", blurb: "Hotel rooms, pastel cakes, quiet girls.",
+    qs: [
+      { kind: "still", media: "lost-translation", q: "Which Sofia Coppola film is this?", o: ["Lost in Translation", "Somewhere", "The Bling Ring", "On the Rocks"], a: 0 },
+      { q: "Which of her films is about the Lisbon sisters?", o: ["The Virgin Suicides", "The Beguiled", "Marie Antoinette", "Priscilla"], a: 0 },
+      { kind: "palette", media: "marie-antoinette", q: "Whose colours are these?", o: ["Marie Antoinette", "The Beguiled", "Priscilla", "The Virgin Suicides"], a: 0 },
+      { kind: "emoji", emoji: "👰‍♀️🎸🏰", q: "Which film is this?", o: ["Priscilla", "Somewhere", "The Bling Ring", "On the Rocks"], a: 0, n: "Life inside Graceland." },
+      { q: "She won the Oscar for Best Original Screenplay for…", o: ["Lost in Translation", "The Virgin Suicides", "Somewhere", "Marie Antoinette"], a: 0 },
+      { q: "In Somewhere, what does Stephen Dorff's character do?", o: ["He's a film star", "He's a novelist", "He runs a hotel", "He's a photographer"], a: 0 },
+      { kind: "emoji", emoji: "💎👜🏠📸", q: "And this one?", o: ["The Bling Ring", "Marie Antoinette", "The Beguiled", "On the Rocks"], a: 0, n: "Teenagers who burgled celebrities' houses." },
+    ],
+  },
+  {
+    id: "almodovar", title: "The Almodóvar quiz", blurb: "Red walls, mothers and melodrama.",
+    qs: [
+      { kind: "still", media: "all-about-mother", q: "Which Almodóvar film is this?", o: ["All About My Mother", "Volver", "Talk to Her", "Julieta"], a: 0 },
+      { q: "Who plays Raimunda in Volver?", o: ["Penélope Cruz", "Marisa Paredes", "Rossy de Palma", "Emma Suárez"], a: 0 },
+      { kind: "palette", media: "pain-glory", q: "Whose colours are these?", o: ["Pain and Glory", "Parallel Mothers", "Julieta", "The Skin I Live In"], a: 0 },
+      { kind: "emoji", emoji: "🩰😴🏥", q: "Which film is this?", o: ["Talk to Her", "Bad Education", "Broken Embraces", "Live Flesh"], a: 0, n: "Two men keep watch over two women in comas." },
+      { q: "Which Oscar did All About My Mother win?", o: ["Best Foreign Language Film", "Best Original Screenplay", "Best Director", "Best Actress"], a: 0, n: "His screenplay Oscar came later, for Talk to Her." },
+      { q: "Who plays the film director Salvador Mallo in Pain and Glory?", o: ["Antonio Banderas", "Javier Bardem", "Gael García Bernal", "Eduardo Noriega"], a: 0 },
+      { kind: "emoji", emoji: "💃😵‍💫☎️🍅", q: "And this one?", o: ["Women on the Verge of a Nervous Breakdown", "Tie Me Up! Tie Me Down!", "High Heels", "Kika"], a: 0, n: "A spiked gazpacho, and an answering machine." },
+    ],
+  },
+  {
+    id: "french-new-wave", title: "The French New Wave quiz", blurb: "Jump cuts and Gauloises.",
+    qs: [
+      { kind: "still", media: "breathless", q: "Which film is this?", o: ["Breathless", "The 400 Blows", "Jules and Jim", "Cléo from 5 to 7"], a: 0 },
+      { q: "Who directed The 400 Blows?", o: ["François Truffaut", "Jean-Luc Godard", "Claude Chabrol", "Éric Rohmer"], a: 0 },
+      { kind: "emoji", emoji: "👨👨👩🚲", q: "Which film is this?", o: ["Jules and Jim", "Band of Outsiders", "Contempt", "Pierrot le Fou"], a: 0, n: "Two friends, one woman, many years." },
+      { q: "In Breathless, what does Patricia sell on the Champs-Élysées?", o: ["The New York Herald Tribune", "Le Monde", "Flowers", "Ice cream"], a: 0 },
+      { q: "In Cléo from 5 to 7, what is the singer Cléo waiting for?", o: ["Her medical test results", "A lover's train", "A record deal", "A telegram from home"], a: 0 },
+      { q: "Which Godard film stars Brigitte Bardot?", o: ["Contempt", "Breathless", "Alphaville", "Pierrot le Fou"], a: 0 },
+      { kind: "emoji", emoji: "🏃‍♂️🏃‍♀️🏃‍♂️🏛️", q: "And this one?", o: ["Band of Outsiders", "Masculin Féminin", "Alphaville", "Vivre sa vie"], a: 0, n: "Three friends race through the Louvre." },
+    ],
+  },
+  {
+    id: "coen-brothers", title: "The Coen brothers quiz", blurb: "Snow, bowling and bad luck.",
+    qs: [
+      { kind: "still", media: "fargo", q: "Which Coen film is this?", o: ["Fargo", "No Country for Old Men", "A Serious Man", "Inside Llewyn Davis"], a: 0 },
+      { q: "Who plays Marge Gunderson in Fargo?", o: ["Frances McDormand", "Holly Hunter", "Laura Dern", "Kathryn Hahn"], a: 0 },
+      { kind: "palette", media: "lebowski", q: "Whose colours are these?", o: ["The Big Lebowski", "Barton Fink", "The Hudsucker Proxy", "Burn After Reading"], a: 0 },
+      { kind: "quote", quote: "Call it, friendo.", q: "Who says it?", o: ["Anton Chigurh", "Llewelyn Moss", "Ed Tom Bell", "Carson Wells"], a: 0 },
+      { kind: "emoji", emoji: "🐈🎸❄️", q: "Which film is this?", o: ["Inside Llewyn Davis", "O Brother, Where Art Thou?", "A Serious Man", "Hail, Caesar!"], a: 0, n: "A folk singer, a borrowed cat and a cold New York winter." },
+      { q: "Which Coen film won Best Picture?", o: ["No Country for Old Men", "Fargo", "True Grit", "Barton Fink"], a: 0 },
+      { kind: "emoji", emoji: "⛓️🏃‍♂️🏃‍♂️🏃‍♂️🎶", q: "And this one?", o: ["O Brother, Where Art Thou?", "Raising Arizona", "The Ladykillers", "Blood Simple"], a: 0 },
+    ],
+  },
 ];
