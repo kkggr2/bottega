@@ -1,6 +1,6 @@
 # Writing to film and book clubs
 
-**The idea:** write first, prepare nothing. Organisers can start their club themselves at bottegarooms.com/start (account, then name the club, then a checklist), or ask you to set it up.
+**The idea:** write first, prepare nothing. The start link comes first (it works on any phone or laptop); the App Store link is a second line for iPhone users. Organisers can start their club themselves at bottegarooms.com/start (account, then name the club, then a checklist), or ask you to set it up.
 
 Send one email per club, to the organiser, from your own address. Never one email to many clubs (no BCC lists):
 it lands in spam, and in Germany unsolicited bulk emails can count as advertising under the UWG.
@@ -27,6 +27,8 @@ Fill in every [bracket], especially the honest line about them. That line is wha
 > It's free and there are no ads. You can start your club yourself in about a minute here:
 > **https://bottegarooms.com/start**
 > — or, if you'd rather, I'll set it up for you and send you the link. I'm also happy to come to a [meeting / screening] and show it.
+>
+> On iPhone? Bottega is also an app: https://apps.apple.com/app/id6832240962
 >
 > Warmly,
 > Çağla
@@ -58,6 +60,8 @@ Fill in every [bracket], especially the honest line about them. That line is wha
 > **https://bottegarooms.com/start**
 > — oder ich richte ihn für euch ein und schicke dir den Link. Ich komme auch gern zu einem [Treffen / Filmabend] und zeige es kurz.
 >
+> Am iPhone? Bottega gibt es auch als App: https://apps.apple.com/app/id6832240962
+>
 > Liebe Grüße
 > Çağla
 > hello@bottegarooms.com
@@ -87,6 +91,8 @@ Fill in every [bracket], especially the honest line about them. That line is wha
 > Ücretsiz ve reklamsız. Kulübünüzü yaklaşık bir dakikada buradan kendiniz kurabilirsiniz:
 > **https://bottegarooms.com/start**
 > — ya da isterseniz ben kurup linki size göndereyim. Bir [buluşmanıza / gösteriminize] gelip kısaca göstermekten de mutlu olurum.
+>
+> iPhone kullanıyorsanız Bottega'nın uygulaması da var: https://apps.apple.com/app/id6832240962
 >
 > Sevgiyle,
 > Çağla
