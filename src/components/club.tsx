@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  APP_STORE, clubPublic, clubStats, createClub, joinClub, joinUrl, myClubs, rememberClub, rememberInvite, roster, slugify,
+  APP_STORE, clubPublic, clubStats, createClub, joinClub, joinUrl, myClubs, rememberClub, rememberInvite, roster, shelfPreview, slugify,
   type ClubPublic, type ClubStats, type MyClub, type RosterRow,
 } from "@/lib/clubs";
 import { befriend } from "@/lib/friends";
@@ -16,9 +16,12 @@ import { track } from "@/lib/track";
 import type { Profile } from "@/lib/types";
 import { useAuth } from "./auth";
 import { ChatLog } from "./chat";
+import { ClubShelf, NextUp } from "./club-hub";
 import { SALON, usePalette } from "@/lib/room-colors";
 import { Gate } from "./gate";
 import { Sheet } from "./sheet";
+
+/* eslint-disable @next/next/no-img-element -- club shelf covers from Apple Music, TMDB and Open Library */
 
 /*
  * Clubs. A host starts one and shares its link (bottegarooms.com/join/gray-fox) or QR code.
@@ -38,11 +41,13 @@ export function JoinScreen({ slug }: { slug: string }) {
   const [error, setError] = useState<string | null>(null);
   const signedIn = auth.status === "ready";
 
+  const [shelf, setShelf] = useState<Awaited<ReturnType<typeof shelfPreview>>>([]);
   useEffect(() => {
     clubPublic(slug).then((c) => {
       setClub(c);
       if (c) track("club_view", { detail: c.slug });
     }).catch(() => setClub(null));
+    shelfPreview(slug).then(setShelf).catch(() => {});
   }, [slug]);
 
   // Not signed in: remember the club here and on the server (for an App Store install), before they leave.
@@ -80,10 +85,22 @@ export function JoinScreen({ slug }: { slug: string }) {
       <p className="mono muted">You&rsquo;re invited</p>
       <h1>{club.name}</h1>
       <p className="lede">
-        @{club.host_username} started this club on Bottega. Everyone gets one room for the films, books and records they love.
-        Join to see the others&rsquo; rooms, swap keys, and talk in the club&rsquo;s own chat.
+        @{club.host_username} started this club&rsquo;s home on Bottega: what you&rsquo;ve read and watched together, a vote on
+        what&rsquo;s next, the club&rsquo;s own chat and quizzes. Everyone also gets a room for the films, books and records they love.
       </p>
       <p className="muted">{club.members === 1 ? "1 person is in" : `${club.members} people are in`} so far.</p>
+      {shelf.length > 0 && (
+        <div className="join-shelf" aria-label="On the club's shelf">
+          <p className="smallcaps muted">On the club&rsquo;s shelf</p>
+          <div>
+            {shelf.map((s, i) => (
+              <span key={i} className={`hub-cover t-${s.type} s`} title={s.title}>
+                {s.cover_url ? <img src={s.cover_url} alt={s.title} loading="lazy" /> : <span className="hub-cover-title">{s.title}</span>}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
       {signedIn ? (
         <button className="btn big" type="button" disabled={busy} onClick={join}>{busy ? "Joining…" : `Join ${club.name}`}</button>
       ) : (
@@ -114,6 +131,7 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
   const [sharing, setSharing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const [shelfTick, setShelfTick] = useState(0);
 
   const load = useCallback(async () => {
     const mine = (await myClubs()).find((c) => c.slug === slug) ?? null;
@@ -176,7 +194,11 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
         </div>
       )}
 
+      <NextUp clubId={club.id} isHost={club.is_host} onShelved={() => setShelfTick((n) => n + 1)} />
+
       <ClubQuizzes slug={club.slug} />
+
+      <ClubShelf clubId={club.id} me={me.id} isHost={club.is_host} refresh={shelfTick} />
 
       <h2 className="thread-h">Members</h2>
       <ul className="roster">

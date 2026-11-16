@@ -1,97 +1,108 @@
 # Writing to film and book clubs
 
-One email per club, to the organiser, from your own address. Fill in the [brackets] so every email
-is clearly written for that club. Never send one email to many clubs at once (no BCC lists): it lands
-in spam, and in Germany unsolicited bulk emails can count as advertising under the UWG. A personal
-note to one organiser about their club is fine.
+**The idea:** don't ask a club to do anything. Set up their home first, then send them the link.
+"I made this for you, here it is" gets far more yeses than "would you like me to…?".
 
-When someone says yes:
-1. Start their club in Bottega (Salon → Clubs → Start a club) and copy its invite link.
-2. Send Claude the club's link name and a theme, e.g. "gray-fox — the books we read this year".
-   Claude writes their quiz the same day.
-3. Reply with the link (and the QR code from "Invite people" if they meet in person).
+**Before each email (10 minutes):**
+1. In the app: Salon → Clubs → **Start a club**, with their name and a sign (📚 🎬).
+2. On the club page: **Add to the shelf** 3–5 things they've read or watched (from their Meetup, Instagram or website).
+3. **Ask the club** "What's next?" with 2–3 choices they might pick next (or that they've mentioned).
+4. Tell Claude the club's link name and a theme. Claude writes their quiz the same day.
+5. Copy the invite link: club page → **Invite people** → Share link.
+
+Send one email per club, to the organiser, from your own address. Never one email to many clubs (no BCC lists):
+it lands in spam, and in Germany unsolicited bulk emails can count as advertising under the UWG.
+Fill in every [bracket], especially the honest line about them. That line is what gets a reply.
 
 ---
 
 ## English
 
-**Subject:** A quiz made for [club name]
-(or: *For [club name]: a room for every member's taste*)
+**Subject:** I made [club name] a home on Bottega
 
 > Hi [first name],
 >
 > I'm Çağla, and I've been following [club name] — [one honest line: e.g. "your Kubrick season looked wonderful" / "I loved that you read Giovanni's Room this autumn"].
 >
-> I've made a small app called Bottega. Everyone gets one room for the films, books and records they love — or simply what they watched last night. Friends visit each other's rooms, and people with the same director or author "on" can talk that evening.
+> I've built a small app called Bottega, and I set up a home for your club on it. It's ready; here's the link:
+> **[invite link]**
 >
-> I'd love to give [club name] its own corner:
-> • a quiz written just for you — e.g. on [their next film / book / theme] — with your own high score table
-> • one invite link: everyone who joins lands in the club, with a club chat
+> What's in it:
+> • **Your shelf** — everything you've read or watched together, so new members see what you're about (I started it with [2–3 titles])
+> • **What's next?** — put up a few options and everyone votes; no more back-and-forth in the group chat
+> • **A club chat**, separate from everyone's other messages
+> • **A quiz just for you**, on [their theme], with your own high score table — fun for the end of your next [meeting / screening]
 >
-> It's free, there are no ads, and it takes a minute to join. If you like, I'll set it up and send you the link — or come along to your next [screening / meeting] and show it.
+> Everyone also gets their own room for the films, books and records they love, so members get to know each other's taste.
 >
-> Have a look: https://bottegarooms.com
+> It's free, there are no ads, and joining takes a minute. I'm happy to hand the club over to you as host, or to come to your next [meeting / screening] and show it.
 >
 > Warmly,
 > Çağla
-> hello@bottegarooms.com
+> hello@bottegarooms.com · bottegarooms.com
 
 **Follow-up (one, after about a week, only if no reply):**
 
-> Hi [first name], just bringing this back up in case it got buried. The [theme] quiz for [club name] is ready whenever you'd like it, no strings attached. Happy to leave it there if it's not for you!
+> Hi [first name], just bringing this back up in case it got buried. [Club name]'s page is ready whenever you want it: [invite link]. The [theme] quiz is waiting too. Happy to leave it there if it's not for you!
 
 ---
 
 ## Deutsch
 
-**Betreff:** Ein Quiz nur für [Clubname]
+**Betreff:** Ich habe [Clubname] ein Zuhause auf Bottega eingerichtet
 
 > Hallo [Vorname],
 >
 > ich bin Çağla und verfolge [Clubname] schon eine Weile — [ein ehrlicher Satz, z. B. „eure Kubrick-Reihe sah großartig aus“].
 >
-> Ich habe eine kleine App gebaut: Bottega. Jede:r bekommt einen Raum für die Filme, Bücher und Platten, die man liebt — oder einfach das, was man gestern Abend gesehen hat. Man besucht die Räume der anderen, und wer abends denselben Regisseur oder dieselbe Autorin „aufliegen“ hat, kann miteinander reden.
+> Ich habe eine kleine App gebaut, Bottega, und eurem Club dort ein Zuhause eingerichtet. Es ist fertig, hier der Link:
+> **[Einladungslink]**
 >
-> Ich würde [Clubname] gern eine eigene Ecke einrichten:
-> • ein Quiz nur für euch — z. B. zu [eurem nächsten Film / Buch / Thema] — mit eurer eigenen Bestenliste
-> • einen Einladungslink: Wer beitritt, landet direkt im Club, mit eigenem Club-Chat
+> Was drin ist:
+> • **Euer Regal** — alles, was ihr zusammen gelesen oder gesehen habt, damit Neue sofort sehen, worum es bei euch geht (ich habe mit [2–3 Titeln] angefangen)
+> • **Was als Nächstes?** — ein paar Vorschläge, alle stimmen ab; kein Hin und Her mehr im Gruppenchat
+> • **Ein eigener Club-Chat**, getrennt vom restlichen Nachrichtenchaos
+> • **Ein Quiz nur für euch** zu [eurem Thema], mit eigener Bestenliste — schön zum Abschluss eures nächsten [Treffens / Filmabends]
 >
-> Kostenlos, ohne Werbung, Beitritt in einer Minute. Wenn ihr mögt, richte ich alles ein und schicke dir den Link — oder ich komme zu eurem nächsten [Filmabend / Treffen] und zeige es kurz.
+> Außerdem bekommt jede:r einen eigenen Raum für die Filme, Bücher und Platten, die man liebt — so lernt ihr den Geschmack der anderen kennen.
 >
-> Hier zum Anschauen: https://bottegarooms.com
+> Kostenlos, ohne Werbung, Beitritt in einer Minute. Ich übergebe dir gern die Club-Leitung oder komme zu eurem nächsten [Treffen / Filmabend] und zeige es kurz.
 >
 > Liebe Grüße
 > Çağla
-> hello@bottegarooms.com
+> hello@bottegarooms.com · bottegarooms.com
 
 **Nachfassen (einmal, nach etwa einer Woche):**
 
-> Hallo [Vorname], ich hole das nur noch einmal hoch, falls es untergegangen ist. Das [Thema]-Quiz für [Clubname] ist fertig, wann immer ihr wollt — ganz unverbindlich. Und falls es nichts für euch ist, ist das völlig in Ordnung!
+> Hallo [Vorname], ich hole das nur noch einmal hoch, falls es untergegangen ist. Die Seite von [Clubname] ist bereit, wann immer ihr wollt: [Einladungslink]. Das [Thema]-Quiz wartet auch schon. Und falls es nichts für euch ist, völlig in Ordnung!
 
 ---
 
 ## Türkçe
 
-**Konu:** [Kulüp adı] için hazırlanmış bir quiz
+**Konu:** [Kulüp adı] için Bottega'da bir ev hazırladım
 
 > Merhaba [isim],
 >
 > Ben Çağla, bir süredir [kulüp adı]'nı takip ediyorum — [samimi bir cümle, ör. "Kubrick seçkiniz harika görünüyordu"].
 >
-> Bottega adında küçük bir uygulama yaptım. Herkesin sevdiği filmler, kitaplar ve plaklar için — ya da sadece dün akşam izlediği şey için — bir odası var. Arkadaşlar birbirinin odasını geziyor; o akşam aynı yönetmeni ya da yazarı "açık" tutanlar da birbiriyle sohbet edebiliyor.
+> Bottega adında küçük bir uygulama yaptım ve kulübünüz için orada bir ev hazırladım. Hazır, link burada:
+> **[davet linki]**
 >
-> [Kulüp adı] için ayrı bir köşe hazırlamak isterim:
-> • sadece size özel bir quiz — ör. [bir sonraki filminiz / kitabınız / temanız] üzerine — kendi skor tablonuzla
-> • tek bir davet linki: katılan herkes doğrudan kulübe düşüyor, kulübe özel bir sohbet de var
+> İçinde neler var:
+> • **Rafınız** — birlikte okuduğunuz ya da izlediğiniz her şey; yeni gelenler sizi hemen tanısın diye (ben [2–3 eser] ile başladım)
+> • **Sırada ne var?** — birkaç seçenek koyun, herkes oy versin; grup sohbetinde uzun tartışmalara gerek yok
+> • **Kulübe özel bir sohbet**, diğer mesaj kalabalığından ayrı
+> • **Sadece size özel bir quiz**, [temanız] üzerine, kendi skor tablonuzla — bir sonraki [buluşmanızın / gösteriminizin] sonunda eğlenceli
 >
-> Ücretsiz, reklamsız, katılmak bir dakika sürüyor. İsterseniz her şeyi kurup linki size göndereyim — ya da bir sonraki [gösteriminize / buluşmanıza] gelip kısaca göstereyim.
+> Ayrıca herkesin sevdiği filmler, kitaplar ve plaklar için kendi odası var; böylece birbirinizin zevkini tanıyorsunuz.
 >
-> Göz atmak için: https://bottegarooms.com
+> Ücretsiz, reklamsız, katılmak bir dakika sürüyor. İsterseniz kulübün yöneticiliğini size devredeyim, ya da bir sonraki [buluşmanıza / gösteriminize] gelip kısaca göstereyim.
 >
 > Sevgiyle,
 > Çağla
-> hello@bottegarooms.com
+> hello@bottegarooms.com · bottegarooms.com
 
 **Hatırlatma (bir kez, yaklaşık bir hafta sonra):**
 
-> Merhaba [isim], gözden kaçmış olabilir diye tekrar yazıyorum. [Kulüp adı] için [tema] quizi hazır, istediğiniz zaman — hiçbir yükümlülük yok. Size uygun değilse de hiç sorun değil!
+> Merhaba [isim], gözden kaçmış olabilir diye tekrar yazıyorum. [Kulüp adı]'nın sayfası istediğiniz zaman hazır: [davet linki]. [Tema] quizi de bekliyor. Size uygun değilse hiç sorun değil!

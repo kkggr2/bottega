@@ -930,3 +930,37 @@ html[data-mood] .tonight-room { background: color-mix(in srgb, var(--bg) 82%, va
 .quiz-row .muted { grid-column: 1; font-size: 13.5px; }
 .quiz-row-go { grid-column: 2; grid-row: 1 / span 2; color: var(--brass); }
 .quiz-row.played .quiz-row-go { color: var(--muted); }
+
+/* The club as a home: What's next? and the shelf. */
+.hub-section { display: grid; gap: 12px; }
+.hub-section .tonight-head h2 { font: 400 22px/1.2 var(--font-display); }
+.hub-cover { display: grid; place-items: center; overflow: hidden; border-radius: 4px; background: color-mix(in srgb, var(--fg) 12%, var(--bg));
+  box-shadow: 0 1px 2px rgba(0,0,0,.25), 0 6px 14px -6px rgba(0,0,0,.45); flex: none; }
+.hub-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.hub-cover.m { width: 100%; aspect-ratio: 2 / 3; }
+.hub-cover.m.t-song { aspect-ratio: 1; }
+.hub-cover.s { width: 44px; height: 64px; }
+.hub-cover.s.t-song { height: 44px; }
+.hub-cover-title { padding: 6px; font: 400 12px/1.2 var(--font-display); text-align: center; color: var(--fg); }
+.vote-options { display: grid; gap: 8px; }
+.vote-option { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; text-align: left; padding: 10px 14px 10px 10px;
+  border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); }
+.vote-option.mine { border-color: var(--brass); box-shadow: 0 0 0 1px var(--brass) inset; }
+.vote-text { display: grid; gap: 2px; min-width: 0; }
+.vote-text b { font: 400 17px/1.2 var(--font-display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vote-text .muted { font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vote-bar { display: block; height: 4px; margin-top: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.vote-bar i { display: block; height: 100%; background: var(--brass); transition: width .3s ease; }
+.vote-count { font: 400 20px/1 var(--font-display); color: var(--muted); min-width: 1.5ch; text-align: right; }
+.vote-foot { font-size: 13px; }
+.hub-shelf { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 16px 12px; align-items: end; }
+.hub-shelf button { display: grid; gap: 6px; width: 100%; padding: 0; border: 0; background: none; color: var(--fg); text-align: left; }
+.hub-shelf-title { font-size: 12.5px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.hub-picked { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.hub-picked li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.hub-picked b { font-weight: 500; }
+.hub-detail { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 16px; align-items: start; padding-right: 40px; }
+.hub-detail h2 { font-size: 26px; }
+.ink { color: var(--fg); font-weight: 500; }
+.join-shelf { display: grid; gap: 8px; width: 100%; }
+.join-shelf > div { display: flex; gap: 8px; flex-wrap: wrap; }

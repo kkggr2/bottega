@@ -95,3 +95,61 @@ export async function claimInvite(): Promise<{ club: string | null; inviter: str
   }).catch(() => null);
   return res?.ok ? ((await res.json()) as { club: string | null; inviter: string | null }) : none;
 }
+
+// ---------------------------------------------------------------------------
+// The club's shelf and "What's next?" (supabase/migrations/20261119000000_club_shelf.sql)
+// ---------------------------------------------------------------------------
+
+export type ShelfKind = "film" | "book" | "song";
+export type ShelfItem = {
+  id: string; type: ShelfKind; title: string; subtitle: string; cover_url: string | null; link: string | null; note: string; created_at: string;
+};
+export type PollOption = { type: ShelfKind; title: string; subtitle?: string; cover_url?: string | null; link?: string | null };
+export type PollState = {
+  id: string; question: string; options: PollOption[]; closed_at: string | null; winner: number | null;
+  counts: number[]; my_choice: number | null; voters: number;
+};
+
+export async function shelfOf(clubId: string): Promise<ShelfItem[]> {
+  const { data } = await supabase().from("club_shelf").select("*").eq("club_id", clubId).order("created_at", { ascending: false });
+  return (data ?? []) as ShelfItem[];
+}
+
+export async function shelfPreview(slug: string): Promise<Pick<ShelfItem, "type" | "title" | "subtitle" | "cover_url">[]> {
+  const { data } = await supabase().rpc("club_shelf_preview", { p_slug: slug, p_limit: 8 });
+  return (data ?? []) as Pick<ShelfItem, "type" | "title" | "subtitle" | "cover_url">[];
+}
+
+export async function addToShelf(clubId: string, me: string, item: PollOption): Promise<string | null> {
+  const { error } = await supabase().from("club_shelf").insert({
+    club_id: clubId, added_by: me, type: item.type, title: item.title.slice(0, 120), subtitle: (item.subtitle ?? "").slice(0, 120),
+    cover_url: item.cover_url ?? null, link: item.link ?? null,
+  });
+  return error ? (/full|kind/i.test(error.message) ? error.message : "Couldn't add it. Try again.") : null;
+}
+
+export async function removeFromShelf(id: string): Promise<void> {
+  await supabase().from("club_shelf").delete().eq("id", id);
+}
+
+export async function pollState(clubId: string): Promise<PollState | null> {
+  const { data } = await supabase().rpc("club_poll_state", { p_club: clubId });
+  return ((data ?? []) as PollState[])[0] ?? null;
+}
+
+const rpcError = (message: string) => message.replace(/^.*?:\s*/, "");
+
+export async function openPoll(clubId: string, options: PollOption[], question: string): Promise<string | null> {
+  const { error } = await supabase().rpc("open_club_poll", { p_club: clubId, p_options: options, p_question: question });
+  return error ? rpcError(error.message) : null;
+}
+
+export async function votePoll(pollId: string, choice: number): Promise<string | null> {
+  const { error } = await supabase().rpc("vote_club_poll", { p_poll: pollId, p_choice: choice });
+  return error ? rpcError(error.message) : null;
+}
+
+export async function closePoll(pollId: string, shelve: boolean): Promise<string | null> {
+  const { error } = await supabase().rpc("close_club_poll", { p_poll: pollId, p_shelve: shelve });
+  return error ? rpcError(error.message) : null;
+}
