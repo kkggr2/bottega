@@ -62,20 +62,17 @@ Wave 1: the six starred ones. Wave 2 (a week later): the rest, using whatever wo
 - Keep a simple list: club, date sent, reply, follow-up date.
 - No reply after a week: send the one short follow-up in OUTREACH.md. Then leave it.
 
-## Before you write to a club (10 minutes each)
-
-1. **Start their club** in the app: Salon → Clubs → Start a club, with their name and a sign (📚 🎬).
-2. **Fill the shelf:** on the club page, Add to the shelf 3–5 things they've read or watched (from their Meetup, Instagram or website).
-3. **Ask "What's next?"** with 2–3 likely next picks.
-4. **Send Claude** the club's link name and a theme ("gray-fox — the books we read this year"). Claude writes their quiz the same day.
-5. **Copy the invite link** (club page → Invite people → Share link) and put it in the email (OUTREACH.md).
-
 ## When a club says yes
 
-1. Offer to hand it over: once the organiser has joined, they can run it. (Until hosting can be handed over in the app, tell Claude and it will be done for you.)
-2. If they meet in person, send the QR code too (Invite people), to show on a screen or print.
-3. Suggest a moment: "Everyone join before the next meeting, vote on what's next, and play the quiz at the end."
-4. After their first evening, look at the club's numbers on its page: joined · came back · active this week.
+1. **Ask them two things:** what they'd like their club called, and what to put on their shelf / their quiz theme (e.g. their next book or film).
+2. **Start their club** in the app: Salon → Clubs → Start a club, with their name and a sign (📚 🎬).
+3. **Send Claude** the club's link name and their theme. Claude writes their quiz the same day.
+4. **Send them the invite link** (club page → Invite people → Share link). If they meet in person, send the QR code too.
+5. **Once the organiser has joined, hand the club over** so they're the host (tell Claude until this is a button in the app).
+6. **Suggest a moment:** "Everyone join before the next meeting, put what's next to a vote, and play the quiz at the end."
+7. **After their first evening,** look at the club's numbers on its page: joined · came back · active this week.
+
+If a club says no or doesn't reply after the follow-up, nothing to undo: you haven't set anything up.
 
 ## Every week
 
