@@ -6,6 +6,7 @@ import { isConfigured, supabase } from "@/lib/supabase";
 import { trackOpen } from "@/lib/track";
 import { forgetPushToken } from "@/lib/push";
 import { clearWidget } from "@/lib/widget";
+import { clearCache, forgetCache, readCache, writeCache } from "@/lib/remember";
 import type { Profile } from "@/lib/types";
 
 type AuthState =
@@ -33,11 +34,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setState({ status: "signedOut", userId: null, profile: null });
       return;
     }
-    const { data } = await supabase()
+    // Who you are is remembered, so the app opens straight into your library and checks in the background.
+    const key = `profile:${session.user.id}`;
+    const known = readCache<Profile>(key);
+    if (known) setState({ status: "ready", userId: session.user.id, profile: known });
+    const { data, error } = await supabase()
       .from("profiles")
       .select("id, username")
       .eq("id", session.user.id)
       .maybeSingle();
+    if (error && known) return; // offline or a hiccup: keep going as who we know you are
+    if (data) writeCache(key, data); else forgetCache(key);
+    if (known && data && known.username === (data as Profile).username) return; // nothing changed
     setState(
       data
         ? { status: "ready", userId: session.user.id, profile: data as Profile }
@@ -65,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await forgetPushToken();
     await supabase().auth.signOut();
     clearWidget();
+    clearCache();
   }, []);
 
   return <AuthContext.Provider value={{ ...state, refreshProfile, signOut }}>{children}</AuthContext.Provider>;

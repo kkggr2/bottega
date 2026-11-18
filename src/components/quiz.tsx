@@ -6,7 +6,9 @@ import type { AnswerResult, BoardRow, ClubQuizCard, QuizQuestion, QuizState } fr
 import { supabase } from "@/lib/supabase";
 import { askForReviewSoon } from "@/lib/review";
 import { track } from "@/lib/track";
+import { useAuth } from "./auth";
 import { Gate } from "./gate";
+import { useRemembered } from "@/lib/remember";
 import { myClubs, type MyClub } from "@/lib/clubs";
 import { QUIZ_ROOM, usePalette } from "@/lib/room-colors";
 
@@ -229,10 +231,13 @@ function Row({ r, count = 7 }: { r: BoardRow; count?: number }) {
 
 /** A small card for the library: today's theme, or your score once you've played. */
 export function QuizCard() {
-  const [state, setState] = useState<QuizState | null>(null);
+  const { userId } = useAuth();
+  // Today's card shows at once; a remembered card from yesterday is not used.
+  const [state, setState] = useRemembered<QuizState | null>(userId ? `quiz-card:${userId}` : null, null,
+    (s) => s?.day === new Date().toISOString().slice(0, 10));
   useEffect(() => {
     call("GET").then(async (r) => r.ok && setState(await r.json())).catch(() => {});
-  }, []);
+  }, [setState]);
   if (!state) return <div className="quiz-hero placeholder" aria-hidden="true" />;
   const a = state.attempt;
   return (
@@ -257,7 +262,8 @@ export function QuizRoomScreen() {
 
 export function QuizRoomView() {
   usePalette(QUIZ_ROOM, "quiz");
-  const [clubs, setClubs] = useState<{ club: MyClub; quizzes: ClubQuizCard[] }[] | null>(null);
+  const { userId } = useAuth();
+  const [clubs, setClubs] = useRemembered<{ club: MyClub; quizzes: ClubQuizCard[] }[] | null>(userId ? `quiz-clubs:${userId}` : null, null);
   useEffect(() => {
     (async () => {
       const mine = await myClubs();
@@ -269,7 +275,7 @@ export function QuizRoomView() {
       }));
       setClubs(lists.filter((l) => l.quizzes.length));
     })().catch(() => setClubs([]));
-  }, []);
+  }, [setClubs]);
 
   return (
     <div className="place">

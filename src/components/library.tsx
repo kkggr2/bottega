@@ -1,5 +1,6 @@
 "use client";
 
+import { useRemembered } from "@/lib/remember";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { isNativeApp } from "@/lib/native";
@@ -43,7 +44,7 @@ type Shelf = {
 };
 
 function Library({ me }: { me: Profile }) {
-  const [shelf, setShelf] = useState<Shelf | null>(null);
+  const [shelf, setShelf] = useRemembered<Shelf | null>(`library:${me.id}`, null);
   const [draft, setDraft] = useState("");
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -129,10 +130,10 @@ function Library({ me }: { me: Profile }) {
       incoming: incomingIds.map((id) => byId.get(id)).filter((p): p is Profile => Boolean(p)),
       outgoing: outgoingIds.map((id) => byId.get(id)).filter((p): p is Profile => Boolean(p)),
     });
-  }, [me.id, me.username]);
+  }, [me.id, me.username, setShelf]);
 
   useEffect(() => {
-    load(); // eslint-disable-line react-hooks/set-state-in-effect -- fetching on mount
+    load();
     const sb = supabase();
     const channel = sb
       .channel("my-friendships")

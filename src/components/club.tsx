@@ -1,5 +1,6 @@
 "use client";
 
+import { useRemembered } from "@/lib/remember";
 import qrcode from "qrcode-generator";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -322,9 +323,10 @@ function InviteSheet({ club, onClose }: { club: MyClub; onClose: () => void }) {
 
 export function ClubsSection() {
   const router = useRouter();
-  const [clubs, setClubs] = useState<MyClub[] | null>(null);
+  const { userId } = useAuth();
+  const [clubs, setClubs] = useRemembered<MyClub[] | null>(userId ? `clubs:${userId}` : null, null);
   const [starting, setStarting] = useState(false);
-  useEffect(() => { myClubs().then(setClubs).catch(() => setClubs([])); }, []);
+  useEffect(() => { myClubs().then(setClubs).catch(() => setClubs([])); }, [setClubs]);
   if (!clubs) return null;
   return (
     <section className="tonight" aria-label="Your clubs">

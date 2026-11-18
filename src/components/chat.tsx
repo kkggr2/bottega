@@ -1,5 +1,7 @@
 "use client";
 
+import { useRemembered } from "@/lib/remember";
+import { useAuth } from "./auth";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -27,10 +29,11 @@ const roomHref = (key: string) => `/chat?room=${encodeURIComponent(key)}`;
 
 /** For the Salon: the rooms you can walk into right now. */
 export function TonightRooms() {
-  const [rooms, setRooms] = useState<ChatRoom[] | null>(null);
+  const { userId } = useAuth();
+  const [rooms, setRooms] = useRemembered<ChatRoom[] | null>(userId ? `tonight:${userId}` : null, null);
   useEffect(() => {
     myChatRooms().then(setRooms).catch(() => setRooms([]));
-  }, []);
+  }, [setRooms]);
   if (!rooms) return null;
   return (
     <section className="tonight" aria-label="Tonight's rooms">

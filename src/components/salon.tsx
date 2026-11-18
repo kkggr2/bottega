@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { ago, myThreads, type Thread } from "@/lib/chat";
 import { SALON, usePalette } from "@/lib/room-colors";
 import { TonightRooms } from "./chat";
 import { ClubsSection } from "./club";
 import { Gate } from "./gate";
+import { useAuth } from "./auth";
+import { useRemembered } from "@/lib/remember";
 
 /*
  * The Salon: the lamp-lit room where people talk. Tonight's rooms (chats by the artist, director
@@ -35,8 +37,9 @@ export function SalonView() {
 
 /** The latest private messages, with a way to all of them. */
 function Letters() {
-  const [threads, setThreads] = useState<Thread[] | null>(null);
-  useEffect(() => { myThreads().then(setThreads).catch(() => setThreads([])); }, []);
+  const { userId } = useAuth();
+  const [threads, setThreads] = useRemembered<Thread[] | null>(userId ? `letters:${userId}` : null, null);
+  useEffect(() => { myThreads().then(setThreads).catch(() => setThreads([])); }, [setThreads]);
   if (!threads) return null;
   const unread = threads.reduce((n, t) => n + t.unread, 0);
   return (

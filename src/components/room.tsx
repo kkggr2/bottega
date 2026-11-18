@@ -15,6 +15,7 @@ import { audioOf } from "@/lib/piece-media";
 import { friendlyError, supabase } from "@/lib/supabase";
 import { rememberInvite } from "@/lib/clubs";
 import { useRoomColors } from "@/lib/room-colors";
+import { useRemembered } from "@/lib/remember";
 import { rememberCameFrom, track } from "@/lib/track";
 import { MAX_PIECES, PIECE_TYPES, roomStyle } from "@/lib/themes";
 import type { Piece, PieceType, Profile, Room } from "@/lib/types";
@@ -53,8 +54,10 @@ export function RoomScreen({ username }: { username: string }) {
 }
 
 function RoomInner({ username, me }: { username: string; me: Profile | null }) {
-  const [data, setData] = useState<Loaded>({ state: "loading" });
-  const [urls, setUrls] = useState<Record<string, string>>({});
+  // Rooms you've been in open at once with what was there, then refresh in the background.
+  const roomKey = `room:${me?.id ?? "guest"}:${username}`;
+  const [data, setData] = useRemembered<Loaded>(roomKey, { state: "loading" });
+  const [urls, setUrls] = useRemembered<Record<string, string>>(`${roomKey}:urls`, {});
   const [detailId, setDetailId] = useState<string | null>(null);
   const [editing, setEditing] = useState<Editing | null>(null);
   const [customizing, setCustomizing] = useState(false);
@@ -65,9 +68,9 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
   // The turntable and the TV.
-  const [recordId, setRecordId] = useState<string | null>(null);
+  const [recordId, setRecordId] = useState<string | null>(() => (data.state === "ready" ? data.room.now_song ?? null : null));
   const [playingId, setPlayingId] = useState<string | null>(null);
-  const [tvId, setTvId] = useState<string | null>(null);
+  const [tvId, setTvId] = useState<string | null>(() => (data.state === "ready" ? data.room.now_film ?? null : null));
   const [tvOn, setTvOn] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const viewed = useRef(false);
@@ -127,7 +130,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
       track("room_view", { room: owner.id, detail: as });
       if (!meId) { rememberCameFrom({ id: owner.id, username: owner.username }); rememberInvite({ inviter: owner.username }); }
     }
-  }, [username, meId]);
+  }, [username, meId, setData, setUrls]);
 
   const ownerId = data.state === "ready" ? data.owner.id : null;
 
