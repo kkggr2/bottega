@@ -356,7 +356,10 @@ function InviteSheet({ club, onClose }: { club: MyClub; onClose: () => void }) {
       <p className="club-link">{url.replace(/^https:\/\//, "")}</p>
       <p className="hint">{t("Anyone who joins is connected with the host straight away. Show the code at a screening, or send the link.")}</p>
       <p className="msg ok">{msg}</p>
-      <div className="row"><button className="btn" type="button" onClick={share}>{t("Share link")}</button></div>
+      <div className="row">
+        <a className="btn ghost" href={`/join/${club.slug}/poster`} target="_blank" rel="noopener">{t("Poster to print")}</a>
+        <button className="btn" type="button" onClick={share}>{t("Share link")}</button>
+      </div>
     </Sheet>
   );
 }
