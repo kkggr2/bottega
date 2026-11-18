@@ -172,10 +172,11 @@ function AskSheet({ clubId, onClose, onDone }: { clubId: string; onClose: () => 
 // The shelf
 // ---------------------------------------------------------------------------
 
-export function ClubShelf({ clubId, me, isHost, refresh }: { clubId: string; me: string; isHost: boolean; refresh: number }) {
+export function ClubShelf({ clubId, me, isHost, refresh, startOpen = false }: { clubId: string; me: string; isHost: boolean; refresh: number; startOpen?: boolean }) {
   const t = useT();
   const [items, setItems] = useState<ShelfItem[] | null>(null);
-  const [adding, setAdding] = useState(false);
+  // A brand-new club opens straight into filling its shelf, so nobody ever lands in an empty club.
+  const [adding, setAdding] = useState(startOpen && isHost);
   const [picked, setPicked] = useState<ShelfItem | null>(null);
 
   const load = useCallback(async () => setItems(await shelfOf(clubId)), [clubId]);
@@ -189,7 +190,14 @@ export function ClubShelf({ clubId, me, isHost, refresh }: { clubId: string; me:
         {isHost && <button className="btn ghost small" type="button" onClick={() => setAdding(true)}>{t("Add to the shelf")}</button>}
       </div>
       {items.length === 0 ? (
-        <p className="muted">{isHost ? t("Everything the club watches, reads or listens to together goes here: a little archive new members can browse.") : t("What the club has watched, read and listened to together will show up here.")}</p>
+        isHost ? (
+          <div className="shelf-start">
+            <p><b>{t("Start with three.")}</b> {t("Add a few books or films you've already done together. It's the first thing new members see, and it shows them what the club is about.")}</p>
+            <button className="btn" type="button" onClick={() => setAdding(true)}>{t("Add the first ones")}</button>
+          </div>
+        ) : (
+          <p className="muted">{t("What the club has watched, read and listened to together will show up here.")}</p>
+        )
       ) : (
         <ul className="hub-shelf">
           {items.map((it) => (
@@ -203,7 +211,7 @@ export function ClubShelf({ clubId, me, isHost, refresh }: { clubId: string; me:
         </ul>
       )}
 
-      {adding && <AddSheet clubId={clubId} me={me} onClose={() => setAdding(false)} onDone={() => { setAdding(false); void load(); }} />}
+      {adding && <AddSheet clubId={clubId} me={me} count={items.length} onAdded={() => void load()} onClose={() => { setAdding(false); void load(); }} />}
       {picked && (
         <Sheet onClose={() => setPicked(null)} label={picked.title}>
           <div className="hub-detail">
@@ -226,27 +234,48 @@ export function ClubShelf({ clubId, me, isHost, refresh }: { clubId: string; me:
   );
 }
 
-function AddSheet({ clubId, me, onClose, onDone }: { clubId: string; me: string; onClose: () => void; onDone: () => void }) {
+/** Add several things in a row: the sheet stays open and lists what went on, until Done. */
+function AddSheet({ clubId, me, count, onAdded, onClose }: { clubId: string; me: string; count: number; onAdded: () => void; onClose: () => void }) {
   const t = useT();
   const [kind, setKind] = useState<ShelfKind>("book");
   const [error, setError] = useState<string | null>(null);
+  const [added, setAdded] = useState<PollOption[]>([]);
+  const [round, setRound] = useState(0); // clears the search box after each pick
   const meta = KINDS.find((k) => k.kind === kind)!;
+  const total = count + added.length;
 
   async function pick(f: Found) {
-    const err = await addToShelf(clubId, me, toOption(kind, f));
-    if (err) return setError(err);
-    onDone();
+    const item = toOption(kind, f);
+    const err = await addToShelf(clubId, me, item);
+    if (err) return setError(t(err));
+    setError(null);
+    setAdded((a) => [...a, item]);
+    setRound((r) => r + 1);
+    onAdded();
   }
 
   return (
     <Sheet onClose={onClose} label={t("Add to the shelf")}>
       <h2>{t("Add to the shelf")}</h2>
+      <p className="muted">{total < 3 ? t("Add a few you've done together. {n} of 3 so far.", { n: total }) : t("Lovely. Add more, or tap Done.")}</p>
       <div className="chips">
         {KINDS.map((k) => <button key={k.kind} type="button" className="chip" aria-pressed={kind === k.kind} onClick={() => setKind(k.kind)}>{t(k.label)}</button>)}
       </div>
-      <SearchPicker key={kind} id="shelf-search" label={t("Find a {kind}", { kind: t(meta.label).toLocaleLowerCase() })} placeholder={t(meta.placeholder)}
+      <SearchPicker key={`${kind}-${round}`} id="shelf-search" label={t("Find a {kind}", { kind: t(meta.label).toLocaleLowerCase() })} placeholder={t(meta.placeholder)}
         source={meta.source} search={meta.search} onPick={pick} />
       <p className="msg err">{error}</p>
+      {added.length > 0 && (
+        <ul className="hub-picked" aria-label={t("Just added")}>
+          {added.map((c, i) => (
+            <li key={`${c.title}-${i}`}>
+              <Cover item={c} size="s" />
+              <span><b>{c.title}</b>{c.subtitle && <span className="muted"> · {c.subtitle}</span>}</span>
+              <span className="smallcaps muted">{t("On the shelf")}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="row"><button className="btn" type="button" onClick={onClose}>{t("Done")}</button></div>
     </Sheet>
   );
 }

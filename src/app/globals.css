@@ -1028,3 +1028,7 @@ html[data-mood] .tonight-room { background: color-mix(in srgb, var(--bg) 82%, va
 /* Club settings: quiet links at the bottom of a club */
 .club-settings { display: flex; flex-wrap: wrap; gap: 8px 22px; justify-content: center; margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 15px; }
 .host-pick { display: grid; gap: 6px; margin: 12px 0; max-height: 40vh; overflow: auto; }
+
+/* An empty shelf, for the host: one clear first step */
+.shelf-start { display: grid; gap: 12px; justify-items: start; padding: 16px 18px; border-radius: 16px; border: 1px dashed color-mix(in srgb, currentColor 30%, transparent); }
+.shelf-start p { margin: 0; }

@@ -4,7 +4,7 @@ import { useT } from "@/lib/i18n";
 import { useRemembered } from "@/lib/remember";
 import qrcode from "qrcode-generator";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   APP_STORE, clubPublic, clubStats, createClub, deleteClub, joinClub, leaveClub, makeHost, joinUrl, myClubs, rememberClub, rememberInvite, roster, shelfPreview, slugify,
@@ -162,6 +162,7 @@ export function ClubScreen({ slug }: { slug: string }) {
 
 export function ClubView({ me, slug }: { me: Profile; slug: string }) {
   const t = useT();
+  const isNew = useSearchParams().get("new") === "1";
   usePalette(SALON, "salon");
   const [club, setClub] = useState<MyClub | null | undefined>(undefined);
   const [people, setPeople] = useState<RosterRow[]>([]);
@@ -239,7 +240,7 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
 
       <ClubQuizzes slug={club.slug} />
 
-      <ClubShelf clubId={club.id} me={me.id} isHost={club.is_host} refresh={shelfTick} />
+      <ClubShelf clubId={club.id} me={me.id} isHost={club.is_host} refresh={shelfTick} startOpen={isNew} />
 
       <h2 className="thread-h">{t("Members")}</h2>
       <ul className="roster">
@@ -391,7 +392,7 @@ export function ClubsSection() {
           ))}
         </div>
       )}
-      {starting && <StartClubSheet onClose={() => setStarting(false)} onDone={(slug) => router.push(`/club/${slug}`)} />}
+      {starting && <StartClubSheet onClose={() => setStarting(false)} onDone={(slug) => router.push(`/club/${slug}?new=1`)} />}
     </section>
   );
 }
