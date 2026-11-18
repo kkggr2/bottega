@@ -242,7 +242,9 @@ function AddSheet({ clubId, me, count, onAdded, onClose }: { clubId: string; me:
   const [added, setAdded] = useState<PollOption[]>([]);
   const [round, setRound] = useState(0); // clears the search box after each pick
   const meta = KINDS.find((k) => k.kind === kind)!;
-  const total = count + added.length;
+  // What was on the shelf when the sheet opened, plus what went on since (the shelf behind refreshes as you add).
+  const [before] = useState(count);
+  const total = before + added.length;
 
   async function pick(f: Found) {
     const item = toOption(kind, f);
