@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { supabase } from "./supabase";
 
 /*
@@ -91,8 +92,8 @@ function friendly(message: string): string {
 /** "now", "5 min", "2 h" */
 export function ago(iso: string): string {
   const s = (Date.now() - Date.parse(iso)) / 1000;
-  if (s < 60) return "now";
-  if (s < 3600) return `${Math.floor(s / 60)} min`;
-  if (s < 86400) return `${Math.floor(s / 3600)} h`;
+  if (s < 60) return t("now");
+  if (s < 3600) return t("{n} min", { n: Math.floor(s / 60) });
+  if (s < 86400) return t("{n} h", { n: Math.floor(s / 3600) });
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import type { Found } from "@/lib/lookup";
 
@@ -21,6 +22,7 @@ export function SearchPicker({
   search: (term: string, signal: AbortSignal) => Promise<Found[]>;
   onPick: (found: Found) => void;
 }) {
+  const t = useT();
   const [term, setTerm] = useState("");
   const [results, setResults] = useState<Found[]>([]);
   const [state, setState] = useState<"idle" | "searching" | "empty" | "error">("idle");
@@ -69,10 +71,10 @@ export function SearchPicker({
         onChange={(e) => { setTerm(e.target.value); if (e.target.value.trim().length < 2) setResults([]); }}
         aria-controls={`${id}-results`} />
       <span className="hint" aria-live="polite">
-        {state === "searching" ? "Searching…"
-          : state === "empty" ? "Nothing found. Try fewer words, or fill it in by hand below."
-          : state === "error" ? `Can't reach ${source} right now. Fill it in by hand below.`
-          : `Results from ${source}.`}
+        {state === "searching" ? t("Searching…")
+          : state === "empty" ? t("Nothing found. Try fewer words, or fill it in by hand below.")
+          : state === "error" ? t("Can't reach {source} right now. Fill it in by hand below.", { source })
+          : t("Results from {source}.", { source })}
       </span>
       {showResults && (
         <ul className="results" id={`${id}-results`}>
@@ -84,7 +86,7 @@ export function SearchPicker({
               </button>
               {r.preview_url && (
                 <button type="button" className="listen" aria-pressed={listening === r.id} onClick={() => listen(r)}
-                  aria-label={listening === r.id ? `Stop ${r.title}` : `Listen to ${r.title}`}>
+                  aria-label={listening === r.id ? t("Stop {title}", { title: r.title }) : t("Listen to {title}", { title: r.title })}>
                   {listening === r.id ? "\u25A0" : "\u25B6\uFE0E"}
                 </button>
               )}

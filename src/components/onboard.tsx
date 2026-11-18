@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { claimInvite, forgetClub, joinClub, pendingClub, pendingStartClub } from "@/lib/clubs";
@@ -11,6 +12,7 @@ import { useAuth } from "./auth";
 
 export function Onboard() {
   const auth = useAuth();
+  const t = useT();
   const { refreshProfile } = auth;
   const router = useRouter();
   // Someone who arrived through a friend's room starts with a friend request to them.
@@ -22,7 +24,7 @@ export function Onboard() {
 
   async function claim() {
     if (!USERNAME.test(username)) {
-      setError("Pick 3–20 lowercase letters, numbers or underscores.");
+      setError(t("Pick 3–20 lowercase letters, numbers or underscores."));
       return;
     }
     setBusy(true);
@@ -35,7 +37,7 @@ export function Onboard() {
     });
     if (error) {
       setBusy(false);
-      setError(friendlyError(error, "Couldn't save your room. Try again."));
+      setError(t(friendlyError(error, "Couldn't save your room. Try again.")));
       return;
     }
     track("room_claimed", { detail: from ? "from_room" : "" });
@@ -79,29 +81,29 @@ export function Onboard() {
   return (
     <section className="onboard">
       <div>
-        <h1>There&rsquo;s an empty room with your name on it.</h1>
-        <p className="lede">Pick the username friends will type to find you. You can name the room and paint the walls once you&rsquo;re inside.</p>
+        <h1>{t("There's an empty room with your name on it.")}</h1>
+        <p className="lede">{t("Pick the username friends will type to find you. You can name the room and paint the walls once you're inside.")}</p>
       </div>
       <div className="panel">
         <form onSubmit={(e) => { e.preventDefault(); claim(); }}>
           <div className="field">
-            <label htmlFor="ob-handle">Username</label>
+            <label htmlFor="ob-handle">{t("Username")}</label>
             <div className="at">
               <input id="ob-handle" type="text" enterKeyHint="done" autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false} maxLength={20}
-                placeholder="yourname" value={username}
+                placeholder={t("yourname")} value={username}
                 onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))} />
             </div>
-            <span className="hint">3–20 lowercase letters, numbers or underscores. Friends find you with this, and it can&rsquo;t be changed later.</span>
+            <span className="hint">{t("3–20 lowercase letters, numbers or underscores. Friends find you with this, and it can't be changed later.")}</span>
           </div>
           {from && (
             <label className="check">
               <input type="checkbox" checked={addFrom} onChange={(e) => setAddFrom(e.target.checked)} />
-              <span>Send <b>@{from.username}</b> a friend request, so your rooms sit side by side</span>
+              <span>{t("Send @{name} a friend request, so your rooms sit side by side", { name: from.username })}</span>
             </label>
           )}
           <p className="msg err" aria-live="polite">{error}</p>
           <div>
-            <button className="btn" type="submit" disabled={busy}>{busy ? "Opening…" : "Open my room"}</button>
+            <button className="btn" type="submit" disabled={busy}>{busy ? t("Opening…") : t("Open my room")}</button>
           </div>
         </form>
       </div>

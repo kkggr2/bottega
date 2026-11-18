@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import { useCallback, useEffect, useState } from "react";
 import {
   addToShelf, closePoll, openPoll, pollState, removeFromShelf, shelfOf, votePoll,
@@ -38,6 +39,7 @@ function Cover({ item, size = "m" }: { item: { type: ShelfKind; title: string; c
 // ---------------------------------------------------------------------------
 
 export function NextUp({ clubId, isHost, onShelved }: { clubId: string; isHost: boolean; onShelved: () => void }) {
+  const t = useT();
   const [poll, setPoll] = useState<PollState | null | undefined>(undefined);
   const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -72,8 +74,8 @@ export function NextUp({ clubId, isHost, onShelved }: { clubId: string; isHost: 
   return (
     <section className="hub-section" id="next" aria-label="What's next">
       <div className="tonight-head">
-        <h2>{open ? poll.question : "What's next?"}</h2>
-        {isHost && !open && <button className="btn small" type="button" onClick={() => setAsking(true)}>Ask the club</button>}
+        <h2>{open ? (poll.question === "What's next?" ? t("What's next?") : poll.question) : t("What's next?")}</h2>
+        {isHost && !open && <button className="btn small" type="button" onClick={() => setAsking(true)}>{t("Ask the club")}</button>}
       </div>
 
       {open ? (
@@ -83,7 +85,7 @@ export function NextUp({ clubId, isHost, onShelved }: { clubId: string; isHost: 
               const mine = poll.my_choice === i;
               return (
                 <button key={i} type="button" className={`vote-option${mine ? " mine" : ""}`} disabled={busy} onClick={() => vote(i)}
-                  aria-pressed={mine} aria-label={`Vote for ${o.title}`}>
+                  aria-pressed={mine} aria-label={t("Vote for {title}", { title: o.title })}>
                   <Cover item={o} size="s" />
                   <span className="vote-text">
                     <b>{o.title}</b>
@@ -96,17 +98,17 @@ export function NextUp({ clubId, isHost, onShelved }: { clubId: string; isHost: 
             })}
           </div>
           <p className="muted vote-foot">
-            {poll.my_choice == null ? "Tap your pick. You can change it until the vote closes." : "Your vote is in. Tap another to change it."}
-            {` ${poll.voters} ${poll.voters === 1 ? "vote" : "votes"} so far.`}
+            {poll.my_choice == null ? t("Tap your pick. You can change it until the vote closes.") : t("Your vote is in. Tap another to change it.")}
+            {" "}{poll.voters === 1 ? t("1 vote so far.") : t("{n} votes so far.", { n: poll.voters })}
           </p>
           {isHost && (
-            <button className="btn ghost small" type="button" disabled={busy} onClick={close}>Close the vote and shelve the winner</button>
+            <button className="btn ghost small" type="button" disabled={busy} onClick={close}>{t("Close the vote and shelve the winner")}</button>
           )}
         </>
       ) : poll && poll.winner != null ? (
-        <p className="muted">Last time the club picked <b className="ink">{poll.options[poll.winner]?.title}</b>.{isHost ? " Ask again when you're ready for the next one." : ""}</p>
+        <p className="muted">{t("Last time the club picked")} <b className="ink">{poll.options[poll.winner]?.title}</b>.{isHost ? ` ${t("Ask again when you're ready for the next one.")}` : ""}</p>
       ) : (
-        <p className="muted">{isHost ? "Put up two to four choices for the next film, book or record, and let the club vote." : "When the host asks what's next, the vote shows up here."}</p>
+        <p className="muted">{isHost ? t("Put up two to four choices for the next film, book or record, and let the club vote.") : t("When the host asks what's next, the vote shows up here.")}</p>
       )}
       <p className="msg err" aria-live="polite">{msg}</p>
 
@@ -116,33 +118,34 @@ export function NextUp({ clubId, isHost, onShelved }: { clubId: string; isHost: 
 }
 
 function AskSheet({ clubId, onClose, onDone }: { clubId: string; onClose: () => void; onDone: () => void }) {
+  const t = useT();
   const [kind, setKind] = useState<ShelfKind>("book");
   const [choices, setChoices] = useState<PollOption[]>([]);
-  const [question, setQuestion] = useState("What's next?");
+  const [question, setQuestion] = useState(t("What's next?"));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const meta = KINDS.find((k) => k.kind === kind)!;
 
   async function ask() {
     setBusy(true);
-    const err = await openPoll(clubId, choices, question.trim() || "What's next?");
+    const err = await openPoll(clubId, choices, question.trim() || t("What's next?"));
     setBusy(false);
     if (err) return setError(err);
     onDone();
   }
 
   return (
-    <Sheet onClose={onClose} onSubmit={ask} label="Ask the club what's next">
-      <h2>Ask the club</h2>
+    <Sheet onClose={onClose} onSubmit={ask} label={t("Ask the club what's next")}>
+      <h2>{t("Ask the club")}</h2>
       <div className="field">
-        <label htmlFor="poll-q">Question</label>
+        <label htmlFor="poll-q">{t("Question")}</label>
         <input id="poll-q" type="text" maxLength={80} value={question} onChange={(e) => setQuestion(e.target.value)} />
       </div>
       <div className="chips">
-        {KINDS.map((k) => <button key={k.kind} type="button" className="chip" aria-pressed={kind === k.kind} onClick={() => setKind(k.kind)}>{k.label}</button>)}
+        {KINDS.map((k) => <button key={k.kind} type="button" className="chip" aria-pressed={kind === k.kind} onClick={() => setKind(k.kind)}>{t(k.label)}</button>)}
       </div>
       {choices.length < 4 && (
-        <SearchPicker key={kind} id="poll-search" label={`Add a ${meta.label.toLowerCase()} (${choices.length} of 4)`} placeholder={meta.placeholder}
+        <SearchPicker key={kind} id="poll-search" label={t("Add a {kind} ({n} of 4)", { kind: t(meta.label).toLocaleLowerCase(), n: choices.length })} placeholder={t(meta.placeholder)}
           source={meta.source} search={meta.search} onPick={(f) => setChoices((c) => [...c, toOption(kind, f)].slice(0, 4))} />
       )}
       {choices.length > 0 && (
@@ -151,15 +154,15 @@ function AskSheet({ clubId, onClose, onDone }: { clubId: string; onClose: () => 
             <li key={`${c.title}-${i}`}>
               <Cover item={c} size="s" />
               <span><b>{c.title}</b>{c.subtitle && <span className="muted"> · {c.subtitle}</span>}</span>
-              <button type="button" className="btn ghost small" onClick={() => setChoices((all) => all.filter((_, j) => j !== i))} aria-label={`Remove ${c.title}`}>Remove</button>
+              <button type="button" className="btn ghost small" onClick={() => setChoices((all) => all.filter((_, j) => j !== i))} aria-label={t("Remove {title}", { title: c.title })}>{t("Remove")}</button>
             </li>
           ))}
         </ul>
       )}
       <p className="msg err">{error}</p>
       <div className="row">
-        <button className="btn ghost" type="button" onClick={onClose}>Cancel</button>
-        <button className="btn" type="submit" disabled={busy || choices.length < 2}>{busy ? "Asking…" : choices.length < 2 ? "Pick at least two" : "Ask the club"}</button>
+        <button className="btn ghost" type="button" onClick={onClose}>{t("Cancel")}</button>
+        <button className="btn" type="submit" disabled={busy || choices.length < 2}>{busy ? t("Asking…") : choices.length < 2 ? t("Pick at least two") : t("Ask the club")}</button>
       </div>
     </Sheet>
   );
@@ -170,6 +173,7 @@ function AskSheet({ clubId, onClose, onDone }: { clubId: string; onClose: () => 
 // ---------------------------------------------------------------------------
 
 export function ClubShelf({ clubId, me, isHost, refresh }: { clubId: string; me: string; isHost: boolean; refresh: number }) {
+  const t = useT();
   const [items, setItems] = useState<ShelfItem[] | null>(null);
   const [adding, setAdding] = useState(false);
   const [picked, setPicked] = useState<ShelfItem | null>(null);
@@ -179,13 +183,13 @@ export function ClubShelf({ clubId, me, isHost, refresh }: { clubId: string; me:
 
   if (!items) return null;
   return (
-    <section className="hub-section" id="shelf" aria-label="The club's shelf">
+    <section className="hub-section" id="shelf" aria-label={t("The club's shelf")}>
       <div className="tonight-head">
-        <h2>The shelf</h2>
-        {isHost && <button className="btn ghost small" type="button" onClick={() => setAdding(true)}>Add to the shelf</button>}
+        <h2>{t("The shelf")}</h2>
+        {isHost && <button className="btn ghost small" type="button" onClick={() => setAdding(true)}>{t("Add to the shelf")}</button>}
       </div>
       {items.length === 0 ? (
-        <p className="muted">{isHost ? "Everything the club watches, reads or listens to together goes here: a little archive new members can browse." : "What the club has watched, read and listened to together will show up here."}</p>
+        <p className="muted">{isHost ? t("Everything the club watches, reads or listens to together goes here: a little archive new members can browse.") : t("What the club has watched, read and listened to together will show up here.")}</p>
       ) : (
         <ul className="hub-shelf">
           {items.map((it) => (
@@ -205,15 +209,15 @@ export function ClubShelf({ clubId, me, isHost, refresh }: { clubId: string; me:
           <div className="hub-detail">
             <Cover item={picked} />
             <div>
-              <p className="smallcaps muted">{picked.type === "song" ? "Record" : picked.type === "film" ? "Film" : "Book"} · on the shelf since {new Date(picked.created_at).toLocaleDateString(undefined, { month: "short", year: "numeric" })}</p>
+              <p className="smallcaps muted">{picked.type === "song" ? t("Record") : picked.type === "film" ? t("Film") : t("Book")} · {t("on the shelf since {date}", { date: new Date(picked.created_at).toLocaleDateString(undefined, { month: "short", year: "numeric" }) })}</p>
               <h2>{picked.title}</h2>
               {picked.subtitle && <p className="muted">{picked.subtitle}</p>}
-              {picked.link && <p><a href={picked.link} target="_blank" rel="noopener noreferrer">Open link ↗</a></p>}
+              {picked.link && <p><a href={picked.link} target="_blank" rel="noopener noreferrer">{t("Open link")} ↗</a></p>}
             </div>
           </div>
           {isHost && (
             <div className="row">
-              <button className="btn ghost danger-text" type="button" onClick={async () => { await removeFromShelf(picked.id); setPicked(null); void load(); }}>Take it off the shelf</button>
+              <button className="btn ghost danger-text" type="button" onClick={async () => { await removeFromShelf(picked.id); setPicked(null); void load(); }}>{t("Take it off the shelf")}</button>
             </div>
           )}
         </Sheet>
@@ -223,6 +227,7 @@ export function ClubShelf({ clubId, me, isHost, refresh }: { clubId: string; me:
 }
 
 function AddSheet({ clubId, me, onClose, onDone }: { clubId: string; me: string; onClose: () => void; onDone: () => void }) {
+  const t = useT();
   const [kind, setKind] = useState<ShelfKind>("book");
   const [error, setError] = useState<string | null>(null);
   const meta = KINDS.find((k) => k.kind === kind)!;
@@ -234,12 +239,12 @@ function AddSheet({ clubId, me, onClose, onDone }: { clubId: string; me: string;
   }
 
   return (
-    <Sheet onClose={onClose} label="Add to the shelf">
-      <h2>Add to the shelf</h2>
+    <Sheet onClose={onClose} label={t("Add to the shelf")}>
+      <h2>{t("Add to the shelf")}</h2>
       <div className="chips">
-        {KINDS.map((k) => <button key={k.kind} type="button" className="chip" aria-pressed={kind === k.kind} onClick={() => setKind(k.kind)}>{k.label}</button>)}
+        {KINDS.map((k) => <button key={k.kind} type="button" className="chip" aria-pressed={kind === k.kind} onClick={() => setKind(k.kind)}>{t(k.label)}</button>)}
       </div>
-      <SearchPicker key={kind} id="shelf-search" label={`Find a ${meta.label.toLowerCase()}`} placeholder={meta.placeholder}
+      <SearchPicker key={kind} id="shelf-search" label={t("Find a {kind}", { kind: t(meta.label).toLocaleLowerCase() })} placeholder={t(meta.placeholder)}
         source={meta.source} search={meta.search} onPick={pick} />
       <p className="msg err">{error}</p>
     </Sheet>

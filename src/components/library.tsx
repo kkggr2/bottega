@@ -1,5 +1,7 @@
 "use client";
 
+import { LangSwitch } from "./lang-switch";
+import { useT } from "@/lib/i18n";
 import { useRemembered } from "@/lib/remember";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
@@ -45,6 +47,7 @@ type Shelf = {
 };
 
 function Library({ me }: { me: Profile }) {
+  const t = useT();
   const [shelf, setShelf] = useRemembered<Shelf | null>(`library:${me.id}`, null);
   const [draft, setDraft] = useState("");
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
@@ -151,26 +154,26 @@ function Library({ me }: { me: Profile }) {
 
   async function addFriend() {
     const username = draft.trim().replace(/^@/, "").toLowerCase();
-    if (!USERNAME.test(username)) return setMsg({ kind: "err", text: "Usernames are 3–20 letters, numbers or underscores." });
-    if (username === me.username) return setMsg({ kind: "err", text: "That's your own room." });
+    if (!USERNAME.test(username)) return setMsg({ kind: "err", text: t("Usernames are 3–20 letters, numbers or underscores.") });
+    if (username === me.username) return setMsg({ kind: "err", text: t("That's your own room.") });
     setBusy(true);
     try {
       const { data: person } = await supabase().from("profiles").select("id, username").eq("username", username).maybeSingle();
       if (!person) {
-        setMsg({ kind: "err", text: `No one is called @${username} yet. Double-check the spelling with your friend.` });
+        setMsg({ kind: "err", text: t("No one is called @{name} yet. Double-check the spelling with your friend.", { name: username }) });
       } else {
         const rel = await befriend(me.id, person.id);
         setMsg({
           kind: "ok",
           text: rel === "friends"
-            ? `You and @${username} are friends. Their room is on your shelf.`
-            : `Request sent. @${username}'s room joins your shelf when they accept.`,
+            ? t("You and @{name} are friends. Their room is on your shelf.", { name: username })
+            : t("Request sent. @{name}'s room joins your shelf when they accept.", { name: username }),
         });
         setDraft("");
         await load();
       }
     } catch (error) {
-      setMsg({ kind: "err", text: friendlyError(error, "Couldn't add them right now. Try again.") });
+      setMsg({ kind: "err", text: t(friendlyError(error, "Couldn't add them right now. Try again.")) });
     }
     setBusy(false);
   }
@@ -178,7 +181,7 @@ function Library({ me }: { me: Profile }) {
   // Early on, most friends won't have Bottega yet, so a link works better than a username search.
   async function sendLink() {
     const url = `${window.location.origin}/r/${me.username}`;
-    const result = await shareLink(`My room on Bottega`, url);
+    const result = await shareLink(t("My room on Bottega"), url);
     if (result === "shared" || result === "copied") track("share_link", { room: me.id, detail: "library" });
     if (result === "copied") setMsg({ kind: "ok", text: "Link copied. Send it to a friend." });
     else if (result === "failed") setMsg({ kind: "err", text: `Couldn't share. Your link is ${url}` });
@@ -212,18 +215,18 @@ function Library({ me }: { me: Profile }) {
     <div>
       <section className="lib-head">
         <div>
-          <h1>Your library</h1>
-          <p>Every door is someone&rsquo;s room. Step inside.</p>
+          <h1>{t("Your library")}</h1>
+          <p>{t("Every door is someone's room. Step inside.")}</p>
           <GuestNote why="to keep your room, add friends and write to people" />
         </div>
         <div className="addfriend">
           <form onSubmit={(e) => { e.preventDefault(); addFriend(); }}>
             <div className="at">
               <input ref={inputRef} id="friend-input" type="text" enterKeyHint="send" autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false} maxLength={21}
-                placeholder="friend's username" aria-label="Friend's username" value={draft}
+                placeholder={t("friend's username")} aria-label={t("Friend's username")} value={draft}
                 onChange={(e) => setDraft(e.target.value)} />
             </div>
-            <button className="btn" type="submit" disabled={busy}>Add</button>
+            <button className="btn" type="submit" disabled={busy}>{t("Add")}</button>
           </form>
           <p className={`msg ${msg?.kind ?? ""}`} aria-live="polite">{msg?.text}</p>
         </div>
@@ -231,27 +234,27 @@ function Library({ me }: { me: Profile }) {
 
 
       {(shelf.incoming.length > 0 || shelf.outgoing.length > 0) && (
-        <section className="requests" aria-label="Friend requests">
+        <section className="requests" aria-label={t("Friend requests")}>
           {shelf.incoming.map((p) => (
             <div className="request" key={p.id}>
-              <span><b>@{p.username}</b> wants to swap keys with you.</span>
+              <span>{t("@{name} wants to swap keys with you.", { name: p.username })}</span>
               <span className="row">
-                <button className="btn small" type="button" onClick={() => respond(p, true)}>Accept</button>
-                <button className="btn ghost small" type="button" onClick={() => respond(p, false)}>Decline</button>
+                <button className="btn small" type="button" onClick={() => respond(p, true)}>{t("Accept")}</button>
+                <button className="btn ghost small" type="button" onClick={() => respond(p, false)}>{t("Decline")}</button>
               </span>
             </div>
           ))}
           {shelf.outgoing.map((p) => (
             <div className="request" key={p.id}>
-              <span className="muted">Waiting for <b>@{p.username}</b> to accept.</span>
-              <button className="btn ghost small" type="button" onClick={() => respond(p, false)}>Cancel</button>
+              <span className="muted">{t("Waiting for @{name} to accept.", { name: p.username })}</span>
+              <button className="btn ghost small" type="button" onClick={() => respond(p, false)}>{t("Cancel")}</button>
             </div>
           ))}
         </section>
       )}
 
       {shelf.inbox.length > 0 && (
-        <section className="updates inbox" aria-label="For you">
+        <section className="updates inbox" aria-label={t("For you")}>
           {shelf.inbox.map((u) => (
             <Link key={u.key} href={u.href} className={`update${u.isNew ? " new" : ""}`}>
               {u.isNew && <span className="dot" aria-label="New" />}
@@ -263,7 +266,7 @@ function Library({ me }: { me: Profile }) {
       )}
 
       {shelf.updates.length > 0 && (
-        <section className="updates" aria-label="What friends put on">
+        <section className="updates" aria-label={t("What friends put on")}>
           {shelf.updates.map((u) => (
             <Link key={u.ownerId} href={`/r/${u.username}`} className={`update${u.isNew ? " new" : ""}`}>
               {u.isNew && <span className="dot" aria-label="New" />}
@@ -274,9 +277,9 @@ function Library({ me }: { me: Profile }) {
         </section>
       )}
 
-      <div className="hall" role="list" aria-label="Rooms">
+      <div className="hall" role="list" aria-label={t("Rooms")}>
         {shelf.rooms.map((room) => {
-          const t = THEMES[room.theme] ?? THEMES.oak;
+          const th = THEMES[room.theme] ?? THEMES.oak;
           const username = room.profile?.username ?? "";
           const mine = room.owner_id === me.id;
           const update = shelf.updates.find((u) => u.ownerId === room.owner_id);
@@ -286,9 +289,9 @@ function Library({ me }: { me: Profile }) {
               <Link
                 href={`/r/${username}`}
                 className="door-link"
-                aria-label={`${mine ? "Your room" : `@${username}'s room`}: ${room.name}${fresh ? ", something new" : ""}`}
+                aria-label={`${mine ? t("Your room") : t("@{name}'s room", { name: username })}: ${room.name}${fresh ? `, ${t("something new")}` : ""}`}
                 onClick={(e) => openDoor(e, `/r/${username}`)}
-                style={{ "--dr-paint": t.wall, "--dr-ink": t.ink, "--dr-accent": t.accent, "--dr-floor": t.floor } as CSSProperties}
+                style={{ "--dr-paint": th.wall, "--dr-ink": th.ink, "--dr-accent": th.accent, "--dr-floor": th.floor } as CSSProperties}
               >
                 <span className="lamp" aria-hidden="true" />
                 <span className="doorway" aria-hidden="true">
@@ -302,7 +305,7 @@ function Library({ me }: { me: Profile }) {
                 </span>
                 <span className="step" aria-hidden="true" />
               </Link>
-              <p className="door-name">{mine ? "Your room" : room.name}</p>
+              <p className="door-name">{mine ? t("Your room") : room.name}</p>
               {update ? (
                 <p className="door-now">{update.kind === "song" ? "♪" : update.kind === "film" ? "▶︎" : "❦"} {update.title}</p>
               ) : mine ? <p className="door-now">{room.name}</p> : null}
@@ -310,33 +313,34 @@ function Library({ me }: { me: Profile }) {
           );
         })}
         <div role="listitem" className="hall-door add">
-          <button type="button" className="door-link" onClick={() => inputRef.current?.focus()} aria-label="Add a friend by username">
+          <button type="button" className="door-link" onClick={() => inputRef.current?.focus()} aria-label={t("Add a friend by username")}>
             <span className="doorway" aria-hidden="true"><span className="leaf"><span className="plus">+</span></span></span>
             <span className="step" aria-hidden="true" />
           </button>
-          <p className="door-name">Add a friend</p>
+          <p className="door-name">{t("Add a friend")}</p>
         </div>
       </div>
       {friendCount > 0 && <PushAsk userId={me.id} />}
       <EmailSwitch userId={me.id} />
       <AppSignOut />
       <footer className="lib-foot">
-        <a href="/privacy">Privacy</a>
-        <a href="/terms">Terms</a>
-        <a href="/support">Help</a>
+        <a href="/privacy">{t("Privacy")}</a>
+        <a href="/terms">{t("Terms")}</a>
+        <a href="/support">{t("Help")}</a>
+        <LangSwitch />
         <DeleteAccount username={me.username} />
       </footer>
 
       {friendCount < 3 ? (
         <div className="invite">
           <p>
-            {friendCount === 0 ? "Your shelf is just you for now." : "A shelf feels like a library at three friends."}{" "}
-            Send your room link. When a friend makes their own room from it, you&rsquo;ll get their friend request.
+            {friendCount === 0 ? t("Your shelf is just you for now.") : t("A shelf feels like a library at three friends.")}{" "}
+            {t("Send your room link. When a friend makes their own room from it, you'll get their friend request.")}
           </p>
-          <button className="btn" type="button" onClick={sendLink}>Send my room link</button>
+          <button className="btn" type="button" onClick={sendLink}>{t("Send my room link")}</button>
         </div>
       ) : (
-        <p className="lib-note">Friends can see your room and you can see theirs. Change who can come in from your room&rsquo;s Customize menu.</p>
+        <p className="lib-note">{t("Friends can see your room and you can see theirs. Change who can come in from your room's Customize menu.")}</p>
       )}
     </div>
   );
@@ -384,6 +388,7 @@ function EmailSwitch({ userId }: { userId: string }) {
 
 /** iPhone app only: once you have a friend, offer a nudge when they put something on. Asked once. */
 function PushAsk({ userId }: { userId: string }) {
+  const t = useT();
   const router = useRouter();
   const [show, setShow] = useState(false);
   useEffect(() => {
@@ -393,14 +398,14 @@ function PushAsk({ userId }: { userId: string }) {
   if (!show) return null;
   return (
     <div className="invite push-ask">
-      <p>Get a nudge when a friend puts something on. <span className="muted">At most one per friend every few hours.</span></p>
+      <p>{t("Get a nudge when a friend puts something on.")} <span className="muted">{t("At most one per friend every few hours.")}</span></p>
       <div className="row">
         <button className="btn" type="button" onClick={async () => {
           await enablePush(userId, (url) => router.push(pathFromUrl(url)));
           dismissPushAsk();
           setShow(false);
-        }}>Turn on</button>
-        <button className="btn ghost" type="button" onClick={() => { dismissPushAsk(); setShow(false); }}>Not now</button>
+        }}>{t("Turn on")}</button>
+        <button className="btn ghost" type="button" onClick={() => { dismissPushAsk(); setShow(false); }}>{t("Not now")}</button>
       </div>
     </div>
   );
@@ -408,13 +413,14 @@ function PushAsk({ userId }: { userId: string }) {
 
 /** In the app the top links are replaced by the tab bar, so signing out lives here. */
 function AppSignOut() {
+  const t = useT();
   const auth = useAuth();
   const native = useSyncExternalStore(() => () => {}, isNativeApp, () => false);
   if (!native) return null;
   // A guest has no email to log back in with, so signing out would lose their room.
   const signOut = () => {
-    if (auth.guest && !window.confirm("You're a guest: signing out loses your room and clubs. Add your email first to keep them. Sign out anyway?")) return;
+    if (auth.guest && !window.confirm(t("You're a guest: signing out loses your room and clubs. Add your email first to keep them. Sign out anyway?"))) return;
     void auth.signOut();
   };
-  return <p className="lib-note"><button className="linkish" type="button" onClick={signOut}>Sign out</button></p>;
+  return <p className="lib-note"><button className="linkish" type="button" onClick={signOut}>{t("Sign out")}</button></p>;
 }

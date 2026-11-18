@@ -1,5 +1,7 @@
 "use client";
 
+import { LangSwitch } from "./lang-switch";
+import { useT } from "@/lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import { isNativeApp } from "@/lib/native";
 import { ExampleRoom } from "./example-room";
@@ -21,6 +23,7 @@ const looksLikeEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 
 /** `forClub`: the short version on the start page — just the form, about starting a club. */
 export function SignIn({ forClub = false }: { forClub?: boolean } = {}) {
+  const t = useT();
   // Most people here are new, so the form starts on "Create account".
   const [mode, setMode] = useState<Mode>("create");
   const [from] = useState(cameFrom);
@@ -52,7 +55,7 @@ export function SignIn({ forClub = false }: { forClub?: boolean } = {}) {
   function checked(): string | null {
     const address = email.trim();
     if (!looksLikeEmail(address)) {
-      err("Enter your email address.");
+      err(t("Enter your email address."));
       return null;
     }
     return address;
@@ -71,24 +74,24 @@ export function SignIn({ forClub = false }: { forClub?: boolean } = {}) {
   const logIn = () => run(async () => {
     const address = checked();
     if (!address) return;
-    if (!password) return err("Enter your password.");
+    if (!password) return err(t("Enter your password."));
     const { error } = await supabase().auth.signInWithPassword({ email: address, password });
     if (!error) return;
     if (/not confirmed/i.test(error.message)) {
       await supabase().auth.resend({ type: "signup", email: address, options: { emailRedirectTo: window.location.origin } });
       setPending({ email: address, kind: "signup" });
-      setMsg({ kind: "ok", text: "Your email isn't confirmed yet. We sent a new code." });
+      setMsg({ kind: "ok", text: t("Your email isn't confirmed yet. We sent a new code.") });
     } else if (/invalid login credentials/i.test(error.message)) {
-      err("That email and password don't match. Try again, or use “Forgot password”.");
+      err(t("That email and password don't match. Try again, or use “Forgot password”."));
     } else {
-      err(friendlyError(error, "Couldn't log in. Try again."));
+      err(t(friendlyError(error, "Couldn't log in. Try again.")));
     }
   });
 
   const createAccount = () => run(async () => {
     const address = checked();
     if (!address) return;
-    if (password.length < MIN_PASSWORD) return err(`Choose a password with at least ${MIN_PASSWORD} characters.`);
+    if (password.length < MIN_PASSWORD) return err(t("Choose a password with at least {n} characters.", { n: MIN_PASSWORD }));
     const { data, error } = await supabase().auth.signUp({
       email: address,
       password,
@@ -96,13 +99,13 @@ export function SignIn({ forClub = false }: { forClub?: boolean } = {}) {
     });
     if (error) {
       if (/already registered|already exists/i.test(error.message)) {
-        return err("There's already an account with this email. Log in instead.");
+        return err(t("There's already an account with this email. Log in instead."));
       }
-      return err(friendlyError(error, "Couldn't create the account. Try again."));
+      return err(t(friendlyError(error, "Couldn't create the account. Try again.")));
     }
     // Supabase hides whether an email is taken: an existing account comes back with no identities.
     if (data.user && data.user.identities?.length === 0) {
-      return err("There's already an account with this email. Log in instead, or use “Forgot password”.");
+      return err(t("There's already an account with this email. Log in instead, or use “Forgot password”."));
     }
     track("account_created");
     if (data.session) return; // Email confirmation is off: already signed in.
@@ -118,7 +121,7 @@ export function SignIn({ forClub = false }: { forClub?: boolean } = {}) {
     });
     if (error) {
       if (/signups not allowed|not found|otp_disabled/i.test(error.message)) {
-        return err("There's no account with this email yet. Create one first.");
+        return err(t("There's no account with this email yet. Create one first."));
       }
       return err(friendlyError(error, "Couldn't send the email. Try again."));
     }
@@ -136,16 +139,16 @@ export function SignIn({ forClub = false }: { forClub?: boolean } = {}) {
   const verify = () => run(async () => {
     if (!pending) return;
     const token = code.trim();
-    if (!/^\d{6,8}$/.test(token)) return err("Enter the code from the email.");
+    if (!/^\d{6,8}$/.test(token)) return err(t("Enter the code from the email."));
     if (pending.kind === "recovery" && password.length < MIN_PASSWORD) {
-      return err(`Choose a new password with at least ${MIN_PASSWORD} characters.`);
+      return err(t("Choose a new password with at least {n} characters.", { n: MIN_PASSWORD }));
     }
     const { error } = await supabase().auth.verifyOtp({
       email: pending.email,
       token,
       type: pending.kind === "recovery" ? "recovery" : "email",
     });
-    if (error) return err("That code didn't work. Check it, or ask for a new email.");
+    if (error) return err(t("That code didn't work. Check it, or ask for a new email."));
     if (pending.kind === "recovery") {
       const { error: pwError } = await supabase().auth.updateUser({ password });
       if (pwError) err(friendlyError(pwError, "Signed in, but the new password didn't save. Try “Forgot password” again later."));
@@ -161,76 +164,76 @@ export function SignIn({ forClub = false }: { forClub?: boolean } = {}) {
       : pending.kind === "recovery" ? await supabase().auth.resetPasswordForEmail(pending.email, { redirectTo: window.location.origin })
       : await supabase().auth.signInWithOtp({ email: pending.email, options: { ...options, shouldCreateUser: false } });
     if (error) err(friendlyError(error, "Couldn't send another email. Wait a minute and try again."));
-    else setMsg({ kind: "ok", text: "Sent. Check your inbox (and spam)." });
+    else setMsg({ kind: "ok", text: t("Sent. Check your inbox (and spam).") });
   });
 
   const intro: Record<Pending["kind"], string> = {
-    signup: "Type the code from the email to confirm your account.",
-    code: "Type the code from the email to log in.",
-    recovery: "Type the code from the email and choose a new password.",
+    signup: t("Type the code from the email to confirm your account."),
+    code: t("Type the code from the email to log in."),
+    recovery: t("Type the code from the email and choose a new password."),
   };
 
   return (
     <div className={forClub ? "landing for-club" : "landing"}>
       {!forClub && <>
       <section className="landing-hero">
-        <h1>Step into your friends&rsquo; taste.</h1>
-        <p className="lede">Fill one room with what you love. Then visit theirs.</p>
+        <h1>{t("Step into your friends' taste.")}</h1>
+        <p className="lede">{t("Fill one room with what you love. Then visit theirs.")}</p>
         <div className="chips">
-          <button className="btn" type="button" onClick={() => goToForm("create")}>Make my own room</button>
-          <button className="btn ghost" type="button" onClick={() => goToForm("login")}>Log in</button>
+          <button className="btn" type="button" onClick={() => goToForm("create")}>{t("Make my own room")}</button>
+          <button className="btn ghost" type="button" onClick={() => goToForm("login")}>{t("Log in")}</button>
         </div>
       </section>
 
-      <section className="landing-room" aria-label="An example room you can try">
-        <p className="try">This room is real. Tap the records, or a DVD.</p>
+      <section className="landing-room" aria-label={t("An example room you can try")}>
+        <p className="try">{t("This room is real. Tap the records, or a DVD.")}</p>
         <ExampleRoom embedded onMakeYours={() => goToForm("create")} />
       </section>
       </>}
 
       <section className="onboard" id="join" ref={joinRef}>
         <div>
-          <h2 className="join-title">{forClub ? (mode === "create" ? "First, your account." : "Welcome back.") : mode === "create" ? "Five things open your door." : "Your room is waiting."}</h2>
+          <h2 className="join-title">{forClub ? (mode === "create" ? t("First, your account.") : t("Welcome back.")) : mode === "create" ? t("Five things open your door.") : t("Your room is waiting.")}</h2>
           <p className="lede">
             {forClub
-              ? mode === "create" ? "It takes a minute. Then you name your club and get its link." : "Log in, then name your club and get its link."
+              ? mode === "create" ? t("It takes a minute. Then you name your club and get its link.") : t("Log in, then name your club and get its link.")
               : from
-              ? <>You came from <b>@{from.username}</b>&rsquo;s room. Make yours and we&rsquo;ll send them a friend request so your rooms sit side by side.</>
+              ? t("You came from @{name}'s room. Make yours and we'll send them a friend request so your rooms sit side by side.", { name: from.username })
               : mode === "create"
-                ? "Pick a username, hang five things you love, and send the link to a friend. Bring in Letterboxd films or Goodreads books in one tap."
-                : "Log in with your email and password, or have a code sent to you."}
+                ? t("Pick a username, hang five things you love, and send the link to a friend. Bring in Letterboxd films or Goodreads books in one tap.")
+                : t("Log in with your email and password, or have a code sent to you.")}
           </p>
         </div>
 
       <div className="panel">
         {pending ? (
           <form className="stack" onSubmit={(e) => { e.preventDefault(); verify(); }}>
-            <h2 className="panel-title">Check your inbox</h2>
+            <h2 className="panel-title">{t("Check your inbox")}</h2>
             <p>
-              We emailed <b>{pending.email}</b>. {intro[pending.kind]}
-              {!isNativeApp() && pending.kind !== "recovery" && " You can also open the link in it on this device."}
+              {t("We emailed {email}.", { email: pending.email })} {intro[pending.kind]}
+              {!isNativeApp() && pending.kind !== "recovery" && ` ${t("You can also open the link in it on this device.")}`}
             </p>
             <div className="field">
-              <label htmlFor="otp">Code</label>
+              <label htmlFor="otp">{t("Code")}</label>
               <input id="otp" type="text" enterKeyHint="done" inputMode="numeric" autoComplete="one-time-code" maxLength={8}
                 value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} />
             </div>
             {pending.kind === "recovery" && (
               <div className="field">
-                <label htmlFor="new-password">New password</label>
+                <label htmlFor="new-password">{t("New password")}</label>
                 <input id="new-password" type="password" autoComplete="new-password" minLength={MIN_PASSWORD}
                   value={password} onChange={(e) => setPassword(e.target.value)} />
-                <span className="hint">At least {MIN_PASSWORD} characters.</span>
+                <span className="hint">{t("At least {n} characters.", { n: MIN_PASSWORD })}</span>
               </div>
             )}
             <p className={`msg ${msg?.kind ?? ""}`} aria-live="polite">{msg?.text}</p>
             <div className="chips">
               <button className="btn" type="submit" disabled={busy}>
-                {pending.kind === "signup" ? "Confirm" : pending.kind === "recovery" ? "Save and log in" : "Log in"}
+                {pending.kind === "signup" ? t("Confirm") : pending.kind === "recovery" ? t("Save and log in") : t("Log in")}
               </button>
-              <button className="btn ghost" type="button" disabled={busy} onClick={resend}>Send again</button>
+              <button className="btn ghost" type="button" disabled={busy} onClick={resend}>{t("Send again")}</button>
             </div>
-            <button className="linkish" type="button" onClick={() => switchTo(mode)}>Use a different email</button>
+            <button className="linkish" type="button" onClick={() => switchTo(mode)}>{t("Use a different email")}</button>
           </form>
         ) : (
           <form
@@ -240,58 +243,59 @@ export function SignIn({ forClub = false }: { forClub?: boolean } = {}) {
               ({ login: logIn, create: createAccount, code: emailCode, forgot: sendReset })[mode]();
             }}
           >
-            <div className="chips" role="group" aria-label="Account">
-              <button type="button" className="chip" aria-pressed={mode === "create"} onClick={() => switchTo("create")}>Create account</button>
-              <button type="button" className="chip" aria-pressed={mode !== "create"} onClick={() => switchTo("login")}>Log in</button>
+            <div className="chips" role="group" aria-label={t("Account")}>
+              <button type="button" className="chip" aria-pressed={mode === "create"} onClick={() => switchTo("create")}>{t("Create account")}</button>
+              <button type="button" className="chip" aria-pressed={mode !== "create"} onClick={() => switchTo("login")}>{t("Log in")}</button>
             </div>
 
-            {mode === "forgot" && <p>Enter your email and we&rsquo;ll send a code to choose a new password.</p>}
-            {mode === "code" && <p>Enter your email and we&rsquo;ll send a code to log in without your password.</p>}
+            {mode === "forgot" && <p>{t("Enter your email and we'll send a code to choose a new password.")}</p>}
+            {mode === "code" && <p>{t("Enter your email and we'll send a code to log in without your password.")}</p>}
 
             <div className="field">
-              <label htmlFor="email">Email</label>
+              <label htmlFor="email">{t("Email")}</label>
               <input id="email" type="email" enterKeyHint={mode === "login" || mode === "create" ? "next" : "send"} autoCapitalize="none" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
 
             {(mode === "login" || mode === "create") && (
               <div className="field">
-                <label htmlFor="password">Password</label>
+                <label htmlFor="password">{t("Password")}</label>
                 <input id="password" type="password" enterKeyHint="go" minLength={mode === "create" ? MIN_PASSWORD : undefined}
                   autoComplete={mode === "create" ? "new-password" : "current-password"}
                   value={password} onChange={(e) => setPassword(e.target.value)} />
-                {mode === "create" && <span className="hint">At least {MIN_PASSWORD} characters. We&rsquo;ll email a code to confirm it&rsquo;s you.</span>}
+                {mode === "create" && <span className="hint">{t("At least {n} characters. We'll email a code to confirm it's you.", { n: MIN_PASSWORD })}</span>}
               </div>
             )}
 
             <p className={`msg ${msg?.kind ?? ""}`} aria-live="polite">{msg?.text}</p>
             <div>
               <button className="btn" type="submit" disabled={busy}>
-                {busy ? "One moment…"
-                  : { login: "Log in", create: "Create account", code: "Email me a code", forgot: "Email me a reset code" }[mode]}
+                {busy ? t("One moment…")
+                  : t({ login: "Log in", create: "Create account", code: "Email me a code", forgot: "Email me a reset code" }[mode])}
               </button>
             </div>
 
             {mode === "create" && (
-              <p className="hint">By creating an account you agree to the <a href="/terms">Terms</a> and <a href="/privacy">Privacy policy</a>. No hateful or abusive content.</p>
+              <p className="hint">{t("By creating an account you agree to the")} <a href="/terms">{t("Terms")}</a> {t("and the")} <a href="/privacy">{t("Privacy policy")}</a>{t(". No hateful or abusive content.")}</p>
             )}
             {mode === "login" && (
               <div className="chips">
-                <button className="linkish" type="button" onClick={() => switchTo("forgot")}>Forgot password?</button>
+                <button className="linkish" type="button" onClick={() => switchTo("forgot")}>{t("Forgot password?")}</button>
                 <span className="muted" aria-hidden>·</span>
-                <button className="linkish" type="button" onClick={() => switchTo("code")}>Email me a code instead</button>
+                <button className="linkish" type="button" onClick={() => switchTo("code")}>{t("Email me a code instead")}</button>
               </div>
             )}
             {(mode === "code" || mode === "forgot") && (
-              <button className="linkish" type="button" onClick={() => switchTo("login")}>Back to log in with password</button>
+              <button className="linkish" type="button" onClick={() => switchTo("login")}>{t("Back to log in with password")}</button>
             )}
           </form>
         )}
       </div>
       </section>
       <footer className="lib-foot">
-        <a href="/privacy">Privacy</a>
-        <a href="/terms">Terms</a>
-        <a href="/support">Help</a>
+        <a href="/privacy">{t("Privacy")}</a>
+        <a href="/terms">{t("Terms")}</a>
+        <a href="/support">{t("Help")}</a>
+        <LangSwitch />
       </footer>
     </div>
   );

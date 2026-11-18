@@ -1,5 +1,6 @@
 "use client";
 
+import { t as tNow, useT } from "@/lib/i18n";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AnswerResult, BoardRow, ClubQuizCard, QuizQuestion, QuizState } from "@/lib/quiz/types";
@@ -41,6 +42,7 @@ export function QuizScreen({ quizRef = null }: { quizRef?: QuizRef } = {}) {
 type Shown = { picked: number | null; answer: number; correct: boolean; note: string | null; points: number };
 
 export function QuizGame({ quizRef: given = null }: { quizRef?: QuizRef } = {}) {
+  const t = useT();
   const clubName = given?.club, quizName = given?.quiz;
   const quizRef = useMemo<QuizRef>(() => (clubName && quizName ? { club: clubName, quiz: quizName } : null), [clubName, quizName]);
   usePalette(QUIZ_ROOM, "quiz");
@@ -56,8 +58,8 @@ export function QuizGame({ quizRef: given = null }: { quizRef?: QuizRef } = {}) 
 
   useEffect(() => {
     call("GET", undefined, quizRef).then(async (r) => (r.ok ? setState(await r.json())
-      : setError(r.status === 403 ? "This quiz is only for the club's members." : "Couldn't load the quiz. Try again.")))
-      .catch(() => setError("Can't reach Bottega. Check your connection."));
+      : setError(r.status === 403 ? tNow("This quiz is only for the club's members.") : tNow("Couldn't load the quiz. Try again."))))
+      .catch(() => setError(tNow("Can't reach Bottega. Check your connection.")));
   }, [quizRef]);
 
   const q = state?.question ?? null;
@@ -80,7 +82,7 @@ export function QuizGame({ quizRef: given = null }: { quizRef?: QuizRef } = {}) 
     setBusy(true);
     const r = await call("POST", { action: "answer", index: q.index, choice }, quizRef).catch(() => null);
     setBusy(false);
-    if (!r) return setError("Can't reach Bottega. Check your connection.");
+    if (!r) return setError(t("Can't reach Bottega. Check your connection."));
     const data = (await r.json()) as AnswerResult | { error: string; state: QuizState };
     if ("error" in data) { setPicked(null); setState(data.state); return; }
     setShown({ picked: choice, answer: data.answer, correct: data.correct, note: data.note, points: data.points });
@@ -90,7 +92,7 @@ export function QuizGame({ quizRef: given = null }: { quizRef?: QuizRef } = {}) 
     }
     // Show right or wrong for a moment; the next question's clock starts after it.
     setTimeout(() => { setShown(null); setPicked(null); setState(data.state); }, 1800);
-  }, [state, q, quizRef]);
+  }, [state, q, quizRef, t]);
 
   // Out of time.
   useEffect(() => {
@@ -101,13 +103,13 @@ export function QuizGame({ quizRef: given = null }: { quizRef?: QuizRef } = {}) 
     setBusy(true);
     const r = await call("POST", { action: "start" }, quizRef).catch(() => null);
     setBusy(false);
-    if (!r?.ok) return setError("Couldn't start the quiz. Try again.");
+    if (!r?.ok) return setError(t("Couldn't start the quiz. Try again."));
     track("quiz_start");
     setState(await r.json());
   }
 
   if (error) return <section className="quiz"><p className="msg err">{error}</p></section>;
-  if (!state) return <p className="loading">Shuffling the questions…</p>;
+  if (!state) return <p className="loading">{t("Shuffling the questions…")}</p>;
 
   const { quiz, attempt } = state;
   const done = attempt?.done;
@@ -117,12 +119,12 @@ export function QuizGame({ quizRef: given = null }: { quizRef?: QuizRef } = {}) 
       {state.club ? (
         <>
           <Link href={`/club/${state.club.slug}`} className="mono muted back">&larr; {state.club.name}</Link>
-          <p className="mono muted">{state.club.emoji} A {state.club.name} quiz</p>
+          <p className="mono muted">{state.club.emoji} {t("A {club} quiz", { club: state.club.name })}</p>
         </>
       ) : (
         <>
-          <Link href="/quiz" className="mono muted back">&larr; Quiz room</Link>
-          <p className="mono muted">Today&rsquo;s quiz</p>
+          <Link href="/quiz" className="mono muted back">&larr; {t("Quiz room")}</Link>
+          <p className="mono muted">{t("Today's quiz")}</p>
         </>
       )}
       <h1>{quiz.title}</h1>
@@ -130,16 +132,16 @@ export function QuizGame({ quizRef: given = null }: { quizRef?: QuizRef } = {}) 
       {!attempt && (
         <div className="quiz-intro">
           <p className="blurb">{quiz.blurb}</p>
-          <p className="muted">{quiz.count} questions: stills, colours, lines and a few facts. 15–20 seconds each, {state.club ? "one try each" : "one try a day"}; faster right answers score more.</p>
-          <button className="btn" type="button" disabled={busy} onClick={start}>{busy ? "Starting…" : "Start the quiz"}</button>
+          <p className="muted">{state.club ? t("{n} questions: stills, colours, lines and a few facts. 15–20 seconds each, one try each; faster right answers score more.", { n: quiz.count }) : t("{n} questions: stills, colours, lines and a few facts. 15–20 seconds each, one try a day; faster right answers score more.", { n: quiz.count })}</p>
+          <button className="btn" type="button" disabled={busy} onClick={start}>{busy ? t("Starting…") : t("Start the quiz")}</button>
         </div>
       )}
 
       {playing && q && (
         <div className="quiz-q">
           <div className="quiz-top">
-            <span className="mono">{q.index + 1} of {quiz.count}</span>
-            <span className="mono">{attempt!.score} points</span>
+            <span className="mono">{t("{i} of {n}", { i: q.index + 1, n: quiz.count })}</span>
+            <span className="mono">{t("{n} points", { n: attempt!.score })}</span>
           </div>
           <div className="quiz-timer" aria-hidden="true">
             <span style={{ width: `${shown ? 0 : Math.min(100, (left / q.limitMs) * 100)}%`, transition: picked != null ? "none" : undefined }} className={left < 5000 ? "low" : ""} />
@@ -160,7 +162,7 @@ export function QuizGame({ quizRef: given = null }: { quizRef?: QuizRef } = {}) 
             })}
           </div>
           <p className={`quiz-feedback ${shown ? (shown.correct ? "ok-text" : "err-text") : ""}`}>
-            {shown ? (shown.correct ? `Right! +${shown.points}` : shown.picked == null ? "Time's up." : "Not quite.") : " "}
+            {shown ? (shown.correct ? `${t("Right!")} +${shown.points}` : shown.picked == null ? t("Time's up.") : t("Not quite.")) : " "}
             {shown?.note && <span className="muted"> {shown.note}</span>}
           </p>
         </div>
@@ -168,9 +170,9 @@ export function QuizGame({ quizRef: given = null }: { quizRef?: QuizRef } = {}) 
 
       {done && attempt && (
         <div className="quiz-done">
-          <p className="quiz-score"><b>{attempt.score}</b> points</p>
-          <p className="muted">{attempt.correct} of {quiz.count} right · {(attempt.timeMs / 1000).toFixed(1)} seconds in all{state.me ? ` · #${state.me.rank}${state.club ? " in the club" : " today"}` : ""}</p>
-          {state.next && <p className="muted">Tomorrow: <b>{state.next}</b></p>}
+          <p className="quiz-score"><b>{attempt.score}</b> {t("points")}</p>
+          <p className="muted">{t("{correct} of {n} right · {s} seconds in all", { correct: attempt.correct, n: quiz.count, s: (attempt.timeMs / 1000).toFixed(1) })}{state.me ? ` · #${state.me.rank} ${state.club ? t("in the club") : t("today")}` : ""}</p>
+          {state.next && <p className="muted">{t("Tomorrow:")} <b>{state.next}</b></p>}
         </div>
       )}
 
@@ -205,11 +207,12 @@ export function Clue({ q }: { q: QuizQuestion }) {
 }
 
 function Board({ rows, me, club = false, count = 7 }: { rows: BoardRow[]; me: BoardRow | null; club?: boolean; count?: number }) {
-  if (!rows.length) return <p className="muted quiz-empty">{club ? "Nobody in the club has played yet. Be the first on the board." : "No scores yet today. Be the first on the board."}</p>;
+  const t = useT();
+  if (!rows.length) return <p className="muted quiz-empty">{club ? t("Nobody in the club has played yet. Be the first on the board.") : t("No scores yet today. Be the first on the board.")}</p>;
   const showMe = me && !rows.some((r) => r.me);
   return (
     <div className="quiz-board">
-      <h3>{club ? "The club’s high scores" : "Today’s high scores"}</h3>
+      <h3>{club ? t("The club's high scores") : t("Today's high scores")}</h3>
       <ol>
         {rows.map((r) => <Row key={r.username} r={r} count={count} />)}
         {showMe && <><li className="gap" aria-hidden="true">…</li><Row r={me} count={count} /></>}
@@ -231,6 +234,7 @@ function Row({ r, count = 7 }: { r: BoardRow; count?: number }) {
 
 /** A small card for the library: today's theme, or your score once you've played. */
 export function QuizCard() {
+  const t = useT();
   const { userId } = useAuth();
   // Today's card shows at once; a remembered card from yesterday is not used.
   const [state, setState] = useRemembered<QuizState | null>(userId ? `quiz-card:${userId}` : null, null,
@@ -242,14 +246,14 @@ export function QuizCard() {
   const a = state.attempt;
   return (
     <Link href="/quiz/today" className={`quiz-hero${a?.done ? " played" : ""}`}>
-      <span className="smallcaps">Today&rsquo;s quiz</span>
+      <span className="smallcaps">{t("Today's quiz")}</span>
       <b>{state.quiz.title}</b>
       <span className="quiz-hero-blurb">{state.quiz.blurb.replace(/[.!?]$/, "")}</span>
       <span className="quiz-hero-foot">
         {a?.done
-          ? <>{a.score} points · {a.correct} of {state.quiz.count} right{state.me ? ` · #${state.me.rank} today` : ""}</>
-          : a ? <>You started this one · Keep going</> : <>{state.quiz.count} questions · About 2 minutes</>}
-        <span className="quiz-hero-go" aria-hidden="true">{a?.done ? "See the table" : "Play"}</span>
+          ? <>{t("{score} points · {correct} of {count} right", { score: a.score, correct: a.correct, count: state.quiz.count })}{state.me ? ` · #${state.me.rank} ${t("today")}` : ""}</>
+          : a ? <>{t("You started this one · Keep going")}</> : <>{t("{n} questions · About 2 minutes", { n: state.quiz.count })}</>}
+        <span className="quiz-hero-go" aria-hidden="true">{a?.done ? t("See the table") : t("Play")}</span>
       </span>
     </Link>
   );
@@ -261,6 +265,7 @@ export function QuizRoomScreen() {
 }
 
 export function QuizRoomView() {
+  const t = useT();
   usePalette(QUIZ_ROOM, "quiz");
   const { userId } = useAuth();
   const [clubs, setClubs] = useRemembered<{ club: MyClub; quizzes: ClubQuizCard[] }[] | null>(userId ? `quiz-clubs:${userId}` : null, null);
@@ -280,32 +285,32 @@ export function QuizRoomView() {
   return (
     <div className="place">
       <header className="place-head">
-        <p className="smallcaps muted">The Quiz room</p>
-        <h1>Test your taste</h1>
-        <p className="lede">A new quiz every day for everyone, and your clubs&rsquo; own.</p>
+        <p className="smallcaps muted">{t("The Quiz room")}</p>
+        <h1>{t("Test your taste")}</h1>
+        <p className="lede">{t("A new quiz every day for everyone, and your clubs' own.")}</p>
       </header>
       <QuizCard />
       {clubs && clubs.length > 0 && clubs.map(({ club, quizzes }) => (
         <section key={club.id} className="tonight" aria-label={`${club.name} quizzes`}>
           <div className="tonight-head">
             <h2>{club.emoji} {club.name}</h2>
-            <Link href={`/club/${club.slug}`} className="btn ghost small">The club</Link>
+            <Link href={`/club/${club.slug}`} className="btn ghost small">{t("The club")}</Link>
           </div>
           <div className="club-quizzes">
             {quizzes.map((q) => (
               <Link key={q.id} href={`/club/${club.slug}/quiz/${q.id}`} className={`quiz-row${q.mine?.done ? " played" : ""}`}>
                 <b>{q.title}</b>
                 <span className="muted">
-                  {q.mine?.done ? `${q.mine.score} points · ${q.mine.correct} of ${q.count} right` : `${q.count} questions${q.played ? ` · ${q.played} played` : ""}`}
+                  {q.mine?.done ? t("{score} points · {correct} of {count} right", { score: q.mine.score, correct: q.mine.correct, count: q.count }) : `${t("{n} questions", { n: q.count })}${q.played ? ` · ${t("{n} played", { n: q.played })}` : ""}`}
                 </span>
-                <span className="smallcaps quiz-row-go">{q.mine?.done ? "Played" : "Play"}</span>
+                <span className="smallcaps quiz-row-go">{q.mine?.done ? t("Played") : t("Play")}</span>
               </Link>
             ))}
           </div>
         </section>
       ))}
       {clubs && clubs.length === 0 && (
-        <p className="muted place-note">Clubs get their own quizzes and high score tables. Start one in the Salon, or join one from a friend&rsquo;s link.</p>
+        <p className="muted place-note">{t("Clubs get their own quizzes and high score tables. Start one in the Salon, or join one from a friend's link.")}</p>
       )}
     </div>
   );

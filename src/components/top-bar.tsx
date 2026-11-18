@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
@@ -23,18 +24,19 @@ export function TopBar() {
 function Nav() {
   const auth = useAuth();
   const pathname = usePathname();
+  const t = useT();
   if (auth.status !== "ready") return null;
   const mine = `/r/${auth.profile.username}`;
   return (
     <nav className="nav" aria-label="Main">
-      <Link href="/" aria-current={pathname === "/" ? "page" : undefined}>Library</Link>
-      <Link href="/salon" aria-current={pathname.startsWith("/salon") ? "page" : undefined}>Salon</Link>
-      <Link href="/quiz" aria-current={pathname.startsWith("/quiz") ? "page" : undefined}>Quiz</Link>
-      <Link href={mine} aria-current={pathname === mine ? "page" : undefined}>My room</Link>
+      <Link href="/" aria-current={pathname === "/" ? "page" : undefined}>{t("Library")}</Link>
+      <Link href="/salon" aria-current={pathname.startsWith("/salon") ? "page" : undefined}>{t("Salon")}</Link>
+      <Link href="/quiz" aria-current={pathname.startsWith("/quiz") ? "page" : undefined}>{t("Quiz")}</Link>
+      <Link href={mine} aria-current={pathname === mine ? "page" : undefined}>{t("My room")}</Link>
       <button type="button" onClick={() => {
-        if (auth.guest && !window.confirm("You're a guest: signing out loses your room and clubs. Add your email first to keep them. Sign out anyway?")) return;
+        if (auth.guest && !window.confirm(t("You're a guest: signing out loses your room and clubs. Add your email first to keep them. Sign out anyway?"))) return;
         void auth.signOut();
-      }}>Sign out</button>
+      }}>{t("Sign out")}</button>
     </nav>
   );
 }
