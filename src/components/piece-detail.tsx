@@ -137,24 +137,25 @@ export function PieceDetail({
         </div>
       )}
       {isOwner ? (
-        <div className="row split">
-          <div className="row">
-            <button className="btn danger" type="button" disabled={busy}
+        <>
+          <div className="row split">
+            <button className="btn ghost" type="button" onClick={onEdit}>Edit</button>
+            <button className="btn" type="button" onClick={onClose}>Done</button>
+          </div>
+          {/* Moving and removing are kept apart from Done, smaller, so they aren't tapped by mistake. */}
+          <div className="piece-tools">
+            <button type="button" disabled={!canMoveEarlier} onClick={() => onMove(-1)}>← Move earlier</button>
+            <button type="button" disabled={!canMoveLater} onClick={() => onMove(1)}>Move later →</button>
+            <button type="button" className="danger-text" disabled={busy}
               onClick={async () => {
                 if (!armed) return setArmed(true);
                 setBusy(true);
                 await onDelete();
               }}>
-              {armed ? "Click again to remove" : "Remove"}
+              {armed ? "Tap again to remove" : "Remove"}
             </button>
-            <button className="btn ghost" type="button" disabled={!canMoveEarlier} onClick={() => onMove(-1)}>← Earlier</button>
-            <button className="btn ghost" type="button" disabled={!canMoveLater} onClick={() => onMove(1)}>Later →</button>
           </div>
-          <div className="row">
-            <button className="btn ghost" type="button" onClick={onEdit}>Edit</button>
-            <button className="btn" type="button" onClick={onClose}>Close</button>
-          </div>
-        </div>
+        </>
       ) : (
         <div className="row"><button className="btn" type="button" onClick={onClose}>Close</button></div>
       )}

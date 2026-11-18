@@ -237,7 +237,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
     [stopMusic],
   );
 
-  if (data.state === "loading") return <p className="loading">Turning on the lights…</p>;
+  if (data.state === "loading") return <RoomSkeleton />;
   if (data.state === "hidden") {
     return (
       <div className="empty-wall">
@@ -378,10 +378,9 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
         <div className="actions">
           {isOwner ? (
             <>
+              <button className="btn" type="button" onClick={() => add()}>+ Add</button>
               <button className="btn ghost" type="button" onClick={() => setSharing(true)}>Share</button>
-              <button className="btn ghost" type="button" onClick={() => setCustomizing(true)}>Customize room</button>
-              <button className="btn ghost" type="button" onClick={() => setImporting(true)}>Import</button>
-              <button className="btn" type="button" onClick={() => add()}>Add something</button>
+              <RoomMenu onCustomize={() => setCustomizing(true)} onImport={() => setImporting(true)} />
             </>
           ) : me ? (
             <>
@@ -550,6 +549,40 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
         <SafetySheet meId={me.id} ownerId={owner.id} username={owner.username} onClose={() => setSafety(false)} />
       )}
       {sharing && <ShareSheet room={room} username={owner.username} pieces={pieces} urls={urls} onClose={() => setSharing(false)} onChanged={load} />}
+    </div>
+  );
+}
+
+/** The quieter room actions, behind one button. */
+function RoomMenu({ onCustomize, onImport }: { onCustomize: () => void; onImport: () => void }) {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    const t = setTimeout(() => document.addEventListener("click", close), 0);
+    return () => { clearTimeout(t); document.removeEventListener("click", close); };
+  }, [open]);
+  return (
+    <span className="menu-wrap">
+      <button className="btn ghost more" type="button" aria-haspopup="menu" aria-expanded={open} aria-label="More" onClick={() => setOpen((o) => !o)}>⋯</button>
+      {open && (
+        <span className="menu" role="menu">
+          <button type="button" role="menuitem" onClick={onCustomize}>Customize room</button>
+          <button type="button" role="menuitem" onClick={onImport}>Import from Letterboxd, Goodreads…</button>
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** While a room loads: its outline, so nothing jumps when it arrives. */
+export function RoomSkeleton() {
+  return (
+    <div className="skeleton" aria-busy="true" aria-label="Loading the room">
+      <span className="sk sk-line short" />
+      <span className="sk sk-title" />
+      <span className="sk sk-line" />
+      <div className="sk-grid"><span className="sk sk-poster" /><span className="sk sk-poster" /><span className="sk sk-poster" /><span className="sk sk-poster" /></div>
     </div>
   );
 }
