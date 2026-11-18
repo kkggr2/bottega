@@ -15,6 +15,8 @@ type AuthState =
   | { status: "ready"; userId: string; profile: Profile };
 
 type AuthContextValue = AuthState & {
+  /** Signed in as a guest (joined from a club link with just a name, no email yet). */
+  guest: boolean;
   refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
 };
@@ -22,6 +24,7 @@ type AuthContextValue = AuthState & {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const [guest, setGuest] = useState(false);
   const [state, setState] = useState<AuthState>(
     isConfigured
       ? { status: "loading", userId: null, profile: null }
@@ -29,6 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const load = useCallback(async (session: Session | null) => {
+    setGuest(Boolean(session?.user.is_anonymous));
     trackOpen(session?.user.id ?? null);
     if (!session) {
       setState({ status: "signedOut", userId: null, profile: null });
@@ -76,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearCache();
   }, []);
 
-  return <AuthContext.Provider value={{ ...state, refreshProfile, signOut }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ ...state, guest, refreshProfile, signOut }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth(): AuthContextValue {

@@ -2,6 +2,7 @@
 
 import { useRemembered } from "@/lib/remember";
 import { useAuth } from "./auth";
+import { GuestCantWrite } from "./guest";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -118,6 +119,7 @@ export function ChatLog({ me, roomKey, people, placeholder, empty }: {
   placeholder: string;
   empty: string;
 }) {
+  const { guest } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -176,11 +178,13 @@ export function ChatLog({ me, roomKey, people, placeholder, empty }: {
         <div ref={end} />
       </div>
 
-      <form className="chat-send" onSubmit={(e) => { e.preventDefault(); void send(); }}>
-        <input type="text" value={draft} maxLength={500} placeholder={placeholder} enterKeyHint="send"
-          onChange={(e) => setDraft(e.target.value)} aria-label="Message" />
-        <button className="btn" type="submit" disabled={busy || !draft.trim()}>Send</button>
-      </form>
+      {guest ? <GuestCantWrite /> : (
+        <form className="chat-send" onSubmit={(e) => { e.preventDefault(); void send(); }}>
+          <input type="text" value={draft} maxLength={500} placeholder={placeholder} enterKeyHint="send"
+            onChange={(e) => setDraft(e.target.value)} aria-label="Message" />
+          <button className="btn" type="submit" disabled={busy || !draft.trim()}>Send</button>
+        </form>
+      )}
       <p className="msg err" aria-live="polite">{error}</p>
 
       {picked && (

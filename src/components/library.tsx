@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { isNativeApp } from "@/lib/native";
 import { useAuth } from "./auth";
+import { GuestNote } from "./guest";
 import { DeleteAccount } from "./delete-account";
 import { accept, befriend, unfriend } from "@/lib/friends";
 import { shareLink, tap } from "@/lib/native";
@@ -213,6 +214,7 @@ function Library({ me }: { me: Profile }) {
         <div>
           <h1>Your library</h1>
           <p>Every door is someone&rsquo;s room. Step inside.</p>
+          <GuestNote why="to keep your room, add friends and write to people" />
         </div>
         <div className="addfriend">
           <form onSubmit={(e) => { e.preventDefault(); addFriend(); }}>
@@ -409,5 +411,10 @@ function AppSignOut() {
   const auth = useAuth();
   const native = useSyncExternalStore(() => () => {}, isNativeApp, () => false);
   if (!native) return null;
-  return <p className="lib-note"><button className="linkish" type="button" onClick={() => auth.signOut()}>Sign out</button></p>;
+  // A guest has no email to log back in with, so signing out would lose their room.
+  const signOut = () => {
+    if (auth.guest && !window.confirm("You're a guest: signing out loses your room and clubs. Add your email first to keep them. Sign out anyway?")) return;
+    void auth.signOut();
+  };
+  return <p className="lib-note"><button className="linkish" type="button" onClick={signOut}>Sign out</button></p>;
 }

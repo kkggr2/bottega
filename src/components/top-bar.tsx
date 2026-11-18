@@ -31,7 +31,10 @@ function Nav() {
       <Link href="/salon" aria-current={pathname.startsWith("/salon") ? "page" : undefined}>Salon</Link>
       <Link href="/quiz" aria-current={pathname.startsWith("/quiz") ? "page" : undefined}>Quiz</Link>
       <Link href={mine} aria-current={pathname === mine ? "page" : undefined}>My room</Link>
-      <button type="button" onClick={() => auth.signOut()}>Sign out</button>
+      <button type="button" onClick={() => {
+        if (auth.guest && !window.confirm("You're a guest: signing out loses your room and clubs. Add your email first to keep them. Sign out anyway?")) return;
+        void auth.signOut();
+      }}>Sign out</button>
     </nav>
   );
 }

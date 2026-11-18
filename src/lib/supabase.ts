@@ -26,6 +26,7 @@ export function friendlyError(error: unknown, fallback = "Something went wrong. 
   if (/username is taken|duplicate key.*username/i.test(message)) return "That username is taken. Try another.";
   if (/holds 80 pieces/i.test(message)) return "A room holds 80 pieces. Take one down to make space.";
   if (/already have a username/i.test(message)) return "You already have a username.";
+  if (/guests can.t|add your email/i.test(message)) return "Add your email first: guests can join, vote and play, but not write to others yet.";
   if (/rate limit/i.test(message)) return "Too many tries. Wait a minute and try again.";
   if (/fetch|network/i.test(message)) return "Can't reach Bottega. Check your connection.";
   // Keep the technical reason visible so a problem can be reported and fixed.

@@ -16,6 +16,9 @@ import { supabase } from "@/lib/supabase";
 import { track } from "@/lib/track";
 import type { Profile } from "@/lib/types";
 import { useAuth } from "./auth";
+import { GuestNote } from "./guest";
+import { joinAsGuest } from "@/lib/guest";
+import { USERNAME } from "@/lib/themes";
 import { ChatLog } from "./chat";
 import { ClubShelf, NextUp } from "./club-hub";
 import { SALON, usePalette } from "@/lib/room-colors";
@@ -40,7 +43,20 @@ export function JoinScreen({ slug }: { slug: string }) {
   const [club, setClub] = useState<ClubPublic | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [name, setName] = useState("");
   const signedIn = auth.status === "ready";
+
+  // No account yet: in with just a name, as a guest. They can add an email later and keep everything.
+  async function joinGuest() {
+    if (!club) return;
+    if (!USERNAME.test(name)) return setError("Pick a name: 3–20 lowercase letters, numbers or underscores.");
+    setBusy(true);
+    setError(null);
+    const err = await joinAsGuest(club.slug, name);
+    if (err) { setBusy(false); return setError(err); }
+    await auth.refreshProfile();
+    router.push(`/club/${club.slug}`);
+  }
 
   const [shelf, setShelf] = useState<Awaited<ReturnType<typeof shelfPreview>>>([]);
   useEffect(() => {
@@ -106,9 +122,22 @@ export function JoinScreen({ slug }: { slug: string }) {
         <button className="btn big" type="button" disabled={busy} onClick={join}>{busy ? "Joining…" : `Join ${club.name}`}</button>
       ) : (
         <div className="join-actions">
-          {iphoneBrowser && <a className="btn big" href={APP_STORE}>Get Bottega for iPhone</a>}
-          <Link className={`btn big${iphoneBrowser ? " ghost" : ""}`} href="/">{iphoneBrowser ? "Or join on the web" : "Make your room and join"}</Link>
-          <p className="hint">Takes a minute. You&rsquo;ll land in the club once your room is ready.</p>
+          <form className="guest-join" onSubmit={(e) => { e.preventDefault(); void joinGuest(); }}>
+            <label htmlFor="guest-name" className="smallcaps muted">Pick a name and come in</label>
+            <div className="guest-row">
+              <div className="at">
+                <input id="guest-name" type="text" enterKeyHint="go" autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false}
+                  maxLength={20} placeholder="yourname" value={name}
+                  onChange={(e) => setName(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))} />
+              </div>
+              <button className="btn big" type="submit" disabled={busy}>{busy ? "Coming in…" : "Join"}</button>
+            </div>
+            <p className="hint">No email needed to look around, vote and play. Add one later to keep your place.</p>
+          </form>
+          <p className="join-or muted">
+            Already on Bottega? <Link href="/">Log in</Link>
+            {iphoneBrowser && <> · <a href={APP_STORE}>Get the iPhone app</a></>}
+          </p>
         </div>
       )}
       <p className="msg err">{error}</p>
@@ -186,6 +215,7 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
       <Link href="/salon" className="mono muted back">&larr; Salon</Link>
       <p className="join-emoji small" aria-hidden="true">{club.emoji}</p>
       <h1>{club.name}</h1>
+      <GuestNote />
       <div className="row club-actions">
         <button className="btn" type="button" onClick={() => setSharing(true)}>Invite people</button>
         {canSwap && <button className="btn ghost" type="button" disabled={busy} onClick={swapAll}>Swap keys with everyone</button>}
