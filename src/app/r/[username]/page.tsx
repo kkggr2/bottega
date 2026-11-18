@@ -1,10 +1,11 @@
 import { Suspense } from "react";
-import { RoomScreen } from "@/components/room";
+import { RoomRoute } from "@/components/room";
 
-export default function RoomPage({ params }: PageProps<"/r/[username]">) {
+// The room reads its name from the address on the phone, so a room you've been in opens at once.
+export default function RoomPage() {
   return (
     <Suspense fallback={<p className="loading">Turning on the lights…</p>}>
-      {params.then(({ username }) => <RoomScreen username={username} />)}
+      <RoomRoute />
     </Suspense>
   );
 }

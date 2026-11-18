@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { befriend, friendshipWith, relationOf, unfriend, type Relation } from "@/lib/friends";
 import { removeMedia, signedUrls } from "@/lib/media";
@@ -44,6 +44,12 @@ type Loaded =
   | { state: "ready"; owner: Profile; room: Room; canView: boolean; pieces: Piece[]; relation: Relation };
 
 type Editing = { piece: Piece | null; type?: PieceType };
+
+/** /r/[username], with the name read on the client. */
+export function RoomRoute() {
+  const { username } = useParams<{ username: string }>();
+  return <RoomScreen username={username} />;
+}
 
 export function RoomScreen({ username }: { username: string }) {
   const auth = useAuth();

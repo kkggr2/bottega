@@ -3,7 +3,7 @@
 import { useRemembered } from "@/lib/remember";
 import qrcode from "qrcode-generator";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   APP_STORE, clubPublic, clubStats, createClub, joinClub, joinUrl, myClubs, rememberClub, rememberInvite, roster, shelfPreview, slugify,
@@ -119,6 +119,12 @@ export function JoinScreen({ slug }: { slug: string }) {
 // ---------------------------------------------------------------------------
 // The club page: for members.
 // ---------------------------------------------------------------------------
+
+/** /club/[slug], with the slug read on the client. */
+export function ClubRoute() {
+  const { slug } = useParams<{ slug: string }>();
+  return <ClubScreen slug={slug.toLowerCase()} />;
+}
 
 export function ClubScreen({ slug }: { slug: string }) {
   return <Gate>{(me) => <ClubView me={me} slug={slug} />}</Gate>;
