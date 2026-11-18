@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  APP_STORE, clubPublic, clubStats, createClub, joinClub, joinUrl, myClubs, rememberClub, rememberInvite, roster, shelfPreview, slugify,
+  APP_STORE, clubPublic, clubStats, createClub, deleteClub, joinClub, leaveClub, makeHost, joinUrl, myClubs, rememberClub, rememberInvite, roster, shelfPreview, slugify,
   type ClubPublic, type ClubStats, type MyClub, type RosterRow,
 } from "@/lib/clubs";
 import { befriend } from "@/lib/friends";
@@ -261,6 +261,8 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
       <ChatLog me={me} roomKey={`club:${club.slug}`} people={people.map((p) => ({ user_id: p.user_id, username: p.username, title: p.now_title }))}
         placeholder={t("Write to {club}…", { club: club.name })} empty={t("Nobody has written yet. Say hello, or ask what everyone's into this week.")} />
 
+      <ClubSettings club={club} me={me} people={people} onChanged={load} />
+
       {sharing && <InviteSheet club={club} onClose={() => setSharing(false)} />}
     </section>
   );
@@ -467,5 +469,89 @@ export function StartClubForm({ onDone }: { onDone: (slug: string) => void }) {
       {form.fields}
       <button className="btn big" type="submit" disabled={form.busy || !form.ready}>{form.busy ? t("Starting…") : t("Start the club")}</button>
     </form>
+  );
+}
+
+/** At the bottom of a club: the host can hand it over or delete it; members can leave. */
+function ClubSettings({ club, me, people, onChanged }: { club: MyClub; me: Profile; people: RosterRow[]; onChanged: () => void }) {
+  const t = useT();
+  const router = useRouter();
+  const [open, setOpen] = useState<"none" | "host" | "delete" | "leave">("none");
+  const [pick, setPick] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const others = people.filter((p) => p.user_id !== me.id);
+  const close = () => { setOpen("none"); setError(null); setPick(""); };
+
+  async function run(task: () => Promise<string | null>, after: () => void) {
+    setBusy(true);
+    setError(null);
+    const err = await task();
+    setBusy(false);
+    if (err) return setError(t(err));
+    after();
+  }
+
+  return (
+    <div className="club-settings">
+      {club.is_host ? (
+        <>
+          {others.length > 0 && <button type="button" className="linkish" onClick={() => setOpen("host")}>{t("Hand the club to someone else")}</button>}
+          <button type="button" className="linkish danger-text" onClick={() => setOpen("delete")}>{t("Delete the club")}</button>
+        </>
+      ) : (
+        <button type="button" className="linkish" onClick={() => setOpen("leave")}>{t("Leave the club")}</button>
+      )}
+
+      {open === "host" && (
+        <Sheet onClose={close} label={t("Hand the club to someone else")}>
+          <h2>{t("Who should host {club}?", { club: club.name })}</h2>
+          <p className="muted">{t("They can then invite people, fill the shelf, ask what's next and see the club's numbers. You stay in the club as a member.")}</p>
+          <div className="host-pick" role="radiogroup" aria-label={t("Members")}>
+            {others.map((p) => (
+              <label key={p.user_id} className="check">
+                <input type="radio" name="new-host" value={p.user_id} checked={pick === p.user_id} onChange={() => setPick(p.user_id)} />
+                <span>@{p.username}</span>
+              </label>
+            ))}
+          </div>
+          <p className="msg err" aria-live="polite">{error}</p>
+          <div className="row">
+            <button className="btn ghost" type="button" onClick={close}>{t("Cancel")}</button>
+            <button className="btn" type="button" disabled={busy || !pick} onClick={() => run(() => makeHost(club.id, pick), () => { close(); onChanged(); })}>
+              {busy ? t("One moment…") : t("Make them the host")}
+            </button>
+          </div>
+        </Sheet>
+      )}
+
+      {open === "delete" && (
+        <Sheet onClose={close} label={t("Delete the club")}>
+          <h2>{t("Delete {club}?", { club: club.name })}</h2>
+          <p>{t("The club's shelf, votes, quiz scores and chat are deleted for everyone, and the invite link stops working. This can't be undone.")}</p>
+          <p className="msg err" aria-live="polite">{error}</p>
+          <div className="row">
+            <button className="btn ghost" type="button" onClick={close}>{t("Cancel")}</button>
+            <button className="btn danger-solid" type="button" disabled={busy} onClick={() => run(() => deleteClub(club.id), () => router.push("/salon"))}>
+              {busy ? t("Deleting…") : t("Delete the club")}
+            </button>
+          </div>
+        </Sheet>
+      )}
+
+      {open === "leave" && (
+        <Sheet onClose={close} label={t("Leave the club")}>
+          <h2>{t("Leave {club}?", { club: club.name })}</h2>
+          <p>{t("You can join again any time from the club's link.")}</p>
+          <p className="msg err" aria-live="polite">{error}</p>
+          <div className="row">
+            <button className="btn ghost" type="button" onClick={close}>{t("Cancel")}</button>
+            <button className="btn" type="button" disabled={busy} onClick={() => run(() => leaveClub(club.id, me.id), () => router.push("/salon"))}>
+              {busy ? t("One moment…") : t("Leave the club")}
+            </button>
+          </div>
+        </Sheet>
+      )}
+    </div>
   );
 }

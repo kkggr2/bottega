@@ -165,3 +165,23 @@ export function pendingStartClub(): boolean {
 export function forgetStartClub(): void {
   try { localStorage.removeItem(START); } catch {}
 }
+
+// ---------------------------------------------------------------------------
+// Hand a club over, delete it, or leave it (supabase/migrations/20261121000000_club_hosts.sql)
+// ---------------------------------------------------------------------------
+
+export async function makeHost(clubId: string, userId: string): Promise<string | null> {
+  const { error } = await supabase().rpc("make_club_host", { p_club: clubId, p_user: userId });
+  return error ? rpcError(error.message) : null;
+}
+
+export async function deleteClub(clubId: string): Promise<string | null> {
+  const { error } = await supabase().rpc("delete_club", { p_club: clubId });
+  return error ? rpcError(error.message) : null;
+}
+
+export async function leaveClub(clubId: string, me: string): Promise<string | null> {
+  const { data, error } = await supabase().from("club_members").delete().eq("club_id", clubId).eq("user_id", me).select("user_id");
+  if (error) return rpcError(error.message);
+  return data?.length ? null : "Hand the club to someone else, or delete it, before you leave.";
+}
