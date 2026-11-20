@@ -5,10 +5,14 @@ import { loadReactions, setReaction } from "@/lib/wall";
 import { hostOf, toEmbed } from "@/lib/embeds";
 import { formatTime } from "@/lib/lookup";
 import { audioOf, imageOf } from "@/lib/piece-media";
-import type { Piece } from "@/lib/types";
+import { PIECE_TYPES, type Zone } from "@/lib/themes";
+import type { Piece, PieceType } from "@/lib/types";
 import { Sheet } from "./sheet";
 
 /* eslint-disable @next/next/no-img-element -- signed storage URLs expire, so they skip the image optimizer */
+
+const KIND: Record<PieceType, string> = { poster: "Film", scene: "Scene", poem: "Poem", song: "Record", game: "Game", book: "Book" };
+const PLACE: Record<Zone, string> = { wall: "On the wall", books: "On the shelf", music: "By the turntable", screen: "By the TV" };
 
 export function PieceDetail({
   piece,
@@ -71,9 +75,17 @@ export function PieceDetail({
 
   return (
     <Sheet onClose={onClose} label={piece.title}>
-      <div>
+      {/* A framed cover first, then a museum label: what it is and where it hangs, the title, the maker. */}
+      {img && (
+        <div className={`detail-media${piece.type === "book" || piece.type === "song" ? " cover" : ""}${piece.body ? " small" : ""}`}>
+          <img src={img} alt={piece.title} onError={(e) => { e.currentTarget.parentElement!.hidden = true; }} />
+        </div>
+      )}
+      {img?.startsWith("https://image.tmdb.org/") && <p className="credit">Image from TMDB</p>}
+      <div className="detail-head">
+        <p className="smallcaps">{KIND[piece.type]} · {PLACE[PIECE_TYPES[piece.type].zone]}</p>
         <h2>{piece.title}</h2>
-        {piece.subtitle && <p className="who">{piece.subtitle}</p>}
+        {piece.subtitle && <p className="detail-maker">{piece.subtitle}</p>}
       </div>
       {/* The owner's words come first: they're why this piece is here. */}
       {piece.body && piece.type !== "poem" && (
@@ -83,12 +95,6 @@ export function PieceDetail({
         </blockquote>
       )}
       {piece.body && piece.type === "poem" && <div className="detail-text poem">{piece.body}</div>}
-      {img && (
-        <div className={`detail-media${piece.type === "book" || piece.type === "song" ? " cover" : ""}${piece.body ? " small" : ""}`}>
-          <img src={img} alt={piece.title} onError={(e) => { e.currentTarget.parentElement!.hidden = true; }} />
-        </div>
-      )}
-      {img?.startsWith("https://image.tmdb.org/") && <p className="credit">Image from TMDB</p>}
       {meId && !isOwner && reactions !== null && (
         <button type="button" className={`react${mine ? " on" : ""}`} aria-pressed={mine} onClick={toggleReaction}>
           <span aria-hidden="true">✦</span> {mine ? "This one got you" : "This one got me"}
