@@ -13,8 +13,8 @@ import type { ThemeKey } from "./types";
 export type Palette = { wall: string; ink: string; accent: string };
 
 /** The Salon: a lamp-lit sitting room. The Quiz room: green baize under a brass lamp. */
-export const SALON: Palette = { wall: "#3A1A22", ink: "#F3E6D6", accent: "#E0A35C" };
-export const QUIZ_ROOM: Palette = { wall: "#16352A", ink: "#EEF0DF", accent: "#E8C46A" };
+export const SALON: Palette = { wall: "#5A1A28", ink: "#F6EADB", accent: "#E2B464" };
+export const QUIZ_ROOM: Palette = { wall: "#2C4D34", ink: "#F2F0E0", accent: "#E4C06A" };
 
 export function usePalette(p: Palette | null, mood?: "salon" | "quiz"): void {
   const wall = p?.wall, ink = p?.ink, accent = p?.accent;

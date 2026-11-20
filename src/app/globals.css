@@ -1272,3 +1272,43 @@ input[type="search"] { border-radius: 999px; padding: 12px 16px 12px 42px; backg
   display: grid; place-items: center; background: var(--green); color: var(--green-ink); font: 700 15px/1 var(--font-ui); }
 .why label { font-size: 11px; font-weight: 600; letter-spacing: .17em; text-transform: uppercase; color: var(--gold); }
 .why textarea { border-radius: 16px; padding: 14px 16px; background: var(--surface); }
+
+/* Lamp-lit house, step 5: evenings, clubs and the quiz. Richer wine and forest green, a warm glow
+   from above, gold for the main buttons and labels, and rounder cards. */
+html[data-mood] { --gold: var(--brass); --green: var(--brass); --green-ink: #2A160E; }
+html[data-mood="salon"] body {
+  background: radial-gradient(120% 60% at 50% -14%, color-mix(in srgb, var(--bg) 55%, #C4505E) 0%, transparent 70%), var(--bg);
+  background-attachment: fixed;
+}
+html[data-mood="quiz"] body { background-color: var(--bg); }
+html[data-mood] .btn.ghost { background: transparent; color: var(--fg); border-color: var(--line); }
+html[data-mood] .tonight-room, html[data-mood] .update, html[data-mood] .vote-option, html[data-mood] .panel {
+  border-radius: 18px; background: color-mix(in srgb, var(--bg) 86%, var(--fg)); border-color: color-mix(in srgb, var(--fg) 12%, transparent); }
+html[data-mood] .chat-msg { border-radius: 18px 18px 18px 6px; background: color-mix(in srgb, var(--bg) 84%, var(--fg)); border-color: transparent; }
+html[data-mood] .chat-msg.mine { background: var(--brass); color: #2A160E; border-color: transparent; }
+html[data-mood] .vote-bar { height: 7px; border-radius: 4px; background: color-mix(in srgb, var(--fg) 14%, transparent); }
+html[data-mood] .vote-bar i { border-radius: 4px; }
+
+/* Today's quiz: a gold card on the green table. */
+.quiz-hero, .quiz-hero.played { transform: none; background: linear-gradient(160deg, #E1BA68, #C99A47); color: #2A1E0C;
+  box-shadow: 0 2px 2px rgba(0,0,0,.15), 0 22px 40px -14px rgba(0,0,0,.55); }
+.quiz-hero.played { background: linear-gradient(160deg, #E8D3A2, #D2B57A); }
+.quiz-hero .smallcaps { color: #5E4413; }
+.quiz-hero b { font-weight: 520; font-variation-settings: "SOFT" 30, "WONK" 0; }
+.quiz-hero-blurb { color: #3B2C10; }
+.quiz-hero-foot { color: #4A3814; }
+.quiz-hero-go { background: #24170A; color: #F0CF7E; font: italic 500 16px/1 var(--font-display); padding: 12px 22px; }
+
+/* Answers: A, B, C, D in little rings; right turns leaf green, wrong turns brick red. */
+.quiz-options { counter-reset: opt; gap: 10px; }
+.quiz-option { display: flex; align-items: center; gap: 14px; border-radius: 16px; font: 500 18px/1.25 var(--font-display);
+  background: color-mix(in srgb, var(--bg) 86%, var(--fg)); border-color: color-mix(in srgb, var(--fg) 14%, transparent); }
+.quiz-option::before { counter-increment: opt; content: counter(opt, upper-alpha); flex: none; width: 30px; height: 30px; border-radius: 50%;
+  display: grid; place-items: center; border: 1.5px solid color-mix(in srgb, currentColor 55%, transparent); font: 600 13px/1 var(--font-ui); }
+.quiz-option.right { background: #7DAE57; border-color: #7DAE57; color: #10200A; }
+.quiz-option.wrong { background: #CF5249; border-color: #CF5249; color: #FFF6F0; }
+.quiz-option.right::before { content: "\2713"; }
+.quiz-option.wrong::before { content: "\2715"; }
+.quiz-score b { font: italic 600 clamp(64px, 18vw, 92px)/1 var(--font-display); font-variation-settings: "SOFT" 30, "WONK" 1; letter-spacing: -.02em; }
+.quiz-feedback { text-align: center; }
+html[data-mood] .chat-msg.mine { border-radius: 18px 18px 6px 18px; }
