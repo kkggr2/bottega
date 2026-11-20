@@ -1117,3 +1117,51 @@ html[data-mood] .tonight-room { background: color-mix(in srgb, var(--bg) 82%, va
 .visit-card b { font: 400 20px/1.2 var(--font-display); }
 .visit-blurb { font-size: 14px; opacity: .78; }
 .featured-badge { opacity: .75; }
+
+/* ---------------------------------------------------------------------------
+   Lamp-lit house (design round one): cream paper under a warm lamp, firmer serif titles,
+   small gold capitals over them, a quiet sans for buttons and details, and green pills.
+   Later screens (room, hallway, evenings) build on these tokens.
+--------------------------------------------------------------------------- */
+:root {
+  --bg: #F3EBDA; --surface: #FBF6EC; --line: #E2D5BC;
+  --gold: #9C7630; --green: #4F6138; --green-ink: #FBF6EC; --wine: #6E1F2E; --forest: #34503A;
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --lamp: radial-gradient(130% 70% at 50% -12%, #FCF3DE 0%, rgba(252, 243, 222, 0) 62%);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1B1714; --surface: #25201B; --line: #3A3229;
+    --gold: #D4B06A; --green: #93A970; --green-ink: #1B1714;
+    --lamp: radial-gradient(130% 70% at 50% -12%, rgba(219, 170, 90, .12) 0%, rgba(219, 170, 90, 0) 62%);
+  }
+}
+body { background: var(--lamp) top / 100% 720px no-repeat, var(--bg); }
+
+/* Titles: a firmer weight, less wonk, so "Library" and "My room" read like a sign over the door. */
+.landing-hero h1, .onboard h1, .door h1, .lib-head h1, .join-title {
+  font-weight: 540; letter-spacing: -.018em; font-variation-settings: "SOFT" 30, "WONK" 0;
+}
+.door-open h2, .panel-title, .sheet h2, .empty-wall h2, .make-yours h2 { font-weight: 480; font-variation-settings: "SOFT" 30, "WONK" 0; }
+.door .tag { font-weight: 400; }
+
+/* Small capitals: spaced-out sans; gold when they head something, muted when they're a detail. */
+.smallcaps, .mono, p.who { font-family: var(--font-ui); font-size: 10.5px; font-weight: 600; letter-spacing: .17em; }
+.smallcaps:not(.muted), p.who { color: var(--gold); }
+.plaque .smallcaps, .smallcaps.plaque-note { color: inherit; font-size: 9.5px; letter-spacing: .12em; }
+.quiz-hero .smallcaps { color: #7A5B22; }
+.year-banner .smallcaps { color: inherit; }
+
+/* The quiet sans: buttons, chips, tabs, hints and field labels. */
+.btn, .chip, .tabbar a, .hint, .field label, .field .label, .typegrid button, .menu button, .linkish,
+.quiz-hero-go, .piece-tools button { font-family: var(--font-ui); }
+.btn { background: var(--green); border-color: var(--green); color: var(--green-ink); font-weight: 600; letter-spacing: 0; padding: 9px 20px; }
+.btn.small { padding: 6px 13px; font-size: 13.5px; }
+.btn.ghost { background: var(--surface); color: var(--fg); border-color: var(--line); }
+.btn.danger { background: transparent; }
+.chip[aria-pressed="true"], .typegrid button[aria-pressed="true"] { border-color: var(--green); background: var(--green); color: var(--green-ink); }
+.chip { background: var(--surface); }
+.tabbar a { font-size: 11px; font-weight: 600; }
+.tabbar a[aria-current="page"] svg { stroke: var(--green); }
+.tab-add { background: var(--green); color: var(--green-ink); }
+:focus-visible { outline-color: var(--gold); }
