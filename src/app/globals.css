@@ -1066,3 +1066,26 @@ html[data-mood] .tonight-room { background: color-mix(in srgb, var(--bg) 82%, va
 .match-covers img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .match-line, .match-try { font-size: 15px; }
 .match-teaser { justify-items: start; }
+
+/* Your Year in the Room: a full-screen story */
+.year { position: fixed; inset: 0; z-index: 60; display: grid; grid-template-rows: auto 1fr auto; padding: calc(env(safe-area-inset-top) + 14px) 22px calc(env(safe-area-inset-bottom) + 22px); transition: background .35s ease, color .35s ease; overflow: hidden; }
+.year-bars { display: flex; gap: 4px; z-index: 2; }
+.year-bars span { flex: 1; height: 3px; border-radius: 2px; background: currentColor; opacity: .22; }
+.year-bars span.on { opacity: .9; }
+.year-card { align-self: center; display: grid; gap: 16px; text-align: center; justify-items: center; max-width: 520px; margin: 0 auto; animation: fade-in .4s ease both; }
+.year-kicker { margin: 0; font-size: 14px; letter-spacing: .14em; text-transform: uppercase; }
+.year-big { margin: 0; font: 400 clamp(40px, 12vw, 68px)/1.02 var(--font-display); letter-spacing: -.01em; }
+.year-line { margin: 0; font: italic 400 19px/1.45 var(--font-display); opacity: .85; max-width: 32ch; }
+.year-covers { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 8px; }
+.year-covers img { width: 82px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 4px; box-shadow: 0 10px 24px rgba(0,0,0,.35); }
+.year-tap { position: absolute; top: 60px; bottom: 140px; width: 34%; background: none; border: 0; z-index: 1; cursor: pointer; }
+.year-tap.prev { left: 0; }
+.year-tap.next { right: 0; width: 66%; }
+.year-foot { z-index: 2; display: grid; justify-items: center; gap: 10px; }
+.year-foot .btn { border: 0; min-width: 200px; }
+.year-hint, .year-done { font-size: 14px; opacity: .7; }
+.year-note { margin: 0; font-size: 14px; min-height: 1.2em; }
+.year-banner { display: grid; gap: 4px; margin: 0 0 18px; padding: 18px 20px; border-radius: 18px; text-decoration: none; color: #F2E8D3;
+  background: radial-gradient(120% 140% at 50% 0%, #4A5A42 0%, #2F3B2C 60%); box-shadow: 0 14px 30px rgba(0,0,0,.18); }
+.year-banner b { font: 400 26px/1.15 var(--font-display); }
+.year-banner .muted { color: rgba(242,232,211,.75); }

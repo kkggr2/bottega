@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CS
 import { isNativeApp } from "@/lib/native";
 import { useAuth } from "./auth";
 import { GuestNote } from "./guest";
+import { YearBanner } from "./year";
 import { DeleteAccount } from "./delete-account";
 import { accept, befriend, unfriend } from "@/lib/friends";
 import { shareLink, tap } from "@/lib/native";
@@ -232,6 +233,7 @@ function Library({ me }: { me: Profile }) {
         </div>
       </section>
 
+      <YearBanner />
 
       {(shelf.incoming.length > 0 || shelf.outgoing.length > 0) && (
         <section className="requests" aria-label={t("Friend requests")}>
