@@ -1,4 +1,5 @@
 import qrcode from "qrcode-generator";
+import { brassPlate, gildedFrame, pictureRail, SANS } from "./card-art";
 import { imageOf } from "./piece-media";
 import { THEMES } from "./themes";
 import type { Piece, Room } from "./types";
@@ -93,7 +94,6 @@ export async function drawRoomCard(room: Room, username: string, pieces: Piece[]
   await document.fonts?.ready;
   const css = getComputedStyle(document.documentElement);
   const display = `${css.getPropertyValue("--ff-display").trim() || "Georgia"}, Georgia, serif`;
-  const mono = `${css.getPropertyValue("--ff-mono").trim() || "Menlo"}, Menlo, monospace`;
   const body = `${css.getPropertyValue("--ff-body").trim() || "system-ui"}, system-ui, sans-serif`;
   const t = THEMES[room.theme] ?? THEMES.oak;
 
@@ -114,11 +114,12 @@ export async function drawRoomCard(room: Room, username: string, pieces: Piece[]
   const floorY = H - 300;
   ctx.fillStyle = t.floor;
   ctx.fillRect(0, floorY, W, H - floorY);
+  pictureRail(ctx, 60, W);
 
   // Door sign.
   ctx.fillStyle = t.ink;
   ctx.textBaseline = "alphabetic";
-  ctx.font = `500 28px ${mono}`;
+  ctx.font = `600 27px ${SANS}`;
   ctx.fillText(`@${username.toUpperCase()}'S ROOM`.split("").join(String.fromCharCode(8202)), 80, 140);
   ctx.font = `400 104px ${display}`;
   const nameLines = wrap(ctx, room.name, W - 160, 2);
@@ -157,19 +158,16 @@ export async function drawRoomCard(room: Room, username: string, pieces: Piece[]
     ctx.font = `italic 400 46px ${display}`;
     const quote = words ? wrap(ctx, `“${words}”`, W - 220, 4) : [];
     // Space under the frame: gap, the quote lines, then the signature line.
-    const quoteH = quote.length ? 92 + quote.length * 58 + 60 : 0;
+    // The brass plate with the title sits under the frame, the words under that.
+    const plateGap = 64, plateH = 70;
+    const quoteH = plateGap + plateH + (quote.length ? 70 + quote.length * 58 + 60 : 0);
     const square = hero.type === "song";
     const maxH = wallBottom - (y + 50) - quoteH;
     const fh = Math.min(square ? 560 : 720, maxH);
     const fw = square ? fh : Math.round(fh * 2 / 3);
     const x = (W - fw) / 2;
     const top = y + 40 + Math.max(0, (maxH - fh) / 2);
-    shadow(ctx, true);
-    ctx.fillStyle = "#20170F";
-    ctx.fillRect(x - 18, top - 18, fw + 36, fh + 36);
-    shadow(ctx, false);
-    ctx.fillStyle = "#E9E1CF";
-    ctx.fillRect(x - 6, top - 6, fw + 12, fh + 12);
+    gildedFrame(ctx, x, top, fw, fh, 24, 14);
     if (heroImg && heroArt?.wide) contain(ctx, heroImg, x, top, fw, fh);
     else if (heroImg) cover(ctx, heroImg, x, top, fw, fh);
     else {
@@ -182,11 +180,12 @@ export async function drawRoomCard(room: Room, username: string, pieces: Piece[]
       ctx.font = `400 52px ${display}`;
       wrap(ctx, hero.title, fw - 48, 4).forEach((l, j, all) => ctx.fillText(l, x + 24, top + fh - 30 - (all.length - 1 - j) * 56));
     }
+    brassPlate(ctx, hero.title, W / 2, top + fh + plateGap, `600 38px ${display}`, W - 260);
     if (quote.length) {
       ctx.fillStyle = t.ink;
       ctx.textAlign = "center";
       ctx.font = `italic 400 46px ${display}`;
-      let qy = top + fh + 92;
+      let qy = top + fh + plateGap + plateH + 70;
       quote.forEach((l) => { ctx.fillText(l, W / 2, qy); qy += 58; });
       ctx.font = `400 28px ${body}`;
       ctx.globalAlpha = 0.7;

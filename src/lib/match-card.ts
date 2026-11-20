@@ -1,3 +1,4 @@
+import { gildedFrame, SANS } from "./card-art";
 import type { TasteMatch } from "./taste";
 
 /** A 1080×1920 picture of a Taste Match, for an Instagram Story. Returns a PNG. */
@@ -37,71 +38,115 @@ export async function drawMatchCard(
 ): Promise<Blob> {
   await document.fonts?.ready;
   const display = getComputedStyle(document.documentElement).getPropertyValue("--font-display").trim() || "Georgia";
-  const f = (size: number, italic = false) => `${italic ? "italic " : ""}400 ${size}px ${display}, Georgia, serif`;
+  const f = (size: number, italic = false, weight = 400) => `${italic ? "italic " : ""}${weight} ${size}px ${display}, Georgia, serif`;
+  const sans = (size: number, weight = 600) => `${weight} ${size}px ${SANS}`;
 
   const canvas = document.createElement("canvas");
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext("2d")!;
-  const INK = "#F3E6D6", MUTED = "rgba(243,230,214,.68)", ACCENT = "#E0A35C";
+  const INK = "#2A1D13", MUTED = "#7A6A58", GOLD = "#9C7630";
 
-  // Wine wall with a lamp glow, like the Salon.
-  ctx.fillStyle = "#3A1A22"; ctx.fillRect(0, 0, W, H);
-  const glow = ctx.createRadialGradient(W / 2, 260, 40, W / 2, 260, 1100);
-  glow.addColorStop(0, "rgba(224,163,92,.30)"); glow.addColorStop(1, "rgba(224,163,92,0)");
+  // Cream paper under a lamp, like the app.
+  ctx.fillStyle = "#F3EBDA"; ctx.fillRect(0, 0, W, H);
+  const glow = ctx.createRadialGradient(W / 2, -120, 60, W / 2, -120, 1500);
+  glow.addColorStop(0, "rgba(255,240,205,.95)"); glow.addColorStop(1, "rgba(255,240,205,0)");
   ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
 
-  ctx.textAlign = "center";
-  ctx.fillStyle = MUTED; ctx.font = f(36);
-  ctx.fillText("BOTTEGA · TASTE MATCH", W / 2, 170);
+  // Top line: the name on the left, the address on the right.
+  ctx.textBaseline = "alphabetic";
+  ctx.textAlign = "left"; ctx.fillStyle = INK; ctx.font = f(64, true, 500);
+  ctx.fillText("Bottega", 90, 170);
+  ctx.textAlign = "right"; ctx.fillStyle = MUTED; ctx.font = sans(26);
+  spaced(ctx, `BOTTEGAROOMS.COM/R/${me.toUpperCase()}`, W - 90, 162, 3);
 
-  ctx.fillStyle = INK; ctx.font = f(64);
-  ctx.fillText(fit(ctx, words.headline, W - 140), W / 2, 330);
+  // Two initials, side by side.
+  const cy = 360, r = 78;
+  const dot = (cx: number, name: string, color: string) => {
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,.25)"; ctx.shadowBlur = 18; ctx.shadowOffsetY = 8;
+    ctx.fillStyle = color; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = "#F6EADB"; ctx.font = f(76, false, 500); ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(name.slice(0, 1).toUpperCase(), cx, cy + 4);
+    ctx.textBaseline = "alphabetic";
+  };
+  dot(W / 2 - 120, me, "#5A2A52");
+  dot(W / 2 + 120, them, "#7A2433");
+  ctx.fillStyle = MUTED; ctx.font = f(56); ctx.textAlign = "center"; ctx.fillText("×", W / 2, cy + 18);
 
-  ctx.fillStyle = ACCENT; ctx.font = f(300);
-  ctx.fillText(`${m.percent}%`, W / 2, 680);
-  ctx.fillStyle = INK; ctx.font = f(64, true);
-  ctx.fillText(words.alike, W / 2, 780);
+  ctx.fillStyle = MUTED; ctx.font = f(40, true);
+  ctx.fillText(fit(ctx, words.headline, W - 180), W / 2, 530);
 
-  let y = 900;
+  // The number.
+  ctx.fillStyle = INK; ctx.font = f(330, true, 600);
+  ctx.fillText(`${m.percent}%`, W / 2, 860);
+  ctx.font = f(64, false, 450);
+  ctx.fillText(words.alike, W / 2, 960);
+
+  // What you both love, in gilded frames: up to three in a row.
+  let y = 1060;
   const shared = m.both.filter((p) => p.cover_url).slice(0, 3);
   if (shared.length) {
-    ctx.fillStyle = MUTED; ctx.font = f(36);
-    ctx.fillText(words.bothLove.toUpperCase(), W / 2, y);
-    y += 50;
+    ctx.fillStyle = GOLD; ctx.font = sans(28);
+    spacedCenter(ctx, words.bothLove.toUpperCase(), W / 2, y, 5);
+    y += 70;
     const imgs = await Promise.all(shared.map((p) => loadImage(p.cover_url!)));
-    const cw = 260, ch = 390, gap = 40;
-    const total = shared.length * cw + (shared.length - 1) * gap;
-    let x = (W - total) / 2;
+    const cols = shared.length, rows = 1;
+    const w = shared.length === 1 ? 280 : 230, h = Math.round(w * 1.5), g = 76;
     imgs.forEach((img, i) => {
-      ctx.save();
-      ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = 40; ctx.shadowOffsetY = 16;
-      ctx.fillStyle = "#1E0E12"; ctx.fillRect(x, y, cw, ch);
-      ctx.restore();
-      if (img) cover(ctx, img, x, y, cw, ch);
-      else { ctx.fillStyle = INK; ctx.font = f(30); ctx.fillText(fit(ctx, shared[i].title, cw - 20), x + cw / 2, y + ch / 2); }
-      x += cw + gap;
+      const row = Math.floor(i / cols), col = i % cols;
+      const inRow = Math.min(cols, shared.length - row * cols);
+      const rowW = inRow * w + (inRow - 1) * g;
+      const x = (W - rowW) / 2 + col * (w + g);
+      const top = y + 36 + row * (h + g);
+      gildedFrame(ctx, x, top, w, h, 16, 10);
+      if (img) cover(ctx, img, x, top, w, h);
+      else {
+        ctx.fillStyle = "#3A2A1C"; ctx.fillRect(x, top, w, h);
+        ctx.fillStyle = "#F6EADB"; ctx.font = f(26); ctx.fillText(fit(ctx, shared[i].title, w - 16), x + w / 2, top + h / 2);
+      }
     });
-    y += ch + 90;
+    y += 36 + rows * h + (rows - 1) * g + 90;
   } else {
     const names = m.both.map((p) => p.title).slice(0, 3);
     if (names.length) {
-      ctx.fillStyle = MUTED; ctx.font = f(36); ctx.fillText(words.bothLove.toUpperCase(), W / 2, y); y += 70;
-      ctx.fillStyle = INK; ctx.font = f(54, true);
-      for (const n of names) { ctx.fillText(fit(ctx, n, W - 160), W / 2, y); y += 76; }
-      y += 40;
+      ctx.fillStyle = GOLD; ctx.font = sans(28); spacedCenter(ctx, words.bothLove.toUpperCase(), W / 2, y, 5); y += 80;
+      ctx.fillStyle = INK; ctx.font = f(56, true);
+      for (const n of names) { ctx.fillText(fit(ctx, n, W - 180), W / 2, y); y += 78; }
+      y += 30;
     }
   }
-  if (m.makers.length) {
-    ctx.fillStyle = MUTED; ctx.font = f(36); ctx.fillText(words.sameMakers.toUpperCase(), W / 2, y); y += 70;
-    ctx.fillStyle = INK; ctx.font = f(50, true);
-    ctx.fillText(fit(ctx, m.makers.slice(0, 3).join(" · "), W - 160), W / 2, y);
+  if (m.makers.length && y < H - 400) {
+    ctx.fillStyle = GOLD; ctx.font = sans(28); spacedCenter(ctx, words.sameMakers.toUpperCase(), W / 2, y, 5); y += 70;
+    ctx.fillStyle = INK; ctx.font = f(48, true);
+    ctx.fillText(fit(ctx, m.makers.slice(0, 3).join(" · "), W - 180), W / 2, y);
   }
 
-  ctx.fillStyle = INK; ctx.font = f(58);
-  ctx.fillText(words.cta, W / 2, H - 230);
-  ctx.fillStyle = ACCENT; ctx.font = f(42);
-  ctx.fillText(`bottegarooms.com/r/${me}`, W / 2, H - 150);
-  void them;
+  // The invitation, on a green pill like the app's buttons.
+  ctx.fillStyle = INK; ctx.font = f(58, false, 500);
+  ctx.fillText(words.cta, W / 2, H - 250);
+  const pill = `bottegarooms.com/r/${me}`;
+  ctx.font = sans(36);
+  const pw = ctx.measureText(pill).width + 90;
+  ctx.fillStyle = "#4F6138";
+  ctx.beginPath(); ctx.roundRect((W - pw) / 2, H - 200, pw, 88, 44); ctx.fill();
+  ctx.fillStyle = "#FBF6EC"; ctx.textBaseline = "middle";
+  ctx.fillText(pill, W / 2, H - 154);
 
   return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("no image"))), "image/png"));
+}
+
+/** Small capitals with room between the letters, right-aligned at x. */
+function spaced(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, gap: number) {
+  const w = [...text].reduce((s, ch) => s + ctx.measureText(ch).width + gap, -gap);
+  let cx = x - w;
+  ctx.textAlign = "left";
+  for (const ch of text) { ctx.fillText(ch, cx, y); cx += ctx.measureText(ch).width + gap; }
+}
+
+/** Small capitals with room between the letters, centred on x. */
+function spacedCenter(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, gap: number) {
+  const w = [...text].reduce((s, ch) => s + ctx.measureText(ch).width + gap, -gap);
+  spaced(ctx, text, x + w / 2, y, gap);
+  ctx.textAlign = "center";
 }
