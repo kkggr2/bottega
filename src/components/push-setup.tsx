@@ -31,6 +31,8 @@ export function pathFromUrl(url: string): string {
   if (dm) return `/messages?with=${dm[1].toLowerCase()}`;
   // bottega://quiz — the daily quiz reminder.
   if (/^bottega:\/\/quiz\b/i.test(url)) return "/quiz/today";
+  // bottega://year — Your Year in the Room (the December notification, and testing it any time).
+  if (/^bottega:\/\/year\b/i.test(url)) return "/year";
   // bottega://room — your own room (the "your turntable is free" nudge); the home screen leads there.
   return "/";
 }
