@@ -1,7 +1,7 @@
 "use client";
 
 import { LangSwitch } from "./lang-switch";
-import { useT } from "@/lib/i18n";
+import { useLang, useT } from "@/lib/i18n";
 import { useRemembered } from "@/lib/remember";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
@@ -51,6 +51,7 @@ type Shelf = {
 
 function Library({ me }: { me: Profile }) {
   const t = useT();
+  const lang = useLang();
   const [shelf, setShelf] = useRemembered<Shelf | null>(`library:${me.id}`, null);
   const [draft, setDraft] = useState("");
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
@@ -210,6 +211,7 @@ function Library({ me }: { me: Profile }) {
   }
 
   if (!shelf) return <p className="loading">Lighting the hallway…</p>;
+  const doors = shelf.rooms.length;
   const friendCount = shelf.rooms.length - 1;
   const newIds = new Set(shelf.updates.filter((u) => u.isNew).map((u) => u.ownerId));
   if (shelf.inbox.some((i) => i.isNew)) newIds.add(me.id);
@@ -218,6 +220,7 @@ function Library({ me }: { me: Profile }) {
     <div>
       <section className="lib-head">
         <div>
+          <p className="smallcaps lib-when">{timeOfDay(t, lang)}</p>
           <h1>{t("Your library")}</h1>
           <p>{t("Every door is someone's room. Step inside.")}</p>
           <GuestNote why="to keep your room, add friends and write to people" />
@@ -281,6 +284,11 @@ function Library({ me }: { me: Profile }) {
         </section>
       )}
 
+      <div className="hall-head">
+        <h2>{t("The hallway")}</h2>
+        <span className="hall-rule" aria-hidden="true" />
+        <span className="muted">{doors === 1 ? t("1 door") : t("{n} doors", { n: doors })}</span>
+      </div>
       <div className="hall" role="list" aria-label={t("Rooms")}>
         {shelf.rooms.map((room) => {
           const th = THEMES[room.theme] ?? THEMES.oak;
@@ -303,7 +311,7 @@ function Library({ me }: { me: Profile }) {
                   <span className="leaf">
                     <span className="dpanel top" />
                     <span className="dpanel bottom" />
-                    <span className="plate">@{username}</span>
+                    <span className="plate">{username}</span>
                     <span className="knob" />
                   </span>
                 </span>
@@ -352,6 +360,17 @@ function Library({ me }: { me: Profile }) {
   );
 }
 
+
+/** "Friday evening" over the title, in the reader's language. */
+function timeOfDay(t: (text: string, vars?: Record<string, string>) => string, lang: string): string {
+  const now = new Date();
+  const day = new Intl.DateTimeFormat(lang === "tr" ? "tr-TR" : "en-GB", { weekday: "long" }).format(now);
+  const h = now.getHours();
+  if (h >= 5 && h < 12) return t("{day} morning", { day });
+  if (h >= 12 && h < 17) return t("{day} afternoon", { day });
+  if (h >= 17 && h < 22) return t("{day} evening", { day });
+  return t("{day} night", { day });
+}
 
 /** "just now", "3h", "yesterday", "Tue". */
 function ago(iso: string): string {
