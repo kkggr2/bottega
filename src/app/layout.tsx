@@ -18,6 +18,8 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
+  // Link previews (room pictures) need full addresses.
+  metadataBase: new URL("https://bottegarooms.com"),
   title: { default: "Bottega", template: "%s · Bottega" },
   description: "Everyone gets one room. Fill it with your taste and step into your friends'.",
   applicationName: "Bottega",

@@ -34,6 +34,7 @@ import { PieceView } from "./piece-view";
 import { ScreenCorner } from "./screen-corner";
 import { ByTheDoor } from "./by-the-door";
 import { TasteMatchCard } from "./taste-match";
+import { BioCard } from "./bio-card";
 import { Guestbook } from "./guestbook";
 import { RecommendSheet } from "./recommend-sheet";
 import { SafetySheet } from "./safety-sheet";
@@ -412,6 +413,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
         <DoorProgress pieces={pieces} onAdd={add} onImport={() => setImporting(true)} />
       )}
       {isOwner && me && <ByTheDoor recs={recs} meId={me.id} onChanged={load} />}
+      {isOwner && me && canView && pieces.length >= DOOR_AT && <BioCard username={owner.username} room={room} onChanged={load} />}
       {!isOwner && canView && <TasteMatchCard meId={meId} meName={me?.username ?? null} owner={owner} pieces={pieces} />}
       {isOwner && doorOpen && (
         <DoorOpen onShare={() => { setDoorOpen(false); setSharing(true); }} onClose={() => setDoorOpen(false)} />
