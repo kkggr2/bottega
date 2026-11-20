@@ -11,6 +11,7 @@ import { GuestNote } from "./guest";
 import { YearBanner } from "./year";
 import { TasteTwins } from "./taste-twins";
 import { RoomsToVisit } from "./rooms-to-visit";
+import { FamousRooms } from "./famous-room";
 import { DeleteAccount } from "./delete-account";
 import { accept, befriend, unfriend } from "@/lib/friends";
 import { shareLink, tap } from "@/lib/native";
@@ -334,6 +335,7 @@ function Library({ me }: { me: Profile }) {
       </div>
       <TasteTwins meId={me.id} />
       <RoomsToVisit />
+      <FamousRooms />
       {friendCount > 0 && <PushAsk userId={me.id} />}
       <EmailSwitch userId={me.id} />
       <AppSignOut />

@@ -1312,3 +1312,10 @@ html[data-mood] .vote-bar i { border-radius: 4px; }
 .quiz-score b { font: italic 600 clamp(64px, 18vw, 92px)/1 var(--font-display); font-variation-settings: "SOFT" 30, "WONK" 1; letter-spacing: -.02em; }
 .quiz-feedback { text-align: center; }
 html[data-mood] .chat-msg.mine { border-radius: 18px 18px 6px 18px; }
+
+/* Famous rooms: where the list comes from, under the tagline. */
+.famous-source { margin-top: 10px; font: 400 13.5px/1.4 var(--font-ui); color: var(--muted); }
+.famous-source a { color: inherit; }
+.door + .match { margin-bottom: 18px; }
+html.in-room:not([data-mood]) { --gold: var(--brass); }
+.visit-row { scroll-padding-inline: 16px; }
