@@ -1165,3 +1165,32 @@ body { background: var(--lamp) top / 100% 720px no-repeat, var(--bg); }
 .tabbar a[aria-current="page"] svg { stroke: var(--green); }
 .tab-add { background: var(--green); color: var(--green-ink); }
 :focus-visible { outline-color: var(--gold); }
+
+/* Lamp-lit house, step 2: the room. Gilded frames with a cream mat, a brass name plate under each
+   piece with the owner's words on the wallpaper beneath it, and a gold picture rail along the top. */
+.wall {
+  box-shadow: inset 0 9px 0 color-mix(in srgb, var(--rink) 12%, transparent), inset 0 12px 0 #C9A458, inset 0 13px 0 rgba(0,0,0,.18);
+  padding-top: clamp(34px, 5vw, 58px);
+}
+.frame {
+  border: 8px solid transparent;
+  border-image: linear-gradient(135deg, #7A5618 0%, #E9CB7C 22%, #A47A2D 46%, #F3DC9C 70%, #80601F 100%) 1;
+  padding: 6px; background: #F3ECDC;
+  box-shadow: 0 2px 3px rgba(0,0,0,.28), 0 16px 28px -8px rgba(20,10,0,.5);
+}
+.frame img, .frame .typo-poster { box-shadow: 0 0 0 1px rgba(60,40,10,.25); }
+
+.plaque, .plaque:hover {
+  background: none; box-shadow: none; border: 0; padding: 0; max-width: 100%; width: 100%;
+  display: grid; justify-items: center; gap: 4px; text-align: center; color: inherit;
+}
+.plaque b {
+  display: inline-block; max-width: 100%; padding: 4px 12px 5px; border-radius: 2px;
+  background: linear-gradient(180deg, #F2D892 0%, #D6AF5E 48%, #B98F3F 100%); color: #33240A;
+  box-shadow: inset 0 1px 0 rgba(255,250,225,.7), inset 0 -1px 0 rgba(90,60,10,.35), 0 2px 4px rgba(0,0,0,.3);
+  font: 600 13.5px/1.2 var(--font-display); font-variation-settings: "SOFT" 30, "WONK" 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.plaque .smallcaps { opacity: .7; font-size: 9px; letter-spacing: .14em; }
+.plaque q { -webkit-line-clamp: 3; margin-top: 2px; font: italic 400 14px/1.35 var(--font-display); opacity: .92; }
+@media (max-width: 520px) { .plaque b { font-size: 12.5px; padding-inline: 10px; } .plaque q { font-size: 13px; } }
