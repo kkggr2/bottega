@@ -97,7 +97,9 @@ export function TasteMatchCard({ meId, meName, owner, pieces }: {
           <ul className="match-covers">
             {match.both.slice(0, 4).map((p) => (
               <li key={p.id} title={p.title}>
-                {p.cover_url ? <img src={p.cover_url} alt={p.title} loading="lazy" /> : <span>{p.title}</span>}
+                {/* Through our image proxy, like the share picture, so covers that block direct loading still show. */}
+                {p.cover_url ? <img src={`/api/image?url=${encodeURIComponent(p.cover_url)}`} alt={p.title} loading="lazy"
+                  onError={(e) => { e.currentTarget.replaceWith(Object.assign(document.createElement("span"), { textContent: p.title })); }} /> : <span>{p.title}</span>}
               </li>
             ))}
           </ul>
