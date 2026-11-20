@@ -14,6 +14,7 @@ import { shareLink, tap } from "@/lib/native";
 import { audioOf } from "@/lib/piece-media";
 import { friendlyError, supabase } from "@/lib/supabase";
 import { rememberInvite } from "@/lib/clubs";
+import { featuredLabel } from "@/lib/featured";
 import { useRoomColors } from "@/lib/room-colors";
 import { useRemembered } from "@/lib/remember";
 import { rememberCameFrom, track } from "@/lib/track";
@@ -140,6 +141,10 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
   }, [username, meId, setData, setUrls]);
 
   const ownerId = data.state === "ready" ? data.owner.id : null;
+
+  // Bookshops, cinemas and clubs Bottega features get a small label under their name.
+  const [featured, setFeatured] = useState<string | null>(null);
+  useEffect(() => { featuredLabel(username).then(setFeatured).catch(() => setFeatured(null)); }, [username]);
 
   useEffect(() => {
     load(); // eslint-disable-line react-hooks/set-state-in-effect -- fetching on mount
@@ -372,7 +377,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
               </span>
             )}
           </div>
-          <p className="who">{isOwner ? "Your room" : `@${owner.username}`}</p>
+          <p className="who">{isOwner ? "Your room" : `@${owner.username}`}{featured && <span className="featured-badge"> · {featured}</span>}</p>
           <h1>{room.name}</h1>
           {room.tagline && <p className="tag">{room.tagline}</p>}
         </div>

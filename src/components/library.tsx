@@ -9,6 +9,8 @@ import { isNativeApp } from "@/lib/native";
 import { useAuth } from "./auth";
 import { GuestNote } from "./guest";
 import { YearBanner } from "./year";
+import { TasteTwins } from "./taste-twins";
+import { RoomsToVisit } from "./rooms-to-visit";
 import { DeleteAccount } from "./delete-account";
 import { accept, befriend, unfriend } from "@/lib/friends";
 import { shareLink, tap } from "@/lib/native";
@@ -322,6 +324,8 @@ function Library({ me }: { me: Profile }) {
           <p className="door-name">{t("Add a friend")}</p>
         </div>
       </div>
+      <TasteTwins meId={me.id} />
+      <RoomsToVisit />
       {friendCount > 0 && <PushAsk userId={me.id} />}
       <EmailSwitch userId={me.id} />
       <AppSignOut />

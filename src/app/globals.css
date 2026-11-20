@@ -1089,3 +1089,31 @@ html[data-mood] .tonight-room { background: color-mix(in srgb, var(--bg) 82%, va
   background: radial-gradient(120% 140% at 50% 0%, #4A5A42 0%, #2F3B2C 60%); box-shadow: 0 14px 30px rgba(0,0,0,.18); }
 .year-banner b { font: 400 26px/1.15 var(--font-display); }
 .year-banner .muted { color: rgba(242,232,211,.75); }
+
+/* Taste Twins, in the library */
+.twins { display: grid; gap: 12px; margin: 28px 0 8px; padding: 20px; border-radius: 20px; background: color-mix(in srgb, currentColor 5%, transparent); border: 1px solid color-mix(in srgb, currentColor 12%, transparent); }
+.twins h2 { margin: 2px 0 0; font: 400 24px/1.2 var(--font-display); }
+.twins p { margin: 0; }
+.twins-off { background: radial-gradient(130% 120% at 0% 0%, color-mix(in srgb, #E9A04B 14%, transparent), transparent 60%), color-mix(in srgb, currentColor 5%, transparent); }
+.twin-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.twin { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 14px; background: color-mix(in srgb, currentColor 5%, transparent); }
+.twin-pct { display: grid; justify-items: center; min-width: 52px; line-height: 1; }
+.twin-pct b { font: 400 26px/1 var(--font-display); }
+.twin-pct span { font-size: 12px; opacity: .7; margin-top: 4px; }
+.twin-main { display: grid; gap: 4px; min-width: 0; }
+.twin-main > span.muted { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.twin-covers { display: flex; gap: 6px; margin-top: 4px; }
+.twin-covers img { width: 30px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 3px; }
+.twins-off-link { justify-self: start; font-size: 14px; opacity: .7; }
+
+/* Curated rooms: "Rooms to visit" */
+.visit { display: grid; gap: 12px; margin: 28px 0 8px; }
+.visit h2 { margin: 2px 0 0; font: 400 24px/1.2 var(--font-display); }
+.visit-row { list-style: none; margin: 0 -16px; padding: 4px 16px 10px; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(200px, 62%); gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; }
+.visit-row li { scroll-snap-align: start; }
+.visit-card { display: grid; gap: 6px; height: 100%; padding: 14px; border-radius: 18px; text-decoration: none; box-shadow: 0 12px 26px rgba(0,0,0,.14); }
+.visit-covers { display: flex; gap: 6px; margin-bottom: 6px; }
+.visit-covers img { width: 52px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 3px; box-shadow: 0 6px 14px rgba(0,0,0,.25); }
+.visit-card b { font: 400 20px/1.2 var(--font-display); }
+.visit-blurb { font-size: 14px; opacity: .78; }
+.featured-badge { opacity: .75; }

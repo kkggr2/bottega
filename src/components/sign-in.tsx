@@ -1,6 +1,7 @@
 "use client";
 
 import { LangSwitch } from "./lang-switch";
+import { RoomsToVisit } from "./rooms-to-visit";
 import { useT } from "@/lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import { isNativeApp } from "@/lib/native";
@@ -189,6 +190,7 @@ export function SignIn({ forClub = false }: { forClub?: boolean } = {}) {
         <p className="try">{t("This room is real. Tap the records, or a DVD.")}</p>
         <ExampleRoom embedded onMakeYours={() => goToForm("create")} />
       </section>
+      <RoomsToVisit title={t("Before you make yours, step into theirs")} />
       </>}
 
       <section className="onboard" id="join" ref={joinRef}>
