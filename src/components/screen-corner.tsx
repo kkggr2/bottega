@@ -1,5 +1,6 @@
 "use client";
 
+import type { LeaveAction } from "./music-corner";
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { formatTime, sceneEmbed, youtubeId } from "@/lib/lookup";
 import { imageOf, wobble } from "@/lib/piece-media";
@@ -73,6 +74,7 @@ export function ScreenCorner({
   onAddGame,
   extraFilm,
   note,
+  leave = null,
 }: {
   scenes: Piece[];
   games: Piece[];
@@ -89,6 +91,8 @@ export function ScreenCorner({
   extraFilm?: Piece | null;
   /** e.g. "In the TV since Tuesday". */
   note?: string | null;
+  /** For the owner: leave this film in the TV. */
+  leave?: LeaveAction;
 }) {
   // What's in the player: the chosen DVD or poster, otherwise the first scene that can play.
   const chosen = scenes.find((s) => s.id === tvId) ?? (extraFilm && extraFilm.id === tvId ? extraFilm : null);
@@ -213,6 +217,9 @@ export function ScreenCorner({
             <span className="mono">{src && !note ? "Now showing" : note ?? "In the player"}{span ? ` · ${span}` : ""}</span>
             <b>{current.title}</b>
             {current.subtitle && <span className="muted-ink">{current.subtitle}</span>}
+            {leave && (leave.wait
+              ? <span className="now-wait">{leave.label}: {`again in ${leave.wait}`}</span>
+              : <button type="button" className="btn small now-leave" onClick={leave.onClick}>{leave.label}</button>)}
             <button type="button" className="linkish" onClick={() => onOpen(current)}>{current.type === "poster" ? "About this film" : "About this scene"}</button>
           </>
         ) : null}

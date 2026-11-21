@@ -87,6 +87,18 @@ export function PieceDetail({
         <h2>{piece.title}</h2>
         {piece.subtitle && <p className="detail-maker">{piece.subtitle}</p>}
       </div>
+      {/* Leaving it out on the turntable, in the TV or on the armchair: the main thing an owner does here. */}
+      {now && (
+        <div className="now-toggle">
+          <button className={`btn ${now.on ? "ghost" : ""}`} type="button" disabled={busy || (!now.on && Boolean(now.wait))}
+            onClick={async () => { setBusy(true); await now.set(!now.on); setBusy(false); }}>
+            {now.on ? now.take : now.put}
+          </button>
+          {!now.on && (now.wait
+            ? <span className="hint">Once a day: you can change your {now.what ?? "pick"} again in {now.wait}.</span>
+            : <span className="hint">Friends see it when they come in. You can change it once a day.</span>)}
+        </div>
+      )}
       {/* The owner's words come first: they're why this piece is here. */}
       {piece.body && piece.type !== "poem" && (
         <blockquote className="detail-why">
@@ -130,17 +142,6 @@ export function PieceDetail({
           <a href={piece.link} target="_blank" rel="noopener noreferrer">Open link ↗</a>{" "}
           <span className="muted">{hostOf(piece.link)}</span>
         </p>
-      )}
-      {now && (
-        <div className="now-toggle">
-          <button className={`btn ${now.on ? "ghost" : ""}`} type="button" disabled={busy || (!now.on && Boolean(now.wait))}
-            onClick={async () => { setBusy(true); await now.set(!now.on); setBusy(false); }}>
-            {now.on ? now.take : now.put}
-          </button>
-          {!now.on && (now.wait
-            ? <span className="hint">Once a day: you can change your {now.what ?? "pick"} again in {now.wait}.</span>
-            : <span className="hint">Friends see it when they come in. You can change it once a day.</span>)}
-        </div>
       )}
       {isOwner ? (
         <>

@@ -283,6 +283,13 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
   const filmNote = tvId && tvId === room.now_film ? `${NOW_WORDS.film.where} ${since(room.now_film_at)}` : null;
   const bookNote = chairBook ? `${NOW_WORDS.book.where} ${since(room.now_book_at)}` : null;
   const detailSlot = detail ? slotFor(detail.type) : null;
+  // "Leave it on the turntable / in the TV", right under what's playing (owner only, once it isn't already left out).
+  const recordPiece = recordId ? pieces.find((p) => p.id === recordId) ?? null : null;
+  const tvPiece = tvId ? pieces.find((p) => p.id === tvId) ?? null : null;
+  const songLeave = isOwner && recordPiece && recordPiece.id !== room.now_song
+    ? { label: NOW_WORDS.song.put, onClick: () => void setNow(recordPiece, true), wait: waitFor(room.now_song_at) } : null;
+  const filmLeave = isOwner && tvPiece && tvPiece.id !== room.now_film && slotFor(tvPiece.type) === "film"
+    ? { label: NOW_WORDS.film.put, onClick: () => void setNow(tvPiece, true), wait: waitFor(room.now_film_at) } : null;
   // Earlier/later moves a piece among its own kind, which is what you see side by side.
   const siblings = detail ? pieces.filter((p) => p.type === detail.type) : [];
   const detailIndex = detail ? siblings.indexOf(detail) : -1;
@@ -482,6 +489,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
                     onAddGame={() => add("game")}
                     extraFilm={posterInTv}
                     note={filmNote}
+                    leave={filmLeave}
                   />
                 )}
                 {showMusic && (
@@ -495,6 +503,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
                     onOpen={(p) => setDetailId(p.id)}
                     onAdd={() => add("song")}
                     note={songNote}
+                    leave={songLeave}
                   />
                 )}
               </div>

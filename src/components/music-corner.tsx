@@ -6,6 +6,9 @@ import type { Piece } from "@/lib/types";
 
 /* eslint-disable @next/next/no-img-element -- signed or remote cover art */
 
+/** "Leave it on the turntable / in the TV": shown right under what's playing, for the room's owner. */
+export type LeaveAction = { label: string; onClick: () => void; wait?: string | null } | null;
+
 export function MusicCorner({
   songs,
   urls,
@@ -16,6 +19,7 @@ export function MusicCorner({
   onOpen,
   onAdd,
   note,
+  leave = null,
 }: {
   songs: Piece[];
   urls: Record<string, string>;
@@ -27,6 +31,8 @@ export function MusicCorner({
   onAdd: () => void;
   /** Shown when the owner left this record out, e.g. "On the turntable since Tuesday". */
   note?: string | null;
+  /** For the owner: leave this record out on the turntable. */
+  leave?: LeaveAction;
 }) {
   const current = songs.find((s) => s.id === currentId) ?? null;
   // The sleeves sit stacked in the crate. Tapping it spreads them out so each one is easy to pick.
@@ -101,6 +107,9 @@ export function MusicCorner({
             <span className="mono">{spinning ? "Now playing" : note ?? "On the turntable"}</span>
             <b>{current.title}</b>
             {current.subtitle && <span className="muted-ink">{current.subtitle}</span>}
+            {leave && (leave.wait
+              ? <span className="now-wait">{leave.label}: {`again in ${leave.wait}`}</span>
+              : <button type="button" className="btn small now-leave" onClick={leave.onClick}>{leave.label}</button>)}
             <button type="button" className="linkish" onClick={() => onOpen(current)}>About this song</button>
           </>
         ) : open ? (
