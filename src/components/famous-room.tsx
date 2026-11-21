@@ -65,7 +65,7 @@ export function FamousRoomView({ room: f }: { room: FamousRoom }) {
 
       {!profile && (
         <div className="example-foot">
-          <Link className="btn" href="/" onClick={() => track("make_yours", { detail: `famous:${f.slug}` })}>{t("Make my own room")}</Link>
+          <Link className="btn" href="/#join" onClick={() => track("make_yours", { detail: `famous:${f.slug}` })}>{t("Make my own room")}</Link>
         </div>
       )}
 

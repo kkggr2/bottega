@@ -408,7 +408,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
           ) : (
             <>
               <button className="btn ghost" type="button" onClick={share}>Share</button>
-              <Link className="btn" href="/" onClick={() => track("make_yours", { room: owner.id, detail: "top" })}>Make my own room</Link>
+              <Link className="btn" href="/#join" onClick={() => track("make_yours", { room: owner.id, detail: "top" })}>Make my own room</Link>
             </>
           )}
         </div>
@@ -512,7 +512,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
             <h2>Make yours. It takes about three minutes.</h2>
             <p className="muted">Hang what you love, then send @{owner.username} a friend request so your rooms sit side by side.</p>
           </div>
-          <Link className="btn" href="/" onClick={() => track("make_yours", { room: owner.id, detail: "bottom" })}>Make my own room</Link>
+          <Link className="btn" href="/#join" onClick={() => track("make_yours", { room: owner.id, detail: "bottom" })}>Make my own room</Link>
         </section>
       )}
 

@@ -37,6 +37,12 @@ export function SignIn({ forClub = false }: { forClub?: boolean } = {}) {
     joinRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     setTimeout(() => document.getElementById("email")?.focus({ preventScroll: true }), 400);
   }
+  // "Make my own room" in someone's room links to /#join: go straight to the form, no second tap.
+  useEffect(() => {
+    if (window.location.hash !== "#join") return;
+    const id = setTimeout(() => joinRef.current?.scrollIntoView({ block: "start" }), 50);
+    return () => clearTimeout(id);
+  }, []);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
@@ -216,6 +222,9 @@ export function SignIn({ forClub = false }: { forClub?: boolean } = {}) {
             <p>
               {t("We emailed {email}.", { email: pending.email })} {intro[pending.kind]}
               {!isNativeApp() && pending.kind !== "recovery" && ` ${t("You can also open the link in it on this device.")}`}
+            </p>
+            <p className="spam-hint">
+              <b>{t("Can't see it?")}</b> {t("Look in your Spam or Junk folder: it comes from Bottega (hello@bottegarooms.com). Marking it “Not spam” helps the next ones arrive.")}
             </p>
             <div className="field">
               <label htmlFor="otp">{t("Code")}</label>

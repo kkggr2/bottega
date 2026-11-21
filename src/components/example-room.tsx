@@ -142,7 +142,7 @@ export function ExampleRoom({ embedded = false, onMakeYours }: { embedded?: bool
         </div>
         <div className="actions">
           <button className="btn ghost" type="button" onClick={() => setSharing(true)}>Preview share picture</button>
-          <Link className="btn" href="/" onClick={() => track("make_yours", { detail: "example" })}>Make my own room</Link>
+          <Link className="btn" href="/#join" onClick={() => track("make_yours", { detail: "example" })}>Make my own room</Link>
         </div>
       </section>}
 

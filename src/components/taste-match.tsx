@@ -41,7 +41,7 @@ export function TasteMatchCard({ meId, meName, owner, pieces }: {
       <section className="match match-teaser" aria-label={t("Taste match")}>
         <p className="smallcaps">{t("Taste match")}</p>
         <p className="match-line">{t("How alike is your taste to {name}'s?", { name: who })}</p>
-        <Link className="btn small" href="/">{t("Make your room to find out")}</Link>
+        <Link className="btn small" href="/#join">{t("Make your room to find out")}</Link>
       </section>
     );
   }

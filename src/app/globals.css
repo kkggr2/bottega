@@ -1463,3 +1463,4 @@ html.in-room:not([data-mood]) { --gold: var(--brass); }
 .quiz-cal span.today { outline: 2px solid var(--fg); outline-offset: 1px; }
 .quiz-stats { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; font: 400 14px/1.3 var(--font-ui); color: var(--muted); }
 .quiz-stats b { color: var(--fg); font: 600 18px/1 var(--font-display); margin-right: 3px; }
+.spam-hint { margin: 0; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--gold) 14%, var(--surface)); border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent); font: 400 14px/1.4 var(--font-ui); }
