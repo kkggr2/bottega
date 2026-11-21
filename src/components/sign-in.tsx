@@ -9,6 +9,9 @@ import { isNativeApp } from "@/lib/native";
 import { ExampleRoom } from "./example-room";
 import { friendlyError, supabase } from "@/lib/supabase";
 import { cameFrom, track } from "@/lib/track";
+import { startAsGuest } from "@/lib/guest";
+import { useRouter } from "next/navigation";
+import { useAuth } from "./auth";
 
 /*
  * Accounts use an email and a password.
@@ -207,6 +210,8 @@ export function SignIn({ forClub = false }: { forClub?: boolean } = {}) {
           <p className="lede">
             {forClub
               ? mode === "create" ? t("It takes a minute. Then you name your club and get its link.") : t("Log in, then name your club and get its link.")
+              : from && mode === "create"
+              ? t("You came from @{name}'s room. Pick a name and your room opens right away; add your email later to keep it, and your rooms will sit side by side.", { name: from.username })
               : from
               ? t("You came from @{name}'s room. Make yours and we'll send them a friend request so your rooms sit side by side.", { name: from.username })
               : mode === "create"
@@ -215,6 +220,12 @@ export function SignIn({ forClub = false }: { forClub?: boolean } = {}) {
           </p>
         </div>
 
+      {!forClub && mode === "create" && !pending && (
+        <>
+          <GuestStart />
+          <p className="or-email">{t("Or sign up with your email from the start")}</p>
+        </>
+      )}
       <div className="panel">
         {pending ? (
           <form className="stack" onSubmit={(e) => { e.preventDefault(); verify(); }}>
@@ -310,6 +321,42 @@ export function SignIn({ forClub = false }: { forClub?: boolean } = {}) {
         <a href="/support">{t("Help")}</a>
         <LangSwitch />
       </footer>
+    </div>
+  );
+}
+
+/** The quick start: a name, and your room opens. The email comes later, to keep it ("Keep your room" card). */
+function GuestStart() {
+  const t = useT();
+  const router = useRouter();
+  const auth = useAuth();
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  async function go() {
+    setError(null);
+    setBusy(true);
+    const err = await startAsGuest(name);
+    if (err) { setBusy(false); return setError(t(err)); }
+    await auth.refreshProfile();
+    router.push(`/r/${name}`);
+  }
+  return (
+    <div className="panel guest-start">
+      <form className="stack" onSubmit={(e) => { e.preventDefault(); void go(); }}>
+        <h2 className="panel-title">{t("Start with just a name")}</h2>
+        <p className="muted">{t("No email yet. Look around, fill your room, and add your email when you want to keep it.")}</p>
+        <div className="field">
+          <label htmlFor="guest-start-name">{t("Your name on Bottega")}</label>
+          <div className="at">
+            <input id="guest-start-name" type="text" enterKeyHint="go" autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false} maxLength={20}
+              placeholder={t("yourname")} value={name} onChange={(e) => setName(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))} />
+          </div>
+          <span className="hint">{t("3–20 lowercase letters, numbers or underscores. Friends find you with this.")}</span>
+        </div>
+        <p className="msg err" aria-live="polite">{error}</p>
+        <button className="btn big" type="submit" disabled={busy || name.length < 3}>{busy ? t("Opening…") : t("Open my room")}</button>
+      </form>
     </div>
   );
 }

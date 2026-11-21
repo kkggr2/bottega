@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { confirmSave, sendSaveCode } from "@/lib/guest";
+import { befriendWhoBroughtMe, confirmSave, sendSaveCode } from "@/lib/guest";
+import { cameFrom } from "@/lib/track";
 import { useT } from "@/lib/i18n";
 import { useAuth } from "./auth";
 import { Sheet } from "./sheet";
@@ -38,6 +39,7 @@ export function GuestCantWrite() {
 
 export function SaveAccountSheet({ onClose }: { onClose: () => void }) {
   const t = useT();
+  const { userId } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
@@ -63,8 +65,10 @@ export function SaveAccountSheet({ onClose }: { onClose: () => void }) {
     if (!/^\d{6,8}$/.test(code.trim())) return setError(t("Enter the code from the email."));
     setBusy(true);
     const err = await confirmSave(email, code, password);
+    if (err) { setBusy(false); return setError(t(err)); }
+    // Now they can have friends: the person whose room brought them gets a friend request.
+    if (userId) await befriendWhoBroughtMe(userId);
     setBusy(false);
-    if (err) return setError(t(err));
     setDone(true);
   }
 
@@ -108,5 +112,29 @@ export function SaveAccountSheet({ onClose }: { onClose: () => void }) {
         <button className="btn" type="submit" disabled={busy}>{busy ? t("One moment…") : sent ? t("Save my account") : t("Send the code")}</button>
       </div>
     </Sheet>
+  );
+}
+
+/**
+ * In a guest's own room once they've hung a few things: keep it by adding an email.
+ * (Guests start with just a name from "Make my own room"; see startAsGuest in lib/guest.ts.)
+ */
+export function KeepRoomCard({ pieces }: { pieces: number }) {
+  const { guest } = useAuth();
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const [from] = useState(cameFrom);
+  if (!guest || pieces < 3) return null;
+  return (
+    <section className="keep-room" aria-label={t("Keep your room")}>
+      <p className="smallcaps">{t("Keep your room")}</p>
+      <h2>{t("You've hung {n} things. Don't lose them.", { n: pieces })}</h2>
+      <p className="muted">
+        {t("You're here as a guest: if you log out or delete the app, this room is gone. Add your email and password to keep it, and to add friends.")}
+        {from && ` ${t("We'll also send @{name} a friend request, so your rooms sit side by side.", { name: from.username })}`}
+      </p>
+      <button className="btn big" type="button" onClick={() => setOpen(true)}>{t("Keep my room")}</button>
+      {open && <SaveAccountSheet onClose={() => setOpen(false)} />}
+    </section>
   );
 }
