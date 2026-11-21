@@ -14,10 +14,32 @@ export function supabase(): SupabaseClient {
   if (!client) {
     if (!url || !key) throw new Error("Supabase is not configured. See .env.example.");
     client = createClient(url, key, {
-      auth: { persistSession: true, detectSessionInUrl: true, flowType: "pkce" },
+      auth: { persistSession: true, detectSessionInUrl: true, flowType: "pkce", storageKey: LOGIN_KEY },
     });
+    if (typeof window !== "undefined") rehome(client, url);
   }
   return client;
+}
+
+/*
+ * Moving the database (docs/FRANKFURT_MOVE.md) gives Supabase a new address. Logins are kept under the first
+ * project's name so phones still find them, and the first time the app meets the new address it trades the
+ * old login for a new one (the copied database knows it), then reloads once. Nobody has to log in again.
+ */
+const LOGIN_KEY = "sb-binvqbsucgohfcqjzoqp-auth-token";
+const HOST_KEY = "bottega.supabase.host";
+
+function rehome(c: SupabaseClient, address: string) {
+  try {
+    const host = new URL(address).host;
+    const before = localStorage.getItem(HOST_KEY);
+    if (before === host) return;
+    localStorage.setItem(HOST_KEY, host);
+    if (!before || !localStorage.getItem(LOGIN_KEY)) return;
+    void c.auth.refreshSession().then(({ error }) => { if (!error) window.location.reload(); });
+  } catch {
+    // Without storage there's nothing to move.
+  }
 }
 
 /** Turn a Postgres or Supabase error into a sentence a person can act on. */
