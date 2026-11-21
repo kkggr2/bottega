@@ -18,6 +18,8 @@ const FIRST_DAY = Date.UTC(2026, 10, 14);
 const GRACE_MS = 1500;
 /** The next question's clock starts after the "right / wrong" moment, so nobody loses time reading it. */
 export const FEEDBACK_MS = 1800;
+/** The first question's clock starts a moment after "Start", so the trip back to the phone doesn't eat into it. */
+const START_MS = 1200;
 
 export function today(now = Date.now()): string {
   return new Date(now).toISOString().slice(0, 10);
@@ -164,18 +166,20 @@ async function stateOf(db: SupabaseClient, userId: string, t: Track, a: Attempt 
 async function start(db: SupabaseClient, userId: string, t: Track): Promise<QuizState> {
   let a = await load(db, userId, t);
   if (!a) {
-    await db.from(t.table).upsert(
-      { user_id: userId, ...t.key, ...t.insert, q_started_at: new Date().toISOString() },
+    // Insert and read back in one trip; only if someone else just started it too do we load again.
+    const { data } = await db.from(t.table).upsert(
+      { user_id: userId, ...t.key, ...t.insert, q_started_at: new Date(Date.now() + START_MS).toISOString() },
       { onConflict: `user_id,${Object.keys(t.key).join(",")}`, ignoreDuplicates: true },
-    );
-    a = await load(db, userId, t);
+    ).select("*").maybeSingle();
+    a = (data as Attempt | null) ?? (await load(db, userId, t));
   }
   // Away too long on the current question: it counts as unanswered, and the next one starts now.
   if (a && !a.finished_at && Date.now() - Date.parse(a.q_started_at) > limitFor(kindOf(t.quiz.qs[a.q_index])) + GRACE_MS) {
     await answer(db, userId, t, a.q_index, null);
     a = await load(db, userId, t);
   }
-  return stateOf(db, userId, t, a);
+  // Mid-quiz the high score table isn't shown: skip it so the first question arrives sooner.
+  return stateOf(db, userId, t, a, Boolean(a?.finished_at));
 }
 
 async function answer(db: SupabaseClient, userId: string, t: Track, index: number, choice: number | null): Promise<AnswerResult | { error: string; state: QuizState }> {

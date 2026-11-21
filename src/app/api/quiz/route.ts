@@ -29,9 +29,20 @@ async function who(request: Request) {
 
 const noStore = { headers: { "Cache-Control": "no-store" } };
 
+/** How long the request took, visible in the browser's network panel (Server-Timing), to spot slowness. */
+function timed(res: Response, since: number): Response {
+  res.headers.set("Server-Timing", `total;dur=${Date.now() - since}`);
+  return res;
+}
+
 export async function GET(request: Request) {
+  const since = Date.now();
+  return timed(await get(request), since);
+}
+
+async function get(request: Request): Promise<Response> {
   const w = await who(request);
-  if ("error" in w) return w.error;
+  if ("error" in w) return w.error as Response;
   const url = new URL(request.url);
   const club = url.searchParams.get("club");
   const quiz = url.searchParams.get("quiz");
@@ -49,8 +60,13 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const since = Date.now();
+  return timed(await post(request), since);
+}
+
+async function post(request: Request): Promise<Response> {
   const w = await who(request);
-  if ("error" in w) return w.error;
+  if ("error" in w) return w.error as Response;
   const body = (await request.json().catch(() => ({}))) as { action?: string; index?: number; choice?: number | null; club?: string; quiz?: string };
   const forClub = body.club != null;
   if (forClub && !(SLUG.test(body.club ?? "") && QUIZ.test(body.quiz ?? ""))) {
