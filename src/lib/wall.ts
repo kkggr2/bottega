@@ -12,9 +12,16 @@ export type Recommendation = {
   wrapped?: boolean; opened_at?: string | null;
 };
 
-const needsUpdate = (msg: string) => /notes|reactions|recommendations|schema cache/i.test(msg);
-const friendly = (msg: string, fallback: string) =>
-  needsUpdate(msg) ? "The database needs its latest update. Run the newest file in supabase/migrations." : fallback;
+/**
+ * What to tell someone when the database says no. Only a missing table or column means the database is behind;
+ * a refusal is usually the rules (not friends yet, or a guest), and its own sentence (like "a lot of notes") is kept.
+ */
+function friendly(msg: string, fallback: string): string {
+  if (/does not exist|schema cache|could not find/i.test(msg)) return "The database needs its latest update. Run the newest file in supabase/migrations.";
+  if (/row-level security|violates row/i.test(msg)) return "Only friends can do this here. If you joined as a guest, add your email first.";
+  if (/a lot of|too many|once a day|slow down/i.test(msg)) return msg;
+  return `${fallback} (${msg.slice(0, 120)})`;
+}
 
 async function withUsernames<T extends { username?: string }>(rows: T[], idOf: (r: T) => string): Promise<T[]> {
   const ids = [...new Set(rows.map(idOf))];
@@ -34,7 +41,7 @@ export async function loadNotes(ownerId: string): Promise<Note[]> {
 export async function addNote(ownerId: string, authorId: string, body: string): Promise<string | null> {
   const { data, error } = await supabase().from("notes")
     .insert({ room_owner: ownerId, author: authorId, body: body.trim().slice(0, 500) }).select("id").single();
-  if (error) return friendly(error.message, /lot of notes/.test(error.message) ? error.message : "Couldn't leave the note. Try again.");
+  if (error) return friendly(error.message, "Couldn't leave the note. Try again.");
   if (ownerId !== authorId && data) void notifyWall("note", data.id as string);
   return null;
 }

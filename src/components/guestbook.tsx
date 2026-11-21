@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { addNote, deleteNote, loadNotes, type Note } from "@/lib/wall";
+import { useAuth } from "./auth";
+import { GuestCantWrite } from "./guest";
 
 /*
  * The guestbook under a room: friends leave notes, like a wall.
@@ -19,6 +21,8 @@ export function Guestbook({ ownerId, ownerName, meId, canWrite }: {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const isOwner = ownerId === meId;
+  // Guests can read the wall but not write on it until they add their email.
+  const { guest } = useAuth();
 
   const load = useCallback(async () => setNotes(await loadNotes(ownerId)), [ownerId]);
 
@@ -48,7 +52,8 @@ export function Guestbook({ ownerId, ownerName, meId, canWrite }: {
   return (
     <section className="guestbook" id="guestbook" aria-label="Guestbook">
       <h2>{isOwner ? "Your guestbook" : "Guestbook"}</h2>
-      {canWrite && (
+      {canWrite && guest && <GuestCantWrite />}
+      {canWrite && !guest && (
         <form className="gb-form" onSubmit={(e) => { e.preventDefault(); send(); }}>
           <label className="sr-only" htmlFor="gb-note">{isOwner ? "Write on your wall" : `Leave a note for @${ownerName}`}</label>
           <textarea id="gb-note" rows={2} maxLength={500} value={draft} enterKeyHint="send"
