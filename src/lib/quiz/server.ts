@@ -4,7 +4,10 @@ import { BANK } from "./bank";
 import type { Quiz } from "./bank-types";
 import { CLUB_QUIZZES } from "./club-quizzes";
 import { MEDIA } from "./media";
-import { limitFor, QUIZ_LIMIT_MS, type AnswerResult, type BoardRow, type ClubQuizCard, type QuizQuestion, type QuizState } from "./types";
+import {
+  limitFor, QUIZ_LIMIT_MS, type AnswerResult, type BoardRow, type ClubQuizCard, type FriendResult, type GridMark, type QuizHistory,
+  type QuizQuestion, type QuizState,
+} from "./types";
 
 /*
  * The quizzes, run on the server: which quiz it is, the order each person sees the options in,
@@ -23,6 +26,11 @@ const START_MS = 1200;
 
 export function today(now = Date.now()): string {
   return new Date(now).toISOString().slice(0, 10);
+}
+
+/** The daily quiz's number: #1 on the first day. */
+export function quizNumber(day: string): number {
+  return Math.floor((Date.parse(`${day}T00:00:00Z`) - FIRST_DAY) / 864e5) + 1;
 }
 
 export function quizFor(day: string): Quiz {
@@ -148,9 +156,61 @@ async function board(db: SupabaseClient, t: Track, userId: string, mine: Attempt
   return { rows, me };
 }
 
+/** Each answered question as quick and right (within half the time), right, or missed. */
+export function gridOf(quiz: Quiz, a: Attempt): GridMark[] {
+  const answers = (a.answers ?? []) as { q: number; choice: number | null; ms: number }[];
+  return quiz.qs.map((q, i) => {
+    const got = answers.find((x) => x.q === i);
+    if (!got || got.choice !== q.a) return "miss";
+    return got.ms <= limitFor(kindOf(q)) / 2 ? "fast" : "right";
+  });
+}
+
+/** Friends who played today's quiz; their scores only once you've finished yours. */
+export async function friendsToday(db: SupabaseClient, userId: string, day: string, finished: boolean): Promise<FriendResult[]> {
+  const { data: links } = await db.from("friendships").select("requester, addressee")
+    .eq("status", "accepted").or(`requester.eq.${userId},addressee.eq.${userId}`);
+  const ids = (links ?? []).map((f) => (f.requester === userId ? f.addressee : f.requester) as string);
+  if (!ids.length) return [];
+  const [{ data: rows }, { data: names }] = await Promise.all([
+    db.from("quiz_attempts").select("user_id, score, correct, time_ms, finished_at").eq("day", day).in("user_id", ids),
+    db.from("profiles").select("id, username").in("id", ids),
+  ]);
+  const nameOf = new Map((names ?? []).map((p) => [p.id as string, p.username as string]));
+  return (rows ?? [])
+    .map((r) => {
+      const done = Boolean(r.finished_at);
+      const username = nameOf.get(r.user_id as string) ?? "someone";
+      return finished && done
+        ? { username, done, score: r.score as number, correct: r.correct as number, timeMs: r.time_ms as number }
+        : { username, done };
+    })
+    .sort((x, y) => (y.score ?? -1) - (x.score ?? -1) || (x.timeMs ?? 0) - (y.timeMs ?? 0) || x.username.localeCompare(y.username));
+}
+
+/** Your daily quizzes: the last 28 days for the calendar, and totals. */
+export async function historyOf(db: SupabaseClient, userId: string): Promise<QuizHistory> {
+  const { data } = await db.from("quiz_attempts").select("day, correct, score")
+    .eq("user_id", userId).not("finished_at", "is", null).order("day", { ascending: false }).limit(1000);
+  const rows = (data ?? []) as { day: string; correct: number; score: number }[];
+  const since = today(Date.now() - 27 * 864e5);
+  return {
+    days: rows.filter((r) => r.day >= since).map((r) => ({ day: r.day, correct: r.correct })),
+    played: rows.length,
+    avgCorrect: rows.length ? Math.round((rows.reduce((n, r) => n + r.correct, 0) / rows.length) * 10) / 10 : 0,
+    best: rows.reduce((n, r) => Math.max(n, r.score), 0),
+  };
+}
+
 async function stateOf(db: SupabaseClient, userId: string, t: Track, a: Attempt | null, withBoard = true): Promise<QuizState> {
   // Mid-quiz the high score table isn't shown, so skip it and answer faster.
-  const b = withBoard ? await board(db, t, userId, a) : { rows: [], me: null };
+  const daily = !t.club;
+  const finished = Boolean(a?.finished_at);
+  const [b, friends, history] = await Promise.all([
+    withBoard ? board(db, t, userId, a) : Promise.resolve({ rows: [] as BoardRow[], me: null as BoardRow | null }),
+    withBoard && daily ? friendsToday(db, userId, t.day, finished) : Promise.resolve(undefined),
+    withBoard && daily ? historyOf(db, userId) : Promise.resolve(undefined),
+  ]);
   return {
     day: t.day,
     quiz: { id: t.quiz.id, title: t.quiz.title, blurb: t.quiz.blurb, count: t.quiz.qs.length, limitMs: QUIZ_LIMIT_MS },
@@ -160,6 +220,10 @@ async function stateOf(db: SupabaseClient, userId: string, t: Track, a: Attempt 
     board: b.rows,
     me: b.me,
     ...(t.club ? { club: t.club } : {}),
+    ...(daily ? { number: quizNumber(t.day) } : {}),
+    ...(a && finished ? { grid: gridOf(t.quiz, a) } : {}),
+    ...(friends ? { friends } : {}),
+    ...(history ? { history } : {}),
   };
 }
 

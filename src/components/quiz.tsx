@@ -12,6 +12,7 @@ import { Gate } from "./gate";
 import { useRemembered } from "@/lib/remember";
 import { myClubs, type MyClub } from "@/lib/clubs";
 import { QUIZ_ROOM, usePalette } from "@/lib/room-colors";
+import { FriendsPlayed, FriendsToday, Grid, NextQuiz, QuizDays, ResultShare } from "./quiz-ritual";
 
 /* eslint-disable @next/next/no-img-element -- remote film stills and album covers */
 
@@ -124,7 +125,7 @@ export function QuizGame({ quizRef: given = null }: { quizRef?: QuizRef } = {}) 
       ) : (
         <>
           <Link href="/quiz" className="mono muted back">&larr; {t("Quiz room")}</Link>
-          <p className="mono muted">{t("Today's quiz")}</p>
+          <p className="mono muted">{t("Today's quiz")}{state.number ? ` · No. ${state.number}` : ""}</p>
         </>
       )}
       <h1>{quiz.title}</h1>
@@ -134,6 +135,7 @@ export function QuizGame({ quizRef: given = null }: { quizRef?: QuizRef } = {}) 
           <p className="blurb">{quiz.blurb}</p>
           <p className="muted">{state.club ? t("{n} questions: stills, colours, lines and a few facts. 15–20 seconds each, one try each; faster right answers score more.", { n: quiz.count }) : t("{n} questions: stills, colours, lines and a few facts. 15–20 seconds each, one try a day; faster right answers score more.", { n: quiz.count })}</p>
           <button className="btn" type="button" disabled={busy} onClick={start}>{busy ? t("Starting…") : t("Start the quiz")}</button>
+          {!state.club && <FriendsPlayed friends={state.friends} />}
         </div>
       )}
 
@@ -172,11 +174,17 @@ export function QuizGame({ quizRef: given = null }: { quizRef?: QuizRef } = {}) 
         <div className="quiz-done">
           <p className="quiz-score"><b>{attempt.score}</b> {t("points")}</p>
           <p className="muted">{t("{correct} of {n} right · {s} seconds in all", { correct: attempt.correct, n: quiz.count, s: (attempt.timeMs / 1000).toFixed(1) })}{state.me ? ` · #${state.me.rank} ${state.club ? t("in the club") : t("today")}` : ""}</p>
-          {state.next && <p className="muted">{t("Tomorrow:")} <b>{state.next}</b></p>}
+          <ResultShare state={state} />
+          {!state.club && <NextQuiz next={state.next} />}
         </div>
       )}
 
+      {done && attempt && !state.club && (
+        <FriendsToday friends={state.friends} count={quiz.count}
+          me={{ score: attempt.score, correct: attempt.correct, username: state.me?.username ?? "you" }} />
+      )}
       {(done || !attempt) && <Board rows={state.board} me={state.me} club={Boolean(state.club)} count={quiz.count} />}
+      {done && !state.club && <QuizDays history={state.history} count={quiz.count} />}
     </section>
   );
 }
@@ -232,23 +240,27 @@ function Row({ r, count = 7 }: { r: BoardRow; count?: number }) {
   );
 }
 
-/** A small card for the library: today's theme, or your score once you've played. */
-export function QuizCard() {
-  const t = useT();
+/** Today's quiz, remembered so the card shows at once; yesterday's remembered card is not used. */
+function useTodaysQuiz(): QuizState | null {
   const { userId } = useAuth();
-  // Today's card shows at once; a remembered card from yesterday is not used.
   const [state, setState] = useRemembered<QuizState | null>(userId ? `quiz-card:${userId}` : null, null,
     (s) => s?.day === new Date().toISOString().slice(0, 10));
   useEffect(() => {
     call("GET").then(async (r) => r.ok && setState(await r.json())).catch(() => {});
   }, [setState]);
+  return state;
+}
+
+/** Today's quiz on the table: its theme, or your grid once you've played. */
+export function QuizCard({ state }: { state: QuizState | null }) {
+  const t = useT();
   if (!state) return <div className="quiz-hero placeholder" aria-hidden="true" />;
   const a = state.attempt;
   return (
     <Link href="/quiz/today" className={`quiz-hero${a?.done ? " played" : ""}`}>
-      <span className="smallcaps">{t("Today's quiz")}</span>
+      <span className="smallcaps">{t("Today's quiz")}{state.number ? ` · No. ${state.number}` : ""}</span>
       <b>{state.quiz.title}</b>
-      <span className="quiz-hero-blurb">{state.quiz.blurb.replace(/[.!?]$/, "")}</span>
+      {a?.done && state.grid?.length ? <Grid marks={state.grid} small /> : <span className="quiz-hero-blurb">{state.quiz.blurb.replace(/[.!?]$/, "")}</span>}
       <span className="quiz-hero-foot">
         {a?.done
           ? <>{t("{score} points · {correct} of {count} right", { score: a.score, correct: a.correct, count: state.quiz.count })}{state.me ? ` · #${state.me.rank} ${t("today")}` : ""}</>
@@ -268,6 +280,7 @@ export function QuizRoomView() {
   const t = useT();
   usePalette(QUIZ_ROOM, "quiz");
   const { userId } = useAuth();
+  const today = useTodaysQuiz();
   const [clubs, setClubs] = useRemembered<{ club: MyClub; quizzes: ClubQuizCard[] }[] | null>(userId ? `quiz-clubs:${userId}` : null, null);
   useEffect(() => {
     (async () => {
@@ -289,7 +302,10 @@ export function QuizRoomView() {
         <h1>{t("Test your taste")}</h1>
         <p className="lede">{t("A new quiz every day for everyone, and your clubs' own.")}</p>
       </header>
-      <QuizCard />
+      <QuizCard state={today} />
+      {today && !today.attempt?.done && <FriendsPlayed friends={today.friends} />}
+      {today?.attempt?.done && <NextQuiz next={today.next} />}
+      <QuizDays history={today?.history} count={today?.quiz.count} />
       {clubs && clubs.length > 0 && clubs.map(({ club, quizzes }) => (
         <section key={club.id} className="tonight" aria-label={`${club.name} quizzes`}>
           <div className="tonight-head">

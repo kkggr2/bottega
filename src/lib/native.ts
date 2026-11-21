@@ -35,6 +35,27 @@ export async function shareLink(title: string, url: string): Promise<"shared" | 
   }
 }
 
+/** Share a few lines of text (a quiz result grid), or copy them where sharing isn't available. */
+export async function shareText(text: string): Promise<"shared" | "copied" | "cancelled" | "failed"> {
+  try {
+    if (isNativeApp()) {
+      await Share.share({ text, dialogTitle: "Bottega" });
+      return "shared";
+    }
+    if (navigator.share) {
+      await navigator.share({ text });
+      return "shared";
+    }
+    await navigator.clipboard.writeText(text);
+    return "copied";
+  } catch (error) {
+    const name = error && typeof error === "object" && "name" in error ? String(error.name) : "";
+    const message = error && typeof error === "object" && "message" in error ? String(error.message) : "";
+    if (name === "AbortError" || /cancel/i.test(message)) return "cancelled";
+    try { await navigator.clipboard.writeText(text); return "copied"; } catch { return "failed"; }
+  }
+}
+
 /**
  * Share a picture (the room card) with the share sheet. On the website without file sharing,
  * it downloads instead so it can be posted by hand.

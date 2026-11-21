@@ -36,7 +36,19 @@ export type QuizState = {
   me: BoardRow | null;
   /** Set for a club's own quiz. */
   club?: { slug: string; name: string; emoji: string };
+  /** The daily quiz's number (#1 was 14 November 2026), for sharing. */
+  number?: number;
+  /** Once you've finished: each question as quick and right, right, or missed (the share grid). */
+  grid?: GridMark[];
+  /** Friends who played today's quiz. Scores only once you've finished yours. */
+  friends?: FriendResult[];
+  /** Your days with the daily quiz: the last four weeks, and totals. No streaks. */
+  history?: QuizHistory;
 };
+
+export type GridMark = "fast" | "right" | "miss";
+export type FriendResult = { username: string; done: boolean; score?: number; correct?: number; timeMs?: number };
+export type QuizHistory = { days: { day: string; correct: number }[]; played: number; avgCorrect: number; best: number };
 
 /** A quiz on a club's page, with your result if you've played. */
 export type ClubQuizCard = {

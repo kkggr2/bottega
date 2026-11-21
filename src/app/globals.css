@@ -1436,3 +1436,30 @@ html.in-room:not([data-mood]) { --gold: var(--brass); }
 .num-link { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
 .num-link span { display: grid; gap: 2px; min-width: 0; font: 400 13px/1.3 var(--font-ui); }
 .num-link code { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* The daily ritual: share grid, countdown, friends, your days. */
+.quiz-grid { display: inline-flex; gap: 6px; }
+.quiz-grid i { width: 30px; height: 30px; border-radius: 6px; display: block; box-shadow: inset 0 -2px 0 rgba(0,0,0,.18); }
+.quiz-grid i.fast { background: #7DAE57; }
+.quiz-grid i.right { background: #E4C06A; }
+.quiz-grid i.miss { background: color-mix(in srgb, var(--fg) 14%, #0c1a10); }
+.quiz-grid.small { gap: 4px; margin: 2px 0; }
+.quiz-grid.small i { width: 18px; height: 18px; border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(42,30,12,.25); }
+.quiz-hero .quiz-grid.small i.miss { background: rgba(42,30,12,.55); }
+.quiz-hero .quiz-grid.small i.right { background: #F6E3A8; }
+.quiz-share { display: grid; gap: 10px; justify-items: start; margin-top: 12px; padding-top: 14px; border-top: 1px solid var(--line); }
+.quiz-share .btn.big { justify-self: stretch; }
+.quiz-next { display: grid; gap: 2px; margin: 10px 0 0; }
+.quiz-next b { font: italic 500 19px/1.25 var(--font-display); }
+.place > .quiz-next { margin: 12px 4px 0; }
+.quiz-friends-line { margin: 8px 0 0; font: 400 15px/1.4 var(--font-ui); }
+.place > .quiz-friends-line { margin: 12px 4px 0; }
+.quiz-board.friends { margin-top: 6px; }
+.quiz-days { display: grid; gap: 10px; margin-top: 26px; }
+.quiz-days h2 { font: 500 22px/1.2 var(--font-display); }
+.quiz-cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; max-width: 320px; }
+.quiz-cal span { aspect-ratio: 1; border-radius: 6px; background: color-mix(in srgb, var(--fg) 8%, transparent); }
+.quiz-cal span.played { background: #E4C06A; }
+.quiz-cal span.today { outline: 2px solid var(--fg); outline-offset: 1px; }
+.quiz-stats { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; font: 400 14px/1.3 var(--font-ui); color: var(--muted); }
+.quiz-stats b { color: var(--fg); font: 600 18px/1 var(--font-display); margin-right: 3px; }
