@@ -578,6 +578,7 @@ function RoomMenu({ onCustomize, onImport }: { onCustomize: () => void; onImport
         <span className="menu" role="menu">
           <button type="button" role="menuitem" onClick={onCustomize}>Customize room</button>
           <button type="button" role="menuitem" onClick={onImport}>Import from Letterboxd, Goodreads…</button>
+          <Link role="menuitem" href="/shelf-cards">Print shelf cards</Link>
         </span>
       )}
     </span>
