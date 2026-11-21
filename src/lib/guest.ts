@@ -1,7 +1,7 @@
 import { joinClub } from "./clubs";
 import { friendlyError, supabase } from "./supabase";
 import { USERNAME } from "./themes";
-import { track } from "./track";
+import { currentVia, track } from "./track";
 
 /*
  * Guests: join a club from its link with just a name. Supabase makes an "anonymous" account
@@ -30,6 +30,8 @@ export async function joinAsGuest(slug: string, username: string): Promise<strin
   if (nameError && !/already have a username/i.test(nameError.message)) {
     return friendlyError(nameError, "Couldn't save your name. Try again.");
   }
+  const via = currentVia();
+  track("room_claimed", { detail: via ? `via:${via}` : `guest:${slug}` });
   const joinError = await joinClub(slug, "guest");
   if (joinError) return joinError;
   track("club_join", { detail: `guest:${slug}` });

@@ -11,7 +11,7 @@ export type EventName =
   | "account_created" | "room_claimed" | "piece_added" | "import"
   | "share_link" | "share_picture" | "friend_request" | "made_public" | "now_set"
   | "quiz_start" | "quiz_done" | "chat_open" | "chat_send" | "dm_send"
-  | "club_view" | "club_join" | "club_create";
+  | "club_view" | "club_join" | "club_create" | "visit";
 
 const VISITOR_KEY = "bottega.visitor";
 let memoryVisitor: string | null = null;
@@ -88,4 +88,34 @@ export function forgetCameFrom(): void {
   try {
     localStorage.removeItem(CAME_FROM_KEY);
   } catch {}
+}
+
+/* Invite links: bottegarooms.com/anything?via=katrina. The source is kept on this device for 30 days
+   and saved with the new room, so the numbers page can show which creator, club or post brought whom. */
+
+const VIA_KEY = "bottega.via";
+
+/** Reads ?via= from the address, remembers it, and logs one visit for it. */
+export function captureVia(): void {
+  try {
+    const raw = new URLSearchParams(window.location.search).get("via");
+    const via = raw?.toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 24);
+    if (!via) return;
+    const seen = sessionStorage.getItem(VIA_KEY);
+    localStorage.setItem(VIA_KEY, JSON.stringify({ via, at: Date.now() }));
+    if (seen !== via) {
+      sessionStorage.setItem(VIA_KEY, via);
+      track("visit", { detail: `via:${via}` });
+    }
+  } catch {}
+}
+
+/** The invite source this person arrived with, if it's less than 30 days old. */
+export function currentVia(): string | null {
+  try {
+    const v = JSON.parse(localStorage.getItem(VIA_KEY) ?? "null") as { via: string; at: number } | null;
+    return v && Date.now() - v.at < 30 * 864e5 ? v.via : null;
+  } catch {
+    return null;
+  }
 }

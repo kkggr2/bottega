@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Fraunces } from "next/font/google";
 import { AuthProvider } from "@/components/auth";
 import { NativeLinks } from "@/components/native-links";
+import { ViaCapture } from "@/components/via-capture";
 import { PushSetup } from "@/components/push-setup";
 import { TabBar } from "@/components/tab-bar";
 import { TopBar } from "@/components/top-bar";
@@ -43,6 +44,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body>
         <AuthProvider>
           <NativeLinks />
+          <Suspense fallback={null}>
+            <ViaCapture />
+          </Suspense>
           <PushSetup />
           <div className="wrap">
             <TopBar />

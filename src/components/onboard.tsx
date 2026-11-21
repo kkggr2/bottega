@@ -6,7 +6,7 @@ import { useState } from "react";
 import { claimInvite, forgetClub, joinClub, pendingClub, pendingStartClub } from "@/lib/clubs";
 import { befriend } from "@/lib/friends";
 import { friendlyError, supabase } from "@/lib/supabase";
-import { cameFrom, forgetCameFrom, track } from "@/lib/track";
+import { cameFrom, forgetCameFrom, currentVia, track } from "@/lib/track";
 import { USERNAME } from "@/lib/themes";
 import { useAuth } from "./auth";
 
@@ -40,7 +40,8 @@ export function Onboard() {
       setError(t(friendlyError(error, "Couldn't save your room. Try again.")));
       return;
     }
-    track("room_claimed", { detail: from ? "from_room" : "" });
+    const via = currentVia();
+    track("room_claimed", { detail: via ? `via:${via}` : from ? "from_room" : "" });
     if (from && addFrom && auth.userId) {
       try {
         // Friends-only rooms hide their owner from visitors, so look them up by username now.
