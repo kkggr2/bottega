@@ -35,6 +35,7 @@ import { ScreenCorner } from "./screen-corner";
 import { ByTheDoor } from "./by-the-door";
 import { TasteMatchCard } from "./taste-match";
 import { BioCard } from "./bio-card";
+import { StartTogetherSheet } from "./together-room";
 import { Guestbook } from "./guestbook";
 import { RecommendSheet } from "./recommend-sheet";
 import { SafetySheet } from "./safety-sheet";
@@ -74,6 +75,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
   const [sharing, setSharing] = useState(false);
   const [safety, setSafety] = useState(false);
   const [recommending, setRecommending] = useState(false);
+  const [together, setTogether] = useState(false);
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
   // The turntable and the TV.
@@ -398,6 +400,9 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
               {relation === "friends" && (
                 <button className="btn ghost" type="button" onClick={() => setRecommending(true)}>Recommend something</button>
               )}
+              {relation === "friends" && (
+                <button className="btn ghost" type="button" onClick={() => setTogether(true)}>Make a room together</button>
+              )}
               <button className="btn ghost more" type="button" onClick={() => setSafety(true)} aria-label={`Report or block @${owner.username}`}>⋯</button>
             </>
           ) : (
@@ -551,6 +556,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
       )}
       {customizing && <Customize room={room} onClose={() => { setCustomizing(false); load(); }} />}
       {importing && <ImportSheet ownerId={owner.id} pieces={pieces} onClose={() => { setImporting(false); load(); }} />}
+      {together && me && <StartTogetherSheet friendId={owner.id} friendName={owner.username} onClose={() => setTogether(false)} />}
       {recommending && me && (
         <RecommendSheet meId={me.id} toId={owner.id} toName={owner.username} onClose={() => setRecommending(false)} />
       )}

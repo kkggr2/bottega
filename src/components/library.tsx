@@ -12,6 +12,7 @@ import { YearBanner } from "./year";
 import { TasteTwins } from "./taste-twins";
 import { RoomsToVisit } from "./rooms-to-visit";
 import { FamousRooms } from "./famous-room";
+import { TogetherDoors, TogetherInvites } from "./together-library";
 import { DeleteAccount } from "./delete-account";
 import { accept, befriend, unfriend } from "@/lib/friends";
 import { shareLink, tap } from "@/lib/native";
@@ -245,6 +246,7 @@ function Library({ me }: { me: Profile }) {
       </section>
 
       <YearBanner />
+      <TogetherInvites />
 
       {(shelf.incoming.length > 0 || shelf.outgoing.length > 0) && (
         <section className="requests" aria-label={t("Friend requests")}>
@@ -330,6 +332,7 @@ function Library({ me }: { me: Profile }) {
             </div>
           );
         })}
+        <TogetherDoors />
         <div role="listitem" className="hall-door add">
           <button type="button" className="door-link" onClick={() => inputRef.current?.focus()} aria-label={t("Add a friend by username")}>
             <span className="doorway" aria-hidden="true"><span className="leaf"><span className="plus">+</span></span></span>
