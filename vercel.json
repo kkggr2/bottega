@@ -9,5 +9,8 @@
       "path": "/api/ritual",
       "schedule": "0 16 * * *"
     }
+  ],
+  "regions": [
+    "sin1"
   ]
 }
