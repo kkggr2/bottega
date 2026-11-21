@@ -1325,3 +1325,44 @@ html.in-room:not([data-mood]) { --gold: var(--brass); }
 .bio-card h2 { font: 500 24px/1.2 var(--font-display); }
 .bio-card .row { display: flex; flex-wrap: wrap; gap: 8px; }
 .bio-link { justify-self: start; padding: 8px 14px; border-radius: 10px; background: var(--bg); font: 600 15px/1.3 var(--font-ui); user-select: all; -webkit-user-select: all; }
+
+/* Wrapped gifts: a parcel by the door (wine paper, gold ribbon and bow). Tap it and the lid flies off. */
+.rec.gift { grid-template-columns: 76px minmax(0, 1fr); align-items: center;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--surface) 92%, #E9CB7C), var(--surface)); }
+.parcel { position: relative; width: 76px; height: 82px; padding: 0; border: 0; background: none; cursor: pointer; }
+.parcel-box, .parcel-lid { position: absolute; left: 4px; right: 4px; border-radius: 4px;
+  background:
+    linear-gradient(90deg, transparent calc(50% - 6px), #E2B464 calc(50% - 6px), #F2D892 50%, #C99A45 calc(50% + 6px), transparent calc(50% + 6px)),
+    repeating-linear-gradient(135deg, #7A2433 0 10px, #6A1E2C 10px 20px);
+  box-shadow: inset 0 -2px 0 rgba(0,0,0,.18), 0 8px 16px rgba(40,10,15,.3); }
+.parcel-box { top: 30px; bottom: 0;
+  background:
+    linear-gradient(90deg, transparent calc(50% - 6px), #E2B464 calc(50% - 6px), #F2D892 50%, #C99A45 calc(50% + 6px), transparent calc(50% + 6px)),
+    linear-gradient(180deg, transparent calc(50% - 6px), #E2B464 calc(50% - 6px), #F2D892 50%, #C99A45 calc(50% + 6px), transparent calc(50% + 6px)),
+    repeating-linear-gradient(135deg, #7A2433 0 10px, #6A1E2C 10px 20px); }
+.parcel-lid { top: 18px; height: 16px; left: 0; right: 0; z-index: 1; transition: transform .55s cubic-bezier(.3,.7,.2,1), opacity .55s; }
+.parcel-bow { position: absolute; z-index: 2; left: 50%; top: 2px; width: 40px; height: 20px; transform: translateX(-50%);
+  background: radial-gradient(ellipse 10px 8px at 28% 60%, #F2D892 0 60%, #B98F3F 62% 72%, transparent 74%),
+              radial-gradient(ellipse 10px 8px at 72% 60%, #F2D892 0 60%, #B98F3F 62% 72%, transparent 74%),
+              radial-gradient(circle 4px at 50% 70%, #C99A45 0 90%, transparent 100%);
+  transition: transform .55s cubic-bezier(.3,.7,.2,1), opacity .55s; }
+.parcel:not(:disabled):hover .parcel-lid, .parcel:not(:disabled):hover .parcel-bow { transform: translateX(var(--tx, 0)) translateY(-3px) rotate(-3deg); }
+.parcel-bow { --tx: -50%; }
+.parcel { animation: parcel-wiggle 3.6s ease-in-out 1.2s infinite; }
+@keyframes parcel-wiggle { 0%, 88%, 100% { transform: rotate(0); } 91% { transform: rotate(-4deg); } 94% { transform: rotate(4deg); } 97% { transform: rotate(-2deg); } }
+.parcel.opening { animation: none; }
+.parcel.opening .parcel-lid { transform: translate(18px, -46px) rotate(28deg); opacity: 0; }
+.parcel.opening .parcel-bow { transform: translate(-80%, -60px) rotate(-30deg); opacity: 0; }
+.parcel.opening .parcel-box { transition: transform .55s ease, opacity .55s; transform: scale(.85); opacity: .2; }
+.rec.just-opened { animation: gift-reveal .5s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes gift-reveal { from { transform: scale(.94); opacity: 0; box-shadow: 0 0 0 0 rgba(226,180,100,.7); } 60% { box-shadow: 0 0 0 10px rgba(226,180,100,0); } to { transform: none; opacity: 1; } }
+
+/* "Wrap it" in the recommend sheet: a gift-tag checkbox. */
+.wrap-toggle { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; padding: 12px 14px; border-radius: 14px;
+  border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-size: 14.5px; }
+.wrap-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.wrap-box { width: 24px; height: 24px; border-radius: 6px; border: 1.5px solid var(--line); display: grid; place-items: center; background: var(--bg); }
+.wrap-toggle input:checked + .wrap-box { background: #7A2433; border-color: #7A2433; }
+.wrap-toggle input:checked + .wrap-box::after { content: "✓"; color: #F2D892; font: 700 14px/1 var(--font-ui); }
+.wrap-toggle input:focus-visible + .wrap-box { outline: 2px solid var(--gold); outline-offset: 2px; }
+.wrap-toggle b { font-weight: 600; margin-right: 4px; }

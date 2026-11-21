@@ -115,11 +115,13 @@ function Library({ me }: { me: Profile }) {
 
     // Notes on your wall (last week) and recommendations waiting at your door.
     const weekAgo = new Date(cutoff).toISOString();
-    const [{ data: notes }, { data: recs }] = await Promise.all([
+    const [{ data: notes }, { data: recs }, { data: openedGifts }] = await Promise.all([
       sb.from("notes").select("id, author, created_at").eq("room_owner", me.id).neq("author", me.id).gte("created_at", weekAgo).order("created_at", { ascending: false }).limit(10),
-      sb.from("recommendations").select("id, from_user, title, type, created_at").eq("to_user", me.id).eq("status", "new").order("created_at", { ascending: false }).limit(10),
+      sb.from("recommendations").select("id, from_user, title, type, created_at, wrapped, opened_at").eq("to_user", me.id).eq("status", "new").order("created_at", { ascending: false }).limit(10),
+      // Gifts you wrapped that a friend opened this week.
+      sb.from("recommendations").select("id, to_user, title, opened_at").eq("from_user", me.id).eq("wrapped", true).gte("opened_at", weekAgo).order("opened_at", { ascending: false }).limit(10),
     ]);
-    const senderIds = [...new Set([...(notes ?? []).map((n) => n.author as string), ...(recs ?? []).map((r) => r.from_user as string)])];
+    const senderIds = [...new Set([...(notes ?? []).map((n) => n.author as string), ...(recs ?? []).map((r) => r.from_user as string), ...(openedGifts ?? []).map((g) => g.to_user as string)])];
     const { data: senders } = senderIds.length ? await sb.from("profiles").select("id, username").in("id", senderIds) : { data: [] };
     const nameOf = new Map((senders ?? []).map((p) => [p.id as string, p.username as string]));
     const seenMine = lastSeen(me.id);
@@ -127,8 +129,11 @@ function Library({ me }: { me: Profile }) {
     const inbox: InboxItem[] = [
       ...(notes ?? []).map((n) => ({ key: `n-${n.id}`, username: nameOf.get(n.author as string) ?? "someone", line: "left a note on your wall",
         at: n.created_at as string, href: `/r/${me.username}#guestbook`, isNew: !seenMine || seenMine < (n.created_at as string) })),
-      ...(recs ?? []).map((r) => ({ key: `r-${r.id}`, username: nameOf.get(r.from_user as string) ?? "someone", line: `left you ${kindWord[r.type as string] ?? "something"}: ${r.title}`,
+      ...(recs ?? []).map((r) => ({ key: `r-${r.id}`, username: nameOf.get(r.from_user as string) ?? "someone",
+        line: r.wrapped && !r.opened_at ? "left you something wrapped. Unwrap it at your door" : `left you ${kindWord[r.type as string] ?? "something"}: ${r.title}`,
         at: r.created_at as string, href: `/r/${me.username}`, isNew: true })),
+      ...(openedGifts ?? []).map((g) => ({ key: `g-${g.id}`, username: nameOf.get(g.to_user as string) ?? "someone", line: `unwrapped your gift: ${g.title}`,
+        at: g.opened_at as string, href: `/r/${nameOf.get(g.to_user as string) ?? ""}`, isNew: !seenMine || seenMine < (g.opened_at as string) })),
     ].sort((a, b) => b.at.localeCompare(a.at));
 
     updateWidget(updates.map(({ username, line, title, kind, at, isNew, cover }) => ({ username, line, title, kind, at, isNew, cover })));

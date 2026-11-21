@@ -8,6 +8,8 @@ export type Recommendation = {
   id: string; to_user: string; from_user: string; type: "song" | "poster" | "scene" | "book";
   title: string; subtitle: string; cover_url: string | null; preview_url: string | null; link: string | null;
   note: string; status: "new" | "kept" | "passed"; created_at: string; username?: string;
+  /** Left wrapped: shown as a parcel until the friend opens it (opened_at). */
+  wrapped?: boolean; opened_at?: string | null;
 };
 
 const needsUpdate = (msg: string) => /notes|reactions|recommendations|schema cache/i.test(msg);
@@ -57,7 +59,7 @@ export async function setReaction(pieceId: string, userId: string, on: boolean):
   return null;
 }
 
-export async function recommend(rec: Omit<Recommendation, "id" | "status" | "created_at" | "username">): Promise<string | null> {
+export async function recommend(rec: Omit<Recommendation, "id" | "status" | "created_at" | "username" | "opened_at">): Promise<string | null> {
   const { data, error } = await supabase().from("recommendations").insert(rec).select("id").single();
   if (error) return friendly(error.message, "Couldn't send it. Try again.");
   if (data) void notifyWall("rec", data.id as string);
@@ -87,8 +89,17 @@ export async function answerRecommendation(rec: Recommendation, keep: boolean, o
   return null;
 }
 
+/** Unwrap a gift left at your door, and let the giver know it was opened. */
+export async function openGift(rec: Recommendation): Promise<string | null> {
+  const opened_at = new Date().toISOString();
+  const { error } = await supabase().from("recommendations").update({ opened_at }).eq("id", rec.id).is("opened_at", null);
+  if (error) return friendly(error.message, "Couldn't open it. Try again.");
+  void notifyWall("open", rec.id);
+  return null;
+}
+
 /** Tell the other person's phone. Fire and forget; the server checks it's real and limits how often. */
-export async function notifyWall(kind: "note" | "rec", id: string): Promise<void> {
+export async function notifyWall(kind: "note" | "rec" | "open", id: string): Promise<void> {
   try {
     const { data } = await supabase().auth.getSession();
     const token = data.session?.access_token;

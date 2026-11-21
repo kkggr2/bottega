@@ -23,6 +23,7 @@ export function RecommendSheet({ meId, toId, toName, onClose }: { meId: string; 
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const [wrapped, setWrapped] = useState(true);
   const meta = KINDS.find((k) => k.kind === kind)!;
 
   async function send() {
@@ -31,7 +32,7 @@ export function RecommendSheet({ meId, toId, toName, onClose }: { meId: string; 
     const err = await recommend({
       to_user: toId, from_user: meId, type: kind, title: picked.title.slice(0, 80), subtitle: picked.subtitle.slice(0, 80),
       cover_url: picked.cover_url, preview_url: kind === "song" ? picked.preview_url ?? null : null,
-      link: picked.link ?? null, note: note.trim().slice(0, 280),
+      link: picked.link ?? null, note: note.trim().slice(0, 280), wrapped,
     });
     setBusy(false);
     if (err) return setMsg(err);
@@ -41,8 +42,10 @@ export function RecommendSheet({ meId, toId, toName, onClose }: { meId: string; 
   if (sent) {
     return (
       <Sheet onClose={onClose} label="Recommendation sent">
-        <h2>Left at @{toName}&rsquo;s door.</h2>
-        <p>They&rsquo;ll find {picked?.title} waiting, with your note. If they hang it, it moves into their room.</p>
+        <h2>{wrapped ? <>Wrapped and left at @{toName}&rsquo;s door.</> : <>Left at @{toName}&rsquo;s door.</>}</h2>
+        <p>{wrapped
+          ? <>They&rsquo;ll find a parcel waiting and unwrap it themselves. You&rsquo;ll hear when they open it.</>
+          : <>They&rsquo;ll find {picked?.title} waiting, with your note. If they hang it, it moves into their room.</>}</p>
         <div className="row"><button className="btn" type="button" onClick={onClose}>Done</button></div>
       </Sheet>
     );
@@ -75,10 +78,15 @@ export function RecommendSheet({ meId, toId, toName, onClose }: { meId: string; 
         <textarea id="rec-note" rows={2} maxLength={280} value={note} placeholder="This made me think of you…"
           onChange={(e) => setNote(e.target.value)} />
       </div>
+      <label className="wrap-toggle">
+        <input type="checkbox" checked={wrapped} onChange={(e) => setWrapped(e.target.checked)} />
+        <span className="wrap-box" aria-hidden="true" />
+        <span><b>Wrap it</b><span className="muted"> They see a parcel by their door and unwrap it themselves.</span></span>
+      </label>
       <p className="msg err" aria-live="polite">{msg}</p>
       <div className="row">
         <button className="btn ghost" type="button" onClick={onClose}>Cancel</button>
-        <button className="btn" type="button" disabled={busy || !picked} onClick={send}>{busy ? "Leaving it…" : "Leave it at their door"}</button>
+        <button className="btn" type="button" disabled={busy || !picked} onClick={send}>{busy ? "Leaving it…" : wrapped ? "Wrap it and leave it" : "Leave it at their door"}</button>
       </div>
     </Sheet>
   );
