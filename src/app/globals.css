@@ -1522,3 +1522,7 @@ input.switch:checked::after { transform: translateX(20px); }
 /* iPhone app with the tab bar: no website header, just a little room under the status bar. */
 html.native.tabs .bar { display: none; }
 html.native.tabs main { padding-top: 4px; }
+
+/* iPhone app: the tab bar hides while the keyboard is up. */
+html.native.kb-open .tabbar { display: none; }
+html.native.kb-open body { padding-bottom: 16px; }

@@ -10,7 +10,7 @@ import { pathFromUrl } from "./push-setup";
 /**
  * Makes the website behave like an app inside the iPhone app:
  * - marks the page as native, so styles can drop website habits (text selection, tap flashes)
- * - hides the keyboard's "‹ › Done" bar
+ * - hides the keyboard's "‹ › Done" bar, and the tab bar while the keyboard is up
  * - opens links like bottega://r/cagla (from the widget or a notification) in the right room
  */
 export function NativeLinks() {
@@ -19,11 +19,18 @@ export function NativeLinks() {
     if (!isNativeApp()) return;
     document.documentElement.classList.add("native");
     Keyboard.setAccessoryBarVisible({ isVisible: false }).catch(() => {});
+    // While typing, the tab bar steps aside (like any iPhone app) instead of riding on top of the keyboard.
+    const root = document.documentElement;
+    const shown = Keyboard.addListener("keyboardWillShow", () => root.classList.add("kb-open"));
+    const hidden = Keyboard.addListener("keyboardWillHide", () => root.classList.remove("kb-open"));
     const handle = App.addListener("appUrlOpen", ({ url }) => {
       router.push(pathFromUrl(url));
     });
     return () => {
       handle.then((h) => h.remove());
+      shown.then((h) => h.remove());
+      hidden.then((h) => h.remove());
+      root.classList.remove("kb-open");
     };
   }, [router]);
   return null;
