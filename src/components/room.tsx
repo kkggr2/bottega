@@ -433,7 +433,6 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
       )}
       {isOwner && me && <ByTheDoor recs={recs} meId={me.id} onChanged={load} />}
       {isOwner && <KeepRoomCard pieces={pieces.length} />}
-      {isOwner && me && canView && pieces.length >= DOOR_AT && <BioCard username={owner.username} room={room} onChanged={load} />}
       {!isOwner && canView && <TasteMatchCard meId={meId} meName={me?.username ?? null} owner={owner} pieces={pieces} />}
       {isOwner && doorOpen && (
         <DoorOpen onShare={() => { setDoorOpen(false); setSharing(true); }} onClose={() => setDoorOpen(false)} />
@@ -518,6 +517,8 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
         </div>
         <div className="floor" aria-hidden="true" />
       </section>
+
+      {isOwner && me && canView && pieces.length >= DOOR_AT && <BioCard username={owner.username} room={room} onChanged={load} />}
 
       {me && canView && (
         <Guestbook ownerId={owner.id} ownerName={owner.username} meId={me.id} canWrite={isOwner || relation === "friends"} />

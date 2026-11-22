@@ -1487,3 +1487,38 @@ html.in-room:not([data-mood]) { --gold: var(--brass); }
 .conno-badge.on-room { margin-top: 8px; padding: 5px 12px; font-size: 12.5px; }
 .conno-card { position: relative; outline: 1.5px solid color-mix(in srgb, #D8B25E 60%, transparent); outline-offset: -5px; }
 .conno-all { flex: none; font-size: 13px; text-decoration: none; color: var(--muted); }
+
+/* Less crowded, more like an app: settings in a sheet, a short "lately" list, adding a friend in a sheet. */
+.lib-head { position: relative; }
+.icon-btn { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line);
+  background: var(--surface); color: var(--fg); cursor: pointer; }
+.icon-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+.icon-btn:active { transform: scale(.94); }
+.lib-head .lib-settings { align-self: start; }
+@media (max-width: 640px) { .lib-head .lib-settings { position: absolute; top: 26px; right: 0; } }
+.lately-more { justify-self: start; padding: 6px 4px; font-size: 14px; }
+.update .when { flex: none; margin-left: auto; }
+.update > span:not(.dot):not(.when) { overflow-wrap: anywhere; }
+.sheet .addfriend { display: flex; gap: 8px; width: 100%; }
+.sheet .addfriend .at { flex: 1; }
+.sheet .requests.waiting { margin-top: 8px; }
+.settings-list { display: grid; gap: 4px; }
+.settings-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 2px; border-bottom: 1px solid var(--line); }
+.settings-row > span:first-child { display: grid; gap: 2px; }
+.settings-row small { font: 400 13px/1.3 var(--font-ui); }
+.settings-note { font-size: 13.5px; padding: 12px 2px 4px; }
+.settings-links { display: flex; gap: 18px; padding: 10px 2px 14px; font-size: 15px; }
+.settings-links a { color: var(--fg); }
+.settings-signout { justify-self: stretch; margin: 6px 0 10px; }
+.settings-list .linkish.muted { justify-self: center; font-size: 13.5px; }
+/* An iOS-style switch. */
+input.switch { appearance: none; -webkit-appearance: none; flex: none; width: 50px; height: 30px; border-radius: 15px; margin: 0;
+  background: color-mix(in srgb, var(--fg) 18%, transparent); position: relative; cursor: pointer; transition: background .2s; }
+input.switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 26px; height: 26px; border-radius: 50%; background: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,.2); transition: transform .2s; }
+input.switch:checked { background: var(--green); }
+input.switch:checked::after { transform: translateX(20px); }
+
+/* iPhone app with the tab bar: no website header, just a little room under the status bar. */
+html.native.tabs .bar { display: none; }
+html.native.tabs main { padding-top: 4px; }

@@ -37,7 +37,13 @@ export function TabBar() {
   const native = useSyncExternalStore(subscribe, isNativeApp, () => false);
   const unread = useUnread(native && auth.status === "ready", pathname);
   const t = useT();
-  if (!native || auth.status !== "ready") return null;
+  const shown = native && auth.status === "ready";
+  // With the tab bar there, the website's top bar is just in the way.
+  useEffect(() => {
+    document.documentElement.classList.toggle("tabs", shown);
+    return () => document.documentElement.classList.remove("tabs");
+  }, [shown]);
+  if (!shown) return null;
 
   const mine = `/r/${auth.profile.username}`;
   const add = () => {

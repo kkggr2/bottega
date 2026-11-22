@@ -4,8 +4,7 @@ import { LangSwitch } from "./lang-switch";
 import { useLang, useT } from "@/lib/i18n";
 import { useRemembered } from "@/lib/remember";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
-import { isNativeApp } from "@/lib/native";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { useAuth } from "./auth";
 import { GuestNote } from "./guest";
 import { YearBanner } from "./year";
@@ -27,6 +26,7 @@ import { pathFromUrl } from "./push-setup";
 import { THEMES, USERNAME } from "@/lib/themes";
 import type { Friendship, Profile, RoomWithOwner } from "@/lib/types";
 import { Gate } from "./gate";
+import { Sheet } from "./sheet";
 
 export function LibraryScreen() {
   return <Gate>{(me) => <Library me={me} />}</Gate>;
@@ -40,6 +40,8 @@ type Update = {
 };
 
 const RECENT_DAYS = 7;
+/** How many lines of "lately" show before "Show more". */
+const LATELY = 3;
 
 /** For you: notes on your wall and things friends left at your door. */
 type InboxItem = { key: string; username: string; line: string; at: string; href: string; isNew: boolean };
@@ -60,6 +62,10 @@ function Library({ me }: { me: Profile }) {
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [adding, setAdding] = useState(false);
+  const [settings, setSettings] = useState(false);
+  const [allLately, setAllLately] = useState(false);
+  const guest = useAuth().guest; // guests have no email yet
   const router = useRouter();
 
   const load = useCallback(async () => {
@@ -223,6 +229,11 @@ function Library({ me }: { me: Profile }) {
   const friendCount = shelf.rooms.length - 1;
   const newIds = new Set(shelf.updates.filter((u) => u.isNew).map((u) => u.ownerId));
   if (shelf.inbox.some((i) => i.isNew)) newIds.add(me.id);
+  // One short list: what's for you and what friends put on, newest first.
+  const lately = [
+    ...shelf.inbox,
+    ...shelf.updates.map((u) => ({ key: `u-${u.ownerId}`, username: u.username, line: u.line, at: u.at, href: `/r/${u.username}`, isNew: u.isNew })),
+  ].sort((a, b) => Number(b.isNew) - Number(a.isNew) || b.at.localeCompare(a.at));
 
   return (
     <div>
@@ -233,23 +244,15 @@ function Library({ me }: { me: Profile }) {
           <p>{t("Every door is someone's room. Step inside.")}</p>
           <GuestNote why="to keep your room, add friends and write to people" />
         </div>
-        <div className="addfriend">
-          <form onSubmit={(e) => { e.preventDefault(); addFriend(); }}>
-            <div className="at">
-              <input ref={inputRef} id="friend-input" type="text" enterKeyHint="send" autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false} maxLength={21}
-                placeholder={t("friend's username")} aria-label={t("Friend's username")} value={draft}
-                onChange={(e) => setDraft(e.target.value)} />
-            </div>
-            <button className="btn" type="submit" disabled={busy}>{t("Add")}</button>
-          </form>
-          <p className={`msg ${msg?.kind ?? ""}`} aria-live="polite">{msg?.text}</p>
-        </div>
+        <button className="icon-btn lib-settings" type="button" onClick={() => setSettings(true)} aria-label={t("Settings")}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>
+        </button>
       </section>
 
       <YearBanner />
       <TogetherInvites />
 
-      {(shelf.incoming.length > 0 || shelf.outgoing.length > 0) && (
+      {shelf.incoming.length > 0 && (
         <section className="requests" aria-label={t("Friend requests")}>
           {shelf.incoming.map((p) => (
             <div className="request" key={p.id}>
@@ -260,36 +263,23 @@ function Library({ me }: { me: Profile }) {
               </span>
             </div>
           ))}
-          {shelf.outgoing.map((p) => (
-            <div className="request" key={p.id}>
-              <span className="muted">{t("Waiting for @{name} to accept.", { name: p.username })}</span>
-              <button className="btn ghost small" type="button" onClick={() => respond(p, false)}>{t("Cancel")}</button>
-            </div>
-          ))}
         </section>
       )}
 
-      {shelf.inbox.length > 0 && (
-        <section className="updates inbox" aria-label={t("For you")}>
-          {shelf.inbox.map((u) => (
+      {lately.length > 0 && (
+        <section className="updates" aria-label={t("Lately")}>
+          {(allLately ? lately : lately.slice(0, LATELY)).map((u) => (
             <Link key={u.key} href={u.href} className={`update${u.isNew ? " new" : ""}`}>
               {u.isNew && <span className="dot" aria-label="New" />}
               <span><b>@{u.username}</b> {u.line}</span>
               <span className="when">{ago(u.at)}</span>
             </Link>
           ))}
-        </section>
-      )}
-
-      {shelf.updates.length > 0 && (
-        <section className="updates" aria-label={t("What friends put on")}>
-          {shelf.updates.map((u) => (
-            <Link key={u.ownerId} href={`/r/${u.username}`} className={`update${u.isNew ? " new" : ""}`}>
-              {u.isNew && <span className="dot" aria-label="New" />}
-              <span><b>@{u.username}</b> {u.line}</span>
-              <span className="when">{ago(u.at)}</span>
-            </Link>
-          ))}
+          {lately.length > LATELY && (
+            <button className="linkish muted lately-more" type="button" onClick={() => setAllLately((v) => !v)}>
+              {allLately ? t("Show less") : t("Show {n} more", { n: lately.length - LATELY })}
+            </button>
+          )}
         </section>
       )}
 
@@ -335,7 +325,7 @@ function Library({ me }: { me: Profile }) {
         })}
         <TogetherDoors />
         <div role="listitem" className="hall-door add">
-          <button type="button" className="door-link" onClick={() => inputRef.current?.focus()} aria-label={t("Add a friend by username")}>
+          <button type="button" className="door-link" onClick={() => { setMsg(null); setAdding(true); }} aria-label={t("Add a friend")}>
             <span className="doorway" aria-hidden="true"><span className="leaf"><span className="plus">+</span></span></span>
             <span className="step" aria-hidden="true" />
           </button>
@@ -347,26 +337,60 @@ function Library({ me }: { me: Profile }) {
       <RoomsToVisit />
       <FamousRooms />
       {friendCount > 0 && <PushAsk userId={me.id} />}
-      <EmailSwitch userId={me.id} />
-      <AppSignOut />
-      <footer className="lib-foot">
-        <a href="/privacy">{t("Privacy")}</a>
-        <a href="/terms">{t("Terms")}</a>
-        <a href="/support">{t("Help")}</a>
-        <LangSwitch />
-        <DeleteAccount username={me.username} />
-      </footer>
-
-      {friendCount < 3 ? (
+      {friendCount === 0 && (
         <div className="invite">
-          <p>
-            {friendCount === 0 ? t("Your shelf is just you for now.") : t("A shelf feels like a library at three friends.")}{" "}
-            {t("Send your room link. When a friend makes their own room from it, you'll get their friend request.")}
-          </p>
+          <p>{t("Your shelf is just you for now.")} {t("Send your room link. When a friend makes their own room from it, you'll get their friend request.")}</p>
           <button className="btn" type="button" onClick={sendLink}>{t("Send my room link")}</button>
         </div>
-      ) : (
-        <p className="lib-note">{t("Friends can see your room and you can see theirs. Change who can come in from your room's Customize menu.")}</p>
+      )}
+      <TasteTwins meId={me.id} />
+      <ConnoisseursRow />
+      <RoomsToVisit />
+      <FamousRooms />
+
+      {adding && (
+        <Sheet onClose={() => setAdding(false)} label={t("Add a friend")}>
+          <h2>{t("Add a friend")}</h2>
+          <form className="addfriend" onSubmit={(e) => { e.preventDefault(); addFriend(); }}>
+            <div className="at">
+              <input ref={inputRef} id="friend-input" type="text" enterKeyHint="send" autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false} maxLength={21}
+                placeholder={t("friend's username")} aria-label={t("Friend's username")} value={draft}
+                onChange={(e) => setDraft(e.target.value)} />
+            </div>
+            <button className="btn" type="submit" disabled={busy}>{t("Add")}</button>
+          </form>
+          <p className={`msg ${msg?.kind ?? ""}`} aria-live="polite">{msg?.text}</p>
+          <p className="muted">{t("Not on Bottega yet? Send them your room link instead.")}</p>
+          <button className="btn ghost" type="button" onClick={sendLink}>{t("Send my room link")}</button>
+          {shelf.outgoing.length > 0 && (
+            <div className="requests waiting">
+              {shelf.outgoing.map((p) => (
+                <div className="request" key={p.id}>
+                  <span className="muted">{t("Waiting for @{name} to accept.", { name: p.username })}</span>
+                  <button className="btn ghost small" type="button" onClick={() => respond(p, false)}>{t("Cancel")}</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </Sheet>
+      )}
+
+      {settings && (
+        <Sheet onClose={() => setSettings(false)} label={t("Settings")}>
+          <h2>{t("Settings")}</h2>
+          <div className="settings-list">
+            {!guest && <EmailSwitch userId={me.id} />}
+            <div className="settings-row"><span>{t("Language")}</span><LangSwitch /></div>
+            <p className="muted settings-note">{t("Friends can see your room and you can see theirs. Change who can come in from your room's Customize menu.")}</p>
+            <nav className="settings-links">
+              <a href="/support">{t("Help")}</a>
+              <a href="/privacy">{t("Privacy")}</a>
+              <a href="/terms">{t("Terms")}</a>
+            </nav>
+            <SignOut />
+            <DeleteAccount username={me.username} />
+          </div>
+        </Sheet>
       )}
     </div>
   );
@@ -397,6 +421,7 @@ function ago(iso: string): string {
 
 /** One daily email, only on days a friend put something on. On unless turned off. */
 function EmailSwitch({ userId }: { userId: string }) {
+  const t = useT();
   const [on, setOn] = useState<boolean | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -416,9 +441,9 @@ function EmailSwitch({ userId }: { userId: string }) {
 
   if (failed || on === null) return null;
   return (
-    <label className="check email-switch">
-      <input type="checkbox" checked={on} onChange={(e) => change(e.target.checked)} />
-      <span>Email me when friends put something on <span className="muted">(at most once a day)</span></span>
+    <label className="settings-row">
+      <span>{t("Daily email")}<small className="muted">{t("Only on days a friend puts something on")}</small></span>
+      <input className="switch" type="checkbox" role="switch" checked={on} onChange={(e) => change(e.target.checked)} />
     </label>
   );
 }
@@ -448,16 +473,14 @@ function PushAsk({ userId }: { userId: string }) {
   );
 }
 
-/** In the app the top links are replaced by the tab bar, so signing out lives here. */
-function AppSignOut() {
+/** Signing out, in Settings. */
+function SignOut() {
   const t = useT();
   const auth = useAuth();
-  const native = useSyncExternalStore(() => () => {}, isNativeApp, () => false);
-  if (!native) return null;
   // A guest has no email to log back in with, so signing out would lose their room.
   const signOut = () => {
     if (auth.guest && !window.confirm(t("You're a guest: signing out loses your room and clubs. Add your email first to keep them. Sign out anyway?"))) return;
     void auth.signOut();
   };
-  return <p className="lib-note"><button className="linkish" type="button" onClick={signOut}>{t("Sign out")}</button></p>;
+  return <button className="btn ghost settings-signout" type="button" onClick={signOut}>{t("Sign out")}</button>;
 }
