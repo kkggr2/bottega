@@ -1525,4 +1525,3 @@ html.native.tabs main { padding-top: 4px; }
 
 /* iPhone app: the tab bar hides while the keyboard is up. */
 html.native.kb-open .tabbar { display: none; }
-html.native.kb-open body { padding-bottom: 16px; }

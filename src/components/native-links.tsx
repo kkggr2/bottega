@@ -24,10 +24,13 @@ export function NativeLinks() {
     const shown = Keyboard.addListener("keyboardWillShow", () => root.classList.add("kb-open"));
     const hidden = Keyboard.addListener("keyboardWillHide", () => root.classList.remove("kb-open"));
     // Once the keyboard is up (and the page has shrunk), bring the field you're typing in back into view.
-    const up = Keyboard.addListener("keyboardDidShow", () => {
+    const reveal = () => {
       const el = document.activeElement as HTMLElement | null;
-      if (el && /^(INPUT|TEXTAREA)$/.test(el.tagName)) el.scrollIntoView({ block: "center", behavior: "smooth" });
-    });
+      if (!el || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
+      const r = el.getBoundingClientRect();
+      if (r.bottom > window.innerHeight - 12 || r.top < 0) window.scrollBy({ top: r.top - window.innerHeight / 3 });
+    };
+    const up = Keyboard.addListener("keyboardDidShow", () => { reveal(); setTimeout(reveal, 250); });
     const handle = App.addListener("appUrlOpen", ({ url }) => {
       router.push(pathFromUrl(url));
     });
