@@ -11,6 +11,7 @@ import { GuestNote } from "./guest";
 import { YearBanner } from "./year";
 import { TasteTwins } from "./taste-twins";
 import { RoomsToVisit } from "./rooms-to-visit";
+import { ConnoisseursRow } from "./connoisseurs";
 import { FamousRooms } from "./famous-room";
 import { TogetherDoors, TogetherInvites } from "./together-library";
 import { DeleteAccount } from "./delete-account";
@@ -342,6 +343,7 @@ function Library({ me }: { me: Profile }) {
         </div>
       </div>
       <TasteTwins meId={me.id} />
+      <ConnoisseursRow />
       <RoomsToVisit />
       <FamousRooms />
       {friendCount > 0 && <PushAsk userId={me.id} />}

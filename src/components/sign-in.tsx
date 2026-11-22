@@ -2,6 +2,7 @@
 
 import { LangSwitch } from "./lang-switch";
 import { RoomsToVisit } from "./rooms-to-visit";
+import { ConnoisseursRow } from "./connoisseurs";
 import { FamousRooms } from "./famous-room";
 import { useT } from "@/lib/i18n";
 import { useEffect, useRef, useState } from "react";
@@ -200,6 +201,7 @@ export function SignIn({ forClub = false }: { forClub?: boolean } = {}) {
         <p className="try">{t("This room is real. Tap the records, or a DVD.")}</p>
         <ExampleRoom embedded onMakeYours={() => goToForm("create")} />
       </section>
+      <ConnoisseursRow />
       <RoomsToVisit title={t("Before you make yours, step into theirs")} />
       <FamousRooms />
       </>}

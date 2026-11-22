@@ -15,6 +15,7 @@ import { audioOf } from "@/lib/piece-media";
 import { friendlyError, supabase } from "@/lib/supabase";
 import { rememberInvite } from "@/lib/clubs";
 import { featuredLabel } from "@/lib/featured";
+import { connoisseurNumber } from "@/lib/connoisseurs";
 import { useRoomColors } from "@/lib/room-colors";
 import { useRemembered } from "@/lib/remember";
 import { rememberCameFrom, track } from "@/lib/track";
@@ -38,6 +39,7 @@ import { BioCard } from "./bio-card";
 import { KeepRoomCard } from "./guest";
 import { StartTogetherSheet } from "./together-room";
 import { Guestbook } from "./guestbook";
+import { ConnoisseurBadge } from "./connoisseurs";
 import { RecommendSheet } from "./recommend-sheet";
 import { SafetySheet } from "./safety-sheet";
 import { ShareSheet } from "./share-sheet";
@@ -149,6 +151,9 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
   // Bookshops, cinemas and clubs Bottega features get a small label under their name.
   const [featured, setFeatured] = useState<string | null>(null);
   useEffect(() => { featuredLabel(username).then(setFeatured).catch(() => setFeatured(null)); }, [username]);
+  // Founding Connoisseurs get a numbered gold badge.
+  const [conno, setConno] = useState<number | null>(null);
+  useEffect(() => { connoisseurNumber(username).then(setConno).catch(() => setConno(null)); }, [username]);
 
   useEffect(() => {
     load(); // eslint-disable-line react-hooks/set-state-in-effect -- fetching on mount
@@ -389,6 +394,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
             )}
           </div>
           <p className="who">{isOwner ? "Your room" : `@${owner.username}`}{featured && <span className="featured-badge"> · {featured}</span>}</p>
+          {conno && <ConnoisseurBadge number={conno} />}
           <h1>{room.name}</h1>
           {room.tagline && <p className="tag">{room.tagline}</p>}
         </div>
