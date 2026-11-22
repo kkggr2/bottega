@@ -23,6 +23,11 @@ export function NativeLinks() {
     const root = document.documentElement;
     const shown = Keyboard.addListener("keyboardWillShow", () => root.classList.add("kb-open"));
     const hidden = Keyboard.addListener("keyboardWillHide", () => root.classList.remove("kb-open"));
+    // Once the keyboard is up (and the page has shrunk), bring the field you're typing in back into view.
+    const up = Keyboard.addListener("keyboardDidShow", () => {
+      const el = document.activeElement as HTMLElement | null;
+      if (el && /^(INPUT|TEXTAREA)$/.test(el.tagName)) el.scrollIntoView({ block: "center", behavior: "smooth" });
+    });
     const handle = App.addListener("appUrlOpen", ({ url }) => {
       router.push(pathFromUrl(url));
     });
@@ -30,6 +35,7 @@ export function NativeLinks() {
       handle.then((h) => h.remove());
       shown.then((h) => h.remove());
       hidden.then((h) => h.remove());
+      up.then((h) => h.remove());
       root.classList.remove("kb-open");
     };
   }, [router]);
