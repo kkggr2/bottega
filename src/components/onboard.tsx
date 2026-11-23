@@ -74,6 +74,8 @@ export function Onboard() {
     // On the way to starting a club: back to naming it.
     if (!landing && pendingStartClub()) landing = "/start";
     forgetClub();
+    // Once their door opens, bring them back to the room they came from to see how alike they are.
+    if (from?.username) { try { localStorage.setItem("bottega.matchWith", from.username); } catch {} }
     forgetCameFrom();
     await refreshProfile();
     if (landing) router.push(landing);
@@ -96,6 +98,7 @@ export function Onboard() {
             </div>
             <span className="hint">{t("3–20 lowercase letters, numbers or underscores. Friends find you with this, and it can't be changed later.")}</span>
           </div>
+          <p className="hint">{t("Anyone with your room's link can look around. You can change who comes in any time.")}</p>
           {from && (
             <label className="check">
               <input type="checkbox" checked={addFrom} onChange={(e) => setAddFrom(e.target.checked)} />

@@ -28,6 +28,7 @@ import { DOOR_AT, DoorOpen, DoorProgress } from "./door-progress";
 import { ADD_EVENT, takeAddRequest } from "./tab-bar";
 import { Gate } from "./gate";
 import { ImportSheet } from "./import-sheet";
+import { StarterPicks } from "./starter-picks";
 import { MusicCorner } from "./music-corner";
 import { PieceDetail } from "./piece-detail";
 import { PieceEditor } from "./piece-editor";
@@ -75,6 +76,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
   const [editing, setEditing] = useState<Editing | null>(null);
   const [customizing, setCustomizing] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [picking, setPicking] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [safety, setSafety] = useState(false);
   const [recommending, setRecommending] = useState(false);
@@ -429,7 +431,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
       </section>
       {notice && <p className="msg ok" role="status" style={{ marginBottom: 12 }}>{notice}</p>}
       {isOwner && canView && pieces.length < DOOR_AT && (
-        <DoorProgress pieces={pieces} onAdd={add} onImport={() => setImporting(true)} />
+        <DoorProgress pieces={pieces} onAdd={add} onQuick={() => setPicking(true)} />
       )}
       {isOwner && me && <ByTheDoor recs={recs} meId={me.id} onChanged={load} />}
       {isOwner && <KeepRoomCard pieces={pieces.length} />}
@@ -573,6 +575,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
         />
       )}
       {customizing && <Customize room={room} onClose={() => { setCustomizing(false); load(); }} />}
+      {picking && <StarterPicks ownerId={owner.id} pieces={pieces} onClose={() => { setPicking(false); load(); }} />}
       {importing && <ImportSheet ownerId={owner.id} pieces={pieces} onClose={() => { setImporting(false); load(); }} />}
       {together && me && <StartTogetherSheet friendId={owner.id} friendName={owner.username} onClose={() => setTogether(false)} />}
       {recommending && me && (

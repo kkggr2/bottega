@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useState } from "react";
 import type { Piece, PieceType } from "@/lib/types";
 
 /*
@@ -16,10 +18,11 @@ const NEXT: { type: PieceType; line: string; button: string }[] = [
   { type: "scene", line: "Add a scene you always rewind.", button: "Add a scene" },
 ];
 
-export function DoorProgress({ pieces, onAdd, onImport }: {
+export function DoorProgress({ pieces, onAdd, onQuick }: {
   pieces: Piece[];
   onAdd: (type?: PieceType) => void;
-  onImport: () => void;
+  /** Tap-to-pick from well-loved films and books: the fastest way to a first room. */
+  onQuick: () => void;
 }) {
   const count = Math.min(pieces.length, DOOR_AT);
   const has = new Set(pieces.map((p) => p.type));
@@ -36,16 +39,37 @@ export function DoorProgress({ pieces, onAdd, onImport }: {
           <b>{count} of {DOOR_AT}</b> · {left === 1 ? "one more opens your door" : `your door opens at ${DOOR_AT}`}
         </p>
       </div>
-      <p className="dp-next">{next ? next.line : "Add anything you love."}</p>
+      <p className="dp-next">{pieces.length === 0 ? "Start with films and books you love. One tap each." : next ? next.line : "Add anything you love."}</p>
       <div className="row">
-        <button className="btn" type="button" onClick={() => onAdd(next?.type)}>{next ? next.button : "Add something"}</button>
-        <button className="linkish" type="button" onClick={onImport}>Or bring in your Letterboxd films or Goodreads books</button>
+        <button className="btn" type="button" onClick={onQuick}>Tap the ones you love</button>
+        <button className="linkish" type="button" onClick={() => onAdd(next?.type)}>{next ? `Or ${next.button.toLowerCase()} yourself` : "Or add your own"}</button>
       </div>
     </section>
   );
 }
 
+/** The room someone signed up from, so the end of their first room leads back to the Taste Match. */
+function matchWith(): string | null {
+  try { return localStorage.getItem("bottega.matchWith"); } catch { return null; }
+}
+
 export function DoorOpen({ onShare, onClose }: { onShare: () => void; onClose: () => void }) {
+  const [back] = useState(matchWith);
+  const forget = () => { try { localStorage.removeItem("bottega.matchWith"); } catch {} };
+  if (back) {
+    return (
+      <section className="door-open" role="status">
+        <div>
+          <h2>Your door is open.</h2>
+          <p>Now see how alike your taste is to @{back}&apos;s.</p>
+        </div>
+        <div className="row">
+          <Link className="btn" href={`/r/${back}`} onClick={forget}>See how alike we are</Link>
+          <button className="btn ghost" type="button" onClick={() => { forget(); onShare(); }}>Share my room</button>
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="door-open" role="status">
       <div>
