@@ -248,33 +248,27 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
         ))}
       </nav>
 
-      {tab === "now" && (
-        <div className="club-now" role="tabpanel" data-empty={t("Nothing planned yet. A meeting, a book or a vote will show up here.")}>
+      {/* All four load together and stay mounted, so switching is instant and the chat keeps its place. */}
+      <div className="club-now" role="tabpanel" hidden={tab !== "now"} data-empty={t("Nothing planned yet. A meeting, a book or a vote will show up here.")}>
           <PushAsk userId={me.id} text={t("Get a nudge when {club} posts, votes or meets.", { club: club.name })} />
           <ClubMeeting clubId={club.id} clubName={club.name} me={me.id} isHost={club.is_host} />
           <ClubReading clubId={club.id} me={me.id} isHost={club.is_host} people={people} onShelved={() => setShelfTick((n) => n + 1)} />
           <NextUp clubId={club.id} isHost={club.is_host} onShelved={() => setShelfTick((n) => n + 1)} />
         </div>
-      )}
 
-      {tab === "chat" && (
-        <div role="tabpanel">
+      <div role="tabpanel" hidden={tab !== "chat"}>
           <ChatLog me={me} roomKey={`club:${club.slug}`} people={people.map((p) => ({ user_id: p.user_id, username: p.username, title: p.now_title }))}
             placeholder={t("Write to {club}…", { club: club.name })} empty={t("Nobody has written yet. Say hello, or ask what everyone's into this week.")}
             canModerate={club.is_host} onSent={() => void notifyClub(club.id, "message")} />
           <p className="muted club-chat-note">{t("Only members can read it. Messages last a week.")}</p>
         </div>
-      )}
 
-      {tab === "shelf" && (
-        <div role="tabpanel" className="club-shelf-tab">
+      <div role="tabpanel" className="club-shelf-tab" hidden={tab !== "shelf"}>
           <ClubShelf clubId={club.id} me={me.id} isHost={club.is_host} refresh={shelfTick} startOpen={isNew} />
           <ClubQuizzes club={club} />
         </div>
-      )}
 
-      {tab === "people" && (
-        <div role="tabpanel" className="club-people">
+      <div role="tabpanel" className="club-people" hidden={tab !== "people"}>
           {stats && stats.members > 0 && (
             <div className="club-stats" aria-label={t("How the link is doing")}>
               <span><b>{stats.members}</b> {t("joined")}</span>
@@ -300,7 +294,6 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
           <p className="msg ok" aria-live="polite">{note}</p>
           <ClubSettings club={club} me={me} people={people} onChanged={load} />
         </div>
-      )}
 
       {sharing && <InviteSheet club={club} onClose={() => setSharing(false)} />}
     </section>
