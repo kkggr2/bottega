@@ -28,7 +28,7 @@ export type FamousRoom = {
   /** What's left out, by title: the record on the turntable, the film in the TV, the book open on the armchair. */
   now?: { song?: string; film?: string; book?: string };
   /** The same room in Spanish (for bilingual presses): the room's words, and each piece's line by its title. */
-  es?: { name: string; tagline: string; source: string; draft?: string; lines: Record<string, string> };
+  es?: { name: string; tagline: string; source: string; draft?: string; lines: Record<string, string>; now?: FamousRoom["now"] };
 };
 
 /**
@@ -230,11 +230,21 @@ export const FAMOUS: FamousRoom[] = [
       ["book", "Men, Women and Ghosts", "Amy Lowell · 1916", cita("https://citapress.org/img/books/men-women-and-ghosts/post.png"),
         "Stories told in poems. \"Patterns\", on the wall, is the first of them.\n\nCover: Annika Leppäaho",
         "https://citapress.org/men-women-and-ghosts/"],
+      ["book", "Meditations on the Song of Songs", "Teresa of Ávila", cita("https://citapress.org/img/books/meditaciones/post.jpg"),
+        "Teresa's meditations, which a confessor once ordered burned, and which survived.\n\nCover: Catalina Vásquez · Foreword: Ana María Carvajal",
+        "https://citapress.org/meditaciones/"],
+      ["poem", "Nada te turbe", "Teresa of Ávila", null,
+        "Nada te turbe;\nnada te espante;\ntodo se pasa;\nDios no se muda,\nla paciencia\ntodo lo alcanza.\nQuien a Dios tiene,\nnada le falta.\nSolo Dios basta.",
+        "https://citapress.org/meditaciones/"],
       ["poem", "Patterns", "Amy Lowell · 1916", null, "I walk down the garden paths,\nAnd all the daffodils\nAre blowing, and the bright blue squills.\nI walk down the patterned garden-paths\nIn my stiff, brocaded gown.\nWith my powdered hair and jewelled fan,\nI too am a rare\nPattern. As I wander down\nThe garden paths.\n\nMy dress is richly figured,\nAnd the train\nMakes a pink and silver stain\nOn the gravel, and the thrift\nOf the borders.\nJust a plate of current fashion,\nTripping by in high-heeled, ribboned shoes.\nNot a softness anywhere about me,\nOnly whalebone and brocade.\nAnd I sink on a seat in the shade\nOf a lime tree. For my passion\nWars against the stiff brocade.\nThe daffodils and squills\nFlutter in the breeze\nAs they please.\nAnd I weep;\nFor the lime-tree is in blossom\nAnd one small flower has dropped upon my bosom.\n\nAnd the plashing of waterdrops\nIn the marble fountain\nComes down the garden-paths.\nThe dripping never stops.\nUnderneath my stiffened gown\nIs the softness of a woman bathing in a marble basin,\nA basin in the midst of hedges grown\nSo thick, she cannot see her lover hiding,\nBut she guesses he is near,\nAnd the sliding of the water\nSeems the stroking of a dear\nHand upon her.\nWhat is Summer in a fine brocaded gown!\nI should like to see it lying in a heap upon the ground.\nAll the pink and silver crumpled up on the ground.\n\nI would be the pink and silver as I ran along the paths,\nAnd he would stumble after,\nBewildered by my laughter.\nI should see the sun flashing from his sword-hilt and the buckles on his shoes.\nI would choose\nTo lead him in a maze along the patterned paths,\nA bright and laughing maze for my heavy-booted lover,\nTill he caught me in the shade,\nAnd the buttons of his waistcoat bruised my body as he clasped me,\nAching, melting, unafraid.\nWith the shadows of the leaves and the sundrops,\nAnd the plopping of the waterdrops,\nAll about us in the open afternoon—\nI am very like to swoon\nWith the weight of this brocade,\nFor the sun sifts through the shade.\n\nUnderneath the fallen blossom\nIn my bosom,\nIs a letter I have hid.\nIt was brought to me this morning by a rider from the Duke.\n\"Madam, we regret to inform you that Lord Hartwell\nDied in action Thursday se'nnight.\"\nAs I read it in the white, morning sunlight,\nThe letters squirmed like snakes.\n\"Any answer, Madam,\" said my footman.\n\"No,\" I told him.\n\"See that the messenger takes some refreshment.\nNo, no answer.\"\nAnd I walked into the garden,\nUp and down the patterned paths,\nIn my stiff, correct brocade.\nThe blue and yellow flowers stood up proudly in the sun,\nEach one.\nI stood upright too,\nHeld rigid to the pattern\nBy the stiffness of my gown.\nUp and down I walked,\nUp and down.\n\nIn a month he would have been my husband.\nIn a month, here, underneath this lime,\nWe would have broke the pattern;\nHe for me, and I for him,\nHe as Colonel, I as Lady,\nOn this shady seat.\nHe had a whim\nThat sunlight carried blessing.\nAnd I answered, \"It shall be as you have said.\"\nNow he is dead.\n\nIn Summer and in Winter I shall walk\nUp and down\nThe patterned garden-paths\nIn my stiff, brocaded gown.\nThe squills and daffodils\nWill give place to pillared roses, and to asters, and to snow.\nI shall go\nUp and down,\nIn my gown.\nGorgeously arrayed,\nBoned and stayed.\nAnd the softness of my body will be guarded from embrace\nBy each button, hook, and lace.\nFor the man who should loose me is dead,\nFighting with the Duke in Flanders,\nIn a pattern called a war.\nChrist! What are patterns for?", "https://citapress.org/men-women-and-ghosts/read/"],
       ["song", "The March of the Women", "Ethel Smyth · 1911", "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/be/ca/c7/becac7a6-2bfa-f11d-c72c-fed71aa27434/190295321994.jpg/600x600bb.jpg",
         "The suffragettes' anthem, written by a woman composer. Sung here by the Chorus of the Plymouth Music Series.",
         "https://music.apple.com/us/album/songs-of-sunrise-no-3-the-march-of-the-women/1484841192?i=1484841203",
         { preview_url: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/b2/5a/6b/b25a6bdb-848c-30ca-c051-9d9be663e8a3/mzaf_14803217788646270337.plus.aac.p.m4a" }],
+      ["song", "Gracias a la vida", "Violeta Parra · 1966", "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/0d/01/1e/0d011e26-7c33-a8a8-f45e-d0262beef095/mzm.ismvyxhg.jpg/600x600bb.jpg",
+        "Written and first sung by Violeta Parra, the Chilean poet and songwriter. Mercedes Sosa made it an anthem.",
+        "https://music.apple.com/us/album/gracias-a-la-vida/1054693764?i=1054693770",
+        { preview_url: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/84/5d/a9/845da9c0-525e-beb5-3fab-82d4443280ff/mzaf_12521979578160084187.plus.aac.p.m4a" }],
       ["scene", "The Yellow Wallpaper", "Kevin Pontuti · 2021", "https://i.ytimg.com/vi/zgws4d1_APY/hqdefault.jpg",
         "Charlotte Perkins Gilman's story on screen. The trailer.", "https://www.youtube.com/watch?v=zgws4d1_APY"],
       ["scene", "10 Days in a Madhouse", "Timothy Hines · 2015", "https://i.ytimg.com/vi/5P3Tz3tLX90/hqdefault.jpg",
@@ -255,15 +265,20 @@ export const FAMOUS: FamousRoom[] = [
         "Behind a Mask": "La autora de Mujercitas, escribiendo un thriller con otro nombre.",
         "Mathilda": "Escrita en 1819–20 y apartada de los lectores durante más de un siglo.",
         "Silly Novels by Silly Lady Novelists": "La crítica afilada de una gran novelista a la ficción que se esperaba que escribieran las mujeres.",
-        "Dolores: Scenes from a Woman's Life": "Un clásico colombiano, en una nueva traducción al inglés.",
+        "Dolores: Scenes from a Woman's Life": "Un clásico colombiano de Soledad Acosta de Samper, en una nueva traducción al inglés.",
         "A Luminous Halo": "Escritos escogidos de Woolf, reunidos por Cita.",
         "Men, Women and Ghosts": "Historias contadas en poemas. «Patterns», en la pared, es la primera.",
         "Patterns": "",
+        "Nada te turbe": "",
+        "Meditations on the Song of Songs": "Las Meditaciones sobre los Cantares de Teresa, que un confesor mandó quemar y que sobrevivieron.",
+        "Gracias a la vida": "Escrita y cantada primero por Violeta Parra, poeta y cantautora chilena. Mercedes Sosa la hizo himno.",
         "The March of the Women": "El himno de las sufragistas, compuesto por una mujer.",
         "The Yellow Wallpaper": "El cuento de Charlotte Perkins Gilman en la pantalla. El tráiler.",
         "10 Days in a Madhouse": "Los diez días de Nellie Bly, en película. El tráiler.",
         "Grand Isle": "El despertar de Kate Chopin, en película. El tráiler.",
       },
+      // In Spanish, Violeta Parra is on the turntable and Teresa's book lies open on the armchair.
+      now: { song: "Gracias a la vida", book: "Meditations on the Song of Songs" },
     },
   },
 ];

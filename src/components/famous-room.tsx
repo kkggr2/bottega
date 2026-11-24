@@ -60,13 +60,21 @@ export function FamousRoomView({ room: f }: { room: FamousRoom }) {
   const es = lang === "es" && f.es ? f.es : null;
   const pieces = useMemo(() => inLanguage(f.pieces, es), [f.pieces, es]);
   const byTitle = (title?: string) => (title ? pieces.find((p) => p.title === title) ?? null : null);
-  const nowSong = byTitle(f.now?.song);
-  const nowFilm = byTitle(f.now?.film);
-  const nowBook = byTitle(f.now?.book);
+  // A Spanish version can leave out something else (its own record, its own book on the armchair).
+  const now = { ...f.now, ...es?.now };
+  const nowSong = byTitle(now.song);
+  const nowFilm = byTitle(now.film);
+  const nowBook = byTitle(now.book);
 
   const [detailId, setDetailId] = useState<string | null>(null);
   const [recordId, setRecordId] = useState<string | null>(nowSong?.id ?? null);
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [lastLang, setLastLang] = useState(lang);
+  if (lastLang !== lang) {
+    // Switching language: that version's record goes on (unless one is playing), like walking into its room.
+    setLastLang(lang);
+    if (!playingId) setRecordId(nowSong?.id ?? null);
+  }
   const [tvId, setTvId] = useState<string | null>(nowFilm?.id ?? null);
   const [tvOn, setTvOn] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);

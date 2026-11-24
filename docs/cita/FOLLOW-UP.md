@@ -21,3 +21,8 @@ Two small gifts, yours to use either way:
 
 Warmly,
 Çağla
+
+## The two videos
+- `cita-room-reel.mp4`: English.
+- `cita-room-reel-es.mp4`: Spanish, with Teresa of Ávila's Meditaciones on the wall and Gracias a la vida on the turntable.
+Suggested music when they post (Instagram's own library, so it's licensed there): "Gracias a la vida" by Mercedes Sosa.
