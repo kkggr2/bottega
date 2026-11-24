@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties }
 import { formatTime, sceneEmbed, youtubeId } from "@/lib/lookup";
 import { imageOf, wobble } from "@/lib/piece-media";
 import type { Piece } from "@/lib/types";
+import { episodeCode, posterUrl, watchPath, type Watching } from "@/lib/watching";
 
 /* eslint-disable @next/next/no-img-element -- signed or remote stills */
 
@@ -75,6 +76,8 @@ export function ScreenCorner({
   extraFilm,
   note,
   leave = null,
+  live = null,
+  moments = [],
 }: {
   scenes: Piece[];
   games: Piece[];
@@ -93,6 +96,10 @@ export function ScreenCorner({
   note?: string | null;
   /** For the owner: leave this film in the TV. */
   leave?: LeaveAction;
+  /** What the owner is watching in Margins right now. It's on the TV until someone puts a DVD in. */
+  live?: Watching | null;
+  /** Lines the owner wrote in Margins, pinned like ticket stubs. Only the show and the minute show here. */
+  moments?: Piece[];
 }) {
   // What's in the player: the chosen DVD or poster, otherwise the first scene that can play.
   const chosen = scenes.find((s) => s.id === tvId) ?? (extraFilm && extraFilm.id === tvId ? extraFilm : null);
@@ -126,14 +133,21 @@ export function ScreenCorner({
     ? `${formatTime(current.clip_start)}${current.clip_end != null ? `–${formatTime(current.clip_end)}` : ""}`
     : "";
 
+  const livePoster = live ? posterUrl(live.poster_path) : null;
+
   return (
     <section className="corner screen-corner" aria-label="Television and films">
       <div className="screen-set">
         <div className="tv">
           <span className="antenna" aria-hidden="true" />
           <div className="tv-body">
-            <div className={`tv-screen${src ? " on" : ""}`}>
-              {src ? (
+            <div className={`tv-screen${src && !live ? " on" : ""}`}>
+              {live ? (
+                <>
+                  {livePoster && <Still src={livePoster} tall />}
+                  <span className="tv-live" aria-hidden="true">{"\u25CF"} Live</span>
+                </>
+              ) : src ? (
                 <Broadcast
                   key={current!.id}
                   src={src}
@@ -146,9 +160,9 @@ export function ScreenCorner({
               ) : still ? (
                 <Still src={still} tall={tall} />
               ) : null}
-              {!src && <span className="glare" aria-hidden="true" />}
+              {(!src || live) && <span className="glare" aria-hidden="true" />}
               <span className="scanlines" aria-hidden="true" />
-              {current && playLink && !src && (
+              {!live && current && playLink && !src && (
                 <button type="button" className="tv-tap" onClick={soundOn} aria-label={`Play ${current.title}`}>
                   <span className="tv-sound">{"\u25B6\uFE0E"} Play</span>
                 </button>
@@ -193,6 +207,20 @@ export function ScreenCorner({
           })}
         </div>
 
+        {moments.length > 0 && (
+          <div className="stubs" role="list" aria-label="Moments from Margins">
+            {moments.map((m) => (
+              <div role="listitem" key={m.id}>
+                <button type="button" className="stub" onClick={() => onOpen(m)} aria-label={`${m.title}, ${m.subtitle}`}
+                  style={{ rotate: `${(wobble(m.id, 5) - 2) * 1.2}deg` } as CSSProperties}>
+                  <b>{m.title}</b>
+                  <span className="mono">{m.subtitle}</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         {(games.length > 0 || isOwner) && (
           <div className="carts" role="list" aria-label="Games">
             {games.map((g) => (
@@ -211,8 +239,15 @@ export function ScreenCorner({
         </div>
       </div>
 
-      <div className={`now${current ? "" : " empty"}`} aria-live="polite">
-        {current ? (
+      <div className={`now${current || live ? "" : " empty"}`} aria-live="polite">
+        {live ? (
+          <>
+            <span className="mono">{isOwner ? "You're watching" : "Watching now"} · Margins</span>
+            <b>{live.show_name ?? "A TV series"}</b>
+            <span className="muted-ink">{episodeCode(live)}</span>
+            {!isOwner && <a className="btn small now-leave" href={watchPath(live)}>Watch along</a>}
+          </>
+        ) : current ? (
           <>
             <span className="mono">{src && !note ? "Now showing" : note ?? "In the player"}{span ? ` · ${span}` : ""}</span>
             <b>{current.title}</b>

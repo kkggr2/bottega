@@ -23,7 +23,7 @@ export type TasteMatch = {
 export type Kind = "film" | "book" | "music" | "poem" | "game";
 export const MIN_PIECES = 3;
 
-const kindOf = (t: PieceType): Kind => (t === "poster" || t === "scene" ? "film" : t === "song" ? "music" : t);
+const kindOf = (t: PieceType): Kind => (t === "poster" || t === "scene" || t === "moment" ? "film" : t === "song" ? "music" : t);
 
 const norm = (s: string) =>
   s.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/ı/g, "i")

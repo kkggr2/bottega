@@ -380,6 +380,7 @@ function Library({ me }: { me: Profile }) {
           <h2>{t("Settings")}</h2>
           <div className="settings-list">
             {!guest && <EmailSwitch userId={me.id} />}
+            <WatchingSwitch userId={me.id} />
             <div className="settings-row"><span>{t("Language")}</span><LangSwitch /></div>
             <p className="muted settings-note">{t("Friends can see your room and you can see theirs. Change who can come in from your room's Customize menu.")}</p>
             <nav className="settings-links">
@@ -443,6 +444,38 @@ function EmailSwitch({ userId }: { userId: string }) {
   return (
     <label className="settings-row">
       <span>{t("Daily email")}<small className="muted">{t("Only on days a friend puts something on")}</small></span>
+      <input className="switch" type="checkbox" role="switch" checked={on} onChange={(e) => change(e.target.checked)} />
+    </label>
+  );
+}
+
+/** For people who use Margins: whether friends see what you're watching on the TV in your room. */
+function WatchingSwitch({ userId }: { userId: string }) {
+  const t = useT();
+  const [on, setOn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const sb = supabase();
+    // Only shown to people who have watched something in Margins.
+    Promise.all([
+      sb.schema("margins").from("watch_sessions").select("id").eq("user_id", userId).limit(1),
+      sb.from("profiles").select("show_watching").eq("id", userId).maybeSingle(),
+    ]).then(([sessions, profile]) => {
+      if (sessions.error || profile.error || !sessions.data?.length) return;
+      setOn((profile.data as { show_watching?: boolean } | null)?.show_watching ?? true);
+    });
+  }, [userId]);
+
+  async function change(next: boolean) {
+    setOn(next);
+    const { error } = await supabase().from("profiles").update({ show_watching: next }).eq("id", userId);
+    if (error) setOn(!next);
+  }
+
+  if (on === null) return null;
+  return (
+    <label className="settings-row">
+      <span>{t("Show what I'm watching")}<small className="muted">{t("On the TV in your room, while you watch in Margins")}</small></span>
       <input className="switch" type="checkbox" role="switch" checked={on} onChange={(e) => change(e.target.checked)} />
     </label>
   );

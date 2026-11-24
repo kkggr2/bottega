@@ -400,4 +400,5 @@ const WHY_PROMPTS: Record<PieceType, string[]> = {
   book: ["The page you folded down…", "Where you were when you read it…", "What stayed with you…"],
   game: ["The night you couldn't stop playing…", "Who you played it with…"],
   poem: [""],
+  moment: [""],
 };

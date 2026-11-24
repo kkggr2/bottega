@@ -31,7 +31,7 @@ export type Year = {
   server: YearServer;
 };
 
-const kindOf = (t: PieceType): Kind => (t === "poster" || t === "scene" ? "film" : t === "song" ? "music" : t);
+const kindOf = (t: PieceType): Kind => (t === "poster" || t === "scene" || t === "moment" ? "film" : t === "song" ? "music" : t);
 const yearOf = (subtitle: string) => Number(subtitle.match(/\b(18|19|20)\d{2}\b/)?.[0] ?? NaN);
 const makerOf = (subtitle: string) => {
   const m = subtitle.split(" · ")[0]?.split(",")[0]?.trim() ?? "";

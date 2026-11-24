@@ -37,6 +37,8 @@ export const PIECE_TYPES: Record<
   song:   { label: "Song",   glyph: "◉", title: "Song", subtitle: "Artist · year", body: "Why it's on your wall", image: "Cover art", zone: "music" },
   game:   { label: "Game",   glyph: "▣", title: "Game", subtitle: "Studio · year", body: "What it meant to you", image: "Box art", zone: "screen" },
   book:   { label: "Book",   glyph: "❚", title: "Book", subtitle: "Author · year", body: "What stayed with you", image: "Cover", zone: "books" },
+  // Pinned from Margins (your own comment at a minute of an episode), kept by the TV like a ticket stub.
+  moment: { label: "Moment", glyph: "◷", title: "Show", subtitle: "Episode · minute", body: "What you wrote", zone: "screen" },
 };
 
 export const MAX_PIECES = 80;

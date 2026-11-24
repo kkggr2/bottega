@@ -121,6 +121,8 @@ export const TR: Record<string, string> = {
   "Couldn't start the room. Try again.": "Oda başlatılamadı. Tekrar dene.",
   "Create account": "Hesap oluştur",
   "Daily email": "Günlük e-posta",
+  "Show what I'm watching": "İzlediğimi göster",
+  "On the TV in your room, while you watch in Margins": "Margins'te izlerken, odandaki televizyonda",
   "Decline": "Reddet",
   "Delete my message": "Mesajımı sil",
   "Delete the club": "Kulübü sil",

@@ -1,7 +1,7 @@
 export type ThemeKey = "oak" | "midnight" | "rose" | "moss" | "seaglass" | "gallery";
 export type Wallpaper = "plain" | "stripe" | "dots" | "grid" | "damask";
 export type Visibility = "friends" | "public" | "private";
-export type PieceType = "poster" | "scene" | "poem" | "game" | "song" | "book";
+export type PieceType = "poster" | "scene" | "poem" | "game" | "song" | "book" | "moment";
 
 export type Profile = { id: string; username: string };
 

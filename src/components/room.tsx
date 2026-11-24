@@ -34,6 +34,7 @@ import { PieceDetail } from "./piece-detail";
 import { PieceEditor } from "./piece-editor";
 import { PieceView } from "./piece-view";
 import { ScreenCorner } from "./screen-corner";
+import { watchingNow, type Watching } from "@/lib/watching";
 import { ByTheDoor } from "./by-the-door";
 import { TasteMatchCard } from "./taste-match";
 import { BioCard } from "./bio-card";
@@ -88,6 +89,9 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [tvId, setTvId] = useState<string | null>(() => (data.state === "ready" ? data.room.now_film ?? null : null));
   const [tvOn, setTvOn] = useState(false);
+  // What the owner is watching in Margins right now; on the TV until someone puts a DVD in.
+  const [watching, setWatching] = useState<Watching | null>(null);
+  const [tvTouched, setTvTouched] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const viewed = useRef(false);
   const nowApplied = useRef(false);
@@ -160,6 +164,15 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
   useEffect(() => {
     load(); // eslint-disable-line react-hooks/set-state-in-effect -- fetching on mount
   }, [load]);
+
+  // Checked again every two minutes while you're in the room, so it appears and goes away by itself.
+  useEffect(() => {
+    let live = true;
+    const check = () => watchingNow(username).then((w) => { if (live) setWatching(w); });
+    void check();
+    const timer = setInterval(check, 120_000);
+    return () => { live = false; clearInterval(timer); };
+  }, [username]);
 
   // Live updates while you're in the room.
   useEffect(() => {
@@ -247,6 +260,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
   const insertDvd = useCallback(
     (piece: Piece) => {
       stopMusic();
+      setTvTouched(true);
       setTvId(piece.id);
       setTvOn(Boolean(piece.link));
       tap();
@@ -281,6 +295,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
   const songs = pieces.filter((p) => p.type === "song");
   const scenes = pieces.filter((p) => p.type === "scene");
   const games = pieces.filter((p) => p.type === "game");
+  const moments = pieces.filter((p) => p.type === "moment");
   const full = pieces.length >= MAX_PIECES;
 
   const detail = pieces.find((p) => p.id === detailId) ?? null;
@@ -379,7 +394,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
   }[relation];
 
   const showBooks = isOwner || books.length > 0;
-  const showScreen = isOwner || scenes.length > 0 || games.length > 0;
+  const showScreen = isOwner || scenes.length > 0 || games.length > 0 || moments.length > 0 || Boolean(watching);
   const showMusic = isOwner || songs.length > 0;
 
   return (
@@ -497,6 +512,8 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
                     extraFilm={posterInTv}
                     note={filmNote}
                     leave={filmLeave}
+                    live={canView && !tvTouched ? watching : null}
+                    moments={moments}
                   />
                 )}
                 {showMusic && (

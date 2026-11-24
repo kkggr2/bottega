@@ -1536,3 +1536,15 @@ html.native.kb-open .tabbar { display: none; }
 .starter-grid button:disabled { cursor: default; opacity: .6; }
 .starter-grid .tick { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--brass); color: #fff; font-size: 14px; font-weight: 700; }
 .starter-foot { margin-top: 12px; }
+
+/* Watching now, from Margins: the show's poster on the glass with a small live tag. */
+.tv-live { position: absolute; top: 8px; left: 10px; z-index: 2; font: 600 10px/1 var(--font-mono, ui-monospace, monospace); letter-spacing: .08em; text-transform: uppercase; color: #fff; background: rgba(178, 58, 72, .9); padding: 4px 7px; border-radius: 999px; }
+.now a.now-leave { text-decoration: none; }
+.watch-page .watch-poster { display: block; width: 160px; max-width: 45%; border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,.3); margin: 12px 0 18px; }
+
+/* Moments from Margins: ticket stubs by the TV. Only the show and the minute; the words open on tap. */
+.stubs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.stub { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; max-width: 150px; padding: 6px 12px 6px 10px; border: 0; border-left: 2px dashed rgba(42, 36, 32, .35); border-radius: 4px; background: #F1E3C2; color: #2A2420; box-shadow: 0 2px 5px rgba(0,0,0,.25); text-align: left; cursor: pointer; }
+.stub b { font: 400 13px/1.15 var(--font-display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.stub .mono { font-size: 9.5px; opacity: .75; }
+.btn.spoiler { display: block; white-space: normal; text-align: left; }

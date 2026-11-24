@@ -11,7 +11,7 @@ import { Sheet } from "./sheet";
 
 /* eslint-disable @next/next/no-img-element -- signed storage URLs expire, so they skip the image optimizer */
 
-const KIND: Record<PieceType, string> = { poster: "Film", scene: "Scene", poem: "Poem", song: "Record", game: "Game", book: "Book" };
+const KIND: Record<PieceType, string> = { poster: "Film", scene: "Scene", poem: "Poem", song: "Record", game: "Game", book: "Book", moment: "Moment" };
 const PLACE: Record<Zone, string> = { wall: "On the wall", books: "On the shelf", music: "By the turntable", screen: "By the TV" };
 
 export function PieceDetail({
@@ -66,6 +66,8 @@ export function PieceDetail({
     if (err) setReactions(await loadReactions(piece.id));
   }
   const [busy, setBusy] = useState(false);
+  // A Margins moment's words stay folded for visitors until they tap: they might not have seen it yet.
+  const [revealed, setRevealed] = useState(isOwner);
   const img = imageOf(piece, urls);
   const songAudio = piece.type === "song" ? audioOf(piece, urls) : null;
   const embed = piece.type === "song" ? toEmbed(piece.link) : null;
@@ -100,7 +102,15 @@ export function PieceDetail({
         </div>
       )}
       {/* The owner's words come first: they're why this piece is here. */}
-      {piece.body && piece.type !== "poem" && (
+      {piece.body && piece.type === "moment" && !revealed && (
+        <button type="button" className="btn ghost spoiler" onClick={() => setRevealed(true)}>
+          Tap to read what @{ownerName ?? "they"} wrote at {piece.subtitle.split(" · ")[1] ?? "this minute"} <span className="hint">(it might spoil)</span>
+        </button>
+      )}
+      {piece.type === "moment" && piece.link?.startsWith("https://bottegarooms.com/watch/") && (
+        <div><a className="btn" href={new URL(piece.link).pathname}>Watch along in Margins</a></div>
+      )}
+      {piece.body && piece.type !== "poem" && (piece.type !== "moment" || revealed) && (
         <blockquote className="detail-why">
           <p>{piece.body}</p>
           {ownerName && <footer>@{ownerName}</footer>}
