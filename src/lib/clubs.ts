@@ -247,11 +247,12 @@ export async function cancelMeeting(id: string): Promise<void> {
   await supabase().from("club_meetings").delete().eq("id", id);
 }
 
-export async function answerMeeting(meetingId: string, me: string, answer: Rsvp): Promise<void> {
-  await supabase().from("club_rsvps").upsert(
+export async function answerMeeting(meetingId: string, me: string, answer: Rsvp): Promise<boolean> {
+  const { error } = await supabase().from("club_rsvps").upsert(
     { meeting_id: meetingId, user_id: me, answer, updated_at: new Date().toISOString() },
     { onConflict: "meeting_id,user_id" },
   );
+  return !error;
 }
 
 export type PartWord = "chapter" | "part" | "section" | "episode";
@@ -288,11 +289,12 @@ export async function finishReading(id: string, shelve: boolean): Promise<string
   return error ? rpcError(error.message) : null;
 }
 
-export async function setProgress(readingId: string, me: string, part: number): Promise<void> {
-  await supabase().from("club_progress").upsert(
+export async function setProgress(readingId: string, me: string, part: number): Promise<boolean> {
+  const { error } = await supabase().from("club_progress").upsert(
     { reading_id: readingId, user_id: me, part, updated_at: new Date().toISOString() },
     { onConflict: "reading_id,user_id" },
   );
+  return !error;
 }
 
 /** The notes this person may see (the database leaves out anything past where they are). */

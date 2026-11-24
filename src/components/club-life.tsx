@@ -32,6 +32,7 @@ export function ClubMeeting({ clubId, clubName, me, isHost }: { clubId: string; 
   const [meeting, setMeeting] = useState<Meeting | null | undefined>(undefined);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const load = useCallback(async () => setMeeting(await nextMeeting(clubId)), [clubId]);
   useEffect(() => { void load(); }, [load]); // eslint-disable-line react-hooks/set-state-in-effect -- fetching on open
@@ -40,7 +41,7 @@ export function ClubMeeting({ clubId, clubName, me, isHost }: { clubId: string; 
     if (!meeting || busy) return;
     setBusy(true);
     setMeeting({ ...meeting, my_answer: a });
-    await answerMeeting(meeting.id, me, a);
+    setFailed(!(await answerMeeting(meeting.id, me, a)));
     setBusy(false);
     void load();
   }
@@ -80,6 +81,7 @@ export function ClubMeeting({ clubId, clubName, me, isHost }: { clubId: string; 
               : t("Nobody has answered yet.")}
             {meeting.maybe > 0 && <> · {t("{n} maybe", { n: meeting.maybe })}</>}
           </p>
+          {failed && <p className="msg err">{t("Couldn't save your answer. Try again.")}</p>}
           <button type="button" className="linkish" onClick={() => downloadIcs(meeting, clubName)}>{t("Add to my calendar")}</button>
         </>
       ) : (
@@ -136,7 +138,7 @@ function MeetingSheet({ clubId, me, meeting, onClose, onDone }: {
   return (
     <Sheet onClose={onClose} onSubmit={save} label={meeting ? t("Change the meeting") : t("Plan a meeting")}>
       <h2>{meeting ? t("Change the meeting") : t("Plan a meeting")}</h2>
-      <div className="row meeting-fields">
+      <div className="meeting-fields">
         <div className="field">
           <label htmlFor="m-date">{t("Date")}</label>
           <input id="m-date" type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
@@ -212,6 +214,7 @@ export function ClubReading({ clubId, me, isHost, people, onShelved }: {
   const [starting, setStarting] = useState(false);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const load = useCallback(async () => {
     const r = await readingNow(clubId);
@@ -245,7 +248,7 @@ export function ClubReading({ clubId, me, isHost, people, onShelved }: {
   async function move(part: number) {
     setBusy(true);
     setReading({ ...r, my_part: part });
-    await setProgress(r.id, me, part);
+    setFailed(!(await setProgress(r.id, me, part)));
     setBusy(false);
     void load();
   }
@@ -289,6 +292,7 @@ export function ClubReading({ clubId, me, isHost, people, onShelved }: {
           <option value={r.parts}>{t("Finished it")}</option>
         </select>
         <span className="reading-bar" aria-hidden="true"><i style={{ width: `${(r.my_part / r.parts) * 100}%` }} /></span>
+        {failed && <span className="msg err">{t("Couldn't save where you are. Try again.")}</span>}
       </div>
 
       <div className="notes" aria-label={t("Notes")}>
@@ -308,7 +312,7 @@ export function ClubReading({ clubId, me, isHost, people, onShelved }: {
         {r.notes_ahead > 0 && (
           <p className="notes-ahead">🔒 {r.notes_ahead === 1 ? t("1 note further on. It opens when you get there.") : t("{n} notes further on. They open when you get there.", { n: r.notes_ahead })}</p>
         )}
-        {!notes.length && !r.notes_ahead && <p className="muted">{t("No notes yet. Write the first one about where you are.")}</p>}
+        {!notes.length && !r.notes_ahead && r.my_part > 0 && <p className="muted">{t("No notes yet. Write the first one about where you are.")}</p>}
       </div>
 
       {r.my_part > 0
@@ -388,7 +392,7 @@ function StartReadingSheet({ clubId, me, onClose, onDone }: { clubId: string; me
         <SearchPicker id="reading-search" label={t("Find the book")} placeholder={t("Title or author")} source="Open Library"
           search={searchBooks} manual={{ subtitle: t("Author or publisher") }} onPick={setBook} />
       )}
-      <div className="row meeting-fields">
+      <div className="meeting-fields">
         <div className="field">
           <label htmlFor="r-parts">{t("How many")}</label>
           <input id="r-parts" type="number" min={1} max={200} value={parts} onChange={(e) => setParts(Number(e.target.value) || 1)} />
@@ -431,7 +435,7 @@ function EditReadingSheet({ reading, onClose, onDone }: { reading: Reading; onCl
   return (
     <Sheet onClose={onClose} onSubmit={save} label={t("Edit the book")}>
       <h2>{reading.title}</h2>
-      <div className="row meeting-fields">
+      <div className="meeting-fields">
         <div className="field">
           <label htmlFor="e-parts">{t("How many")}</label>
           <input id="e-parts" type="number" min={1} max={200} value={parts} onChange={(e) => setParts(Number(e.target.value) || 1)} />

@@ -1568,7 +1568,9 @@ html.native.kb-open .tabbar { display: none; }
 .rsvp { display: flex; flex-wrap: wrap; gap: 8px; }
 .rsvp .chip { padding: 8px 16px; font-size: 14px; }
 .meeting .linkish { justify-self: start; }
-.meeting-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; align-items: end; }
+.meeting-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; align-items: end; }
+.meeting-fields .field { margin: 0; }
+.meeting-fields input, .meeting-fields select { width: 100%; }
 .reading-book { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 14px; align-items: start; }
 .reading-book > div { display: grid; gap: 3px; }
 .reading-title { font: 400 21px/1.2 var(--font-display); }

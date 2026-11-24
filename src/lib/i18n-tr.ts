@@ -754,4 +754,6 @@ export const TR: Record<string, string> = {
   "Get a nudge when {club} posts, votes or meets.": "{club} bir şey yazınca, oylama açınca ya da buluşma planlayınca haber al.",
   "Notifications from this club": "Bu kulübün bildirimleri",
   "Messages, votes, new books and meeting reminders": "Mesajlar, oylamalar, yeni kitaplar ve buluşma hatırlatmaları",
+  "Couldn't save your answer. Try again.": "Cevabın kaydedilemedi. Tekrar dene.",
+  "Couldn't save where you are. Try again.": "Nerede olduğun kaydedilemedi. Tekrar dene.",
 };
