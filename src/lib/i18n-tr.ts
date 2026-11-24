@@ -867,5 +867,5 @@ export const TR: Record<string, string> = {
   "Films on the shelf": "Raftaki filmler",
   "Close rating": "Puanlamayı kapat",
   "Members' scores": "Üyelerin puanları",
-  "This season's films, best rated first. The small number is how many members rated it.": "Bu sezonun filmleri, en yüksek puanlı önce. Küçük sayı, kaç üyenin puanladığı.",
+  "This season's films, best rated first.": "Bu sezonun filmleri, en yüksek puanlı önce.",
 };

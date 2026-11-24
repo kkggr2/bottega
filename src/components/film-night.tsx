@@ -317,13 +317,16 @@ export function SeasonScores({ clubId, refresh = 0 }: { clubId: string; refresh?
   return (
     <section className="hub-section season-scores" aria-label={t("Members' scores")}>
       <h2>{t("Members' scores")}</h2>
-      <p className="season-hint">{t("This season's films, best rated first. The small number is how many members rated it.")}</p>
+      <p className="season-hint">{t("This season's films, best rated first.")}</p>
       <ol>
         {scores.map((s) => (
           <li key={s.item_id}>
             {s.cover_url ? <img src={s.cover_url} alt="" loading="lazy" /> : <span className="season-blank" aria-hidden="true" />}
             <span className="season-title"><b>{s.title}</b><span className="muted">{s.subtitle}</span></span>
-            <span className="season-score"><b>{Number(s.average).toFixed(1)}</b> ★<span className="muted">{s.ratings}</span></span>
+            <span className="season-score">
+              <span><b>{Number(s.average).toFixed(1)}</b> <span aria-hidden="true">★</span></span>
+              <span className="season-count">{s.ratings === 1 ? t("1 rating") : t("{n} ratings", { n: s.ratings })}</span>
+            </span>
           </li>
         ))}
       </ol>
