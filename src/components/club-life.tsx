@@ -208,6 +208,8 @@ const WORDS: PartWord[] = ["chapter", "part", "section", "episode"];
 
 /** 54 → "0:54", 125 → "2:05". */
 const hm = (min: number) => `${Math.floor(min / 60)}:${String(min % 60).padStart(2, "0")}`;
+/** 145 → "2 h 25 min", 50 → "50 min". */
+const runtime = (min: number) => (min >= 60 ? `${Math.floor(min / 60)} h${min % 60 ? ` ${min % 60} min` : ""}` : `${min} min`);
 
 export function ClubReading({ clubId, me, isHost, people, onShelved }: {
   clubId: string; me: string; isHost: boolean; people: Person[]; onShelved: () => void;
@@ -291,7 +293,7 @@ export function ClubReading({ clubId, me, isHost, people, onShelved }: {
         <div>
           <b className="reading-title">{r.title}</b>
           {r.subtitle && <span className="muted">{r.subtitle}</span>}
-          {film && <span className="muted">{hm(r.parts)}</span>}
+          {film && <span className="muted">{runtime(r.parts)}</span>}
           {r.due_on && <span className="mono muted reading-due">{t(film ? "Watch by {date}" : "Read by {date}", { date: new Date(`${r.due_on}T12:00`).toLocaleDateString(undefined, { day: "numeric", month: "long" }) })}</span>}
           <span className="muted">{r.finished
             ? t(film ? "{n} of {m} have watched it" : "{n} of {m} reading have finished", { n: r.finished, m: Math.max(r.readers, r.finished) })
@@ -499,9 +501,10 @@ function StartReadingSheet({ clubId, me, onClose, onDone }: { clubId: string; me
   async function pick(f: Found) {
     setItem(f);
     if (!film || f.id.startsWith("hand-")) return;
-    // The film's running time, so minutes line up with the film.
-    const runtime = await filmDetails(f.id).then((d) => d.runtime ?? null).catch(() => null);
-    if (runtime) setParts(Math.min(300, runtime));
+    // The film's running time (so minutes line up with the film), and its director for the card.
+    const d = await filmDetails(f.id).catch(() => null);
+    if (d?.runtime) setParts(Math.min(300, d.runtime));
+    if (d?.subtitle) setItem({ ...f, subtitle: d.subtitle, link: d.link ?? f.link });
   }
 
   async function start() {
