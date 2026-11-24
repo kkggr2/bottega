@@ -25,13 +25,21 @@ export type FamousRoom = {
    * list and of search engines, with this note at the top.
    */
   draft?: string;
+  /** What's left out, by title: the record on the turntable, the film in the TV, the book open on the armchair. */
+  now?: { song?: string; film?: string; book?: string };
+  /** The same room in Spanish (for bilingual presses): the room's words, and each piece's line by its title. */
+  es?: { name: string; tagline: string; source: string; draft?: string; lines: Record<string, string> };
 };
 
-/** Each item: type, title, subtitle, cover, and optionally a line about it and a link (for example to read it free). */
-function build(slug: string, items: [PieceType, string, string, string | null, string?, string?][]): Piece[] {
-  return items.map(([type, title, subtitle, cover_url, body, link], i) => ({
+/**
+ * Each item: type, title, subtitle, cover, and optionally a line about it, a link (for example to read it free),
+ * and anything else a piece can carry (a song's 30-second preview).
+ */
+function build(slug: string, items: [PieceType, string, string, string | null, string?, string?, Partial<Piece>?][]): Piece[] {
+  return items.map(([type, title, subtitle, cover_url, body, link, extra], i) => ({
     id: `famous-${slug}-${i + 1}`, owner_id: `famous:${slug}`, type, title, subtitle, body: body ?? "", image_path: null, audio_path: null,
     link: link ?? null, cover_url, preview_url: null, clip_start: null, clip_end: null, position: i + 1, created_at: "",
+    ...extra,
   }));
 }
 
@@ -179,7 +187,8 @@ export const FAMOUS: FamousRoom[] = [
     ]),
   },
   // A draft for Cita Press (citapress.org), an open library and press for women's writing. Not listed until they agree.
-  // Every book links to its free edition on citapress.org. The lines are Bottega's placeholders for Cita to rewrite.
+  // Their own covers, each book linking to its free edition, with the designers and editors Cita credits.
+  // The lines are Bottega's placeholders for Cita to rewrite (in English and Spanish: Cita is a bilingual press).
   {
     slug: "citapress",
     person: "Cita Press", short: "Cita",
@@ -189,26 +198,73 @@ export const FAMOUS: FamousRoom[] = [
     sourceUrl: "https://citapress.org/",
     theme: "rose", wallpaper: "stripe",
     draft: "A draft made for Cita Press to look at. It isn't listed anywhere on Bottega until they say yes, and every line can be changed.",
+    now: { song: "The March of the Women", film: "The Yellow Wallpaper", book: "Dolores: Scenes from a Woman's Life" },
     pieces: build("citapress", [
       ["book", "The Yellow Wall-Paper", "Charlotte Perkins Gilman · 1892", cita("https://citapress.org/img/books/the-yellow-wall-paper/post.jpg"),
-        "A woman told to rest, a room she can't leave, and a wallpaper she can't stop reading.", "https://citapress.org/the-yellow-wall-paper/"],
+        "A woman told to rest, a room she can't leave, and a wallpaper she can't stop reading.\n\nCover: Laura Savina · Foreword: Catherine J. Golden",
+        "https://citapress.org/the-yellow-wall-paper/"],
       ["book", "The Awakening", "Kate Chopin · 1899", cita("https://citapress.org/img/books/the-awakening/post.png"),
-        "A summer on the Gulf Coast, and a woman who stops pretending.", "https://citapress.org/the-awakening/"],
+        "A summer on the Gulf Coast, and a woman who stops pretending.\n\nCover: Jiwon Park · Foreword: Heather Ostman",
+        "https://citapress.org/the-awakening/"],
       ["book", "Ten Days in a Mad-House", "Nellie Bly · 1887", cita("https://citapress.org/img/books/ten-days-in-a-mad-house/post.png"),
-        "The reporter who had herself committed to tell the truth about an asylum.", "https://citapress.org/ten-days-in-a-mad-house/"],
+        "The reporter who had herself committed to tell the truth about an asylum.\n\nCover and illustrations: Dajia Zhou · Foreword: Mikita Brottman",
+        "https://citapress.org/ten-days-in-a-mad-house/"],
       ["book", "Incidents in the Life of a Slave Girl", "Harriet Jacobs · 1861", cita("https://citapress.org/img/books/incidents-in-the-life-of-a-slave-girl/post.jpg"),
-        "Her own account of slavery and escape, written in her own name.", "https://citapress.org/incidents-in-the-life-of-a-slave-girl/"],
+        "Her own account of slavery and escape, written in her own name.\n\nCover: Thaïs Jacoponi · Foreword: Christy Hyman",
+        "https://citapress.org/incidents-in-the-life-of-a-slave-girl/"],
       ["book", "Behind a Mask", "Louisa May Alcott · 1866", cita("https://citapress.org/img/books/behind-a-mask/post.png"),
-        "The Little Women author, writing a thriller under another name.", "https://citapress.org/behind-a-mask/"],
+        "The Little Women author, writing a thriller under another name.\n\nCover: Lauren Smedley",
+        "https://citapress.org/behind-a-mask/"],
       ["book", "Mathilda", "Mary Shelley", cita("https://citapress.org/img/books/mathilda/post.jpg"),
-        "Written in 1819–20 and kept from readers for more than a century.", "https://citapress.org/mathilda/"],
+        "Written in 1819–20 and kept from readers for more than a century.\n\nCover: Kathy Mueller · Foreword: Christina Standley",
+        "https://citapress.org/mathilda/"],
       ["book", "Silly Novels by Silly Lady Novelists", "George Eliot · 1856", cita("https://citapress.org/img/books/silly-novels/post.png"),
-        "A great novelist's sharp review of the fiction women were expected to write.", "https://citapress.org/silly-novels/"],
+        "A great novelist's sharp review of the fiction women were expected to write.\n\nCover: Jean Yang",
+        "https://citapress.org/silly-novels/"],
       ["book", "Dolores: Scenes from a Woman's Life", "Soledad Acosta de Samper", cita("https://citapress.org/img/books/dolores-scenes-from-a-womans-life/post.jpeg"),
-        "A Colombian classic, in a new English translation.", "https://citapress.org/dolores-scenes-from-a-womans-life/"],
+        "A Colombian classic, in a new English translation.\n\nTranslation and foreword: Sara Abadía Alvarado · Cover: Mariana Sanín A.",
+        "https://citapress.org/dolores-scenes-from-a-womans-life/"],
       ["book", "A Luminous Halo", "Virginia Woolf", cita("https://citapress.org/img/books/a-luminous-halo-selected-writings-by-virginia-woolf/post.jpg"),
-        "Selected writings by Woolf, gathered by Cita.", "https://citapress.org/a-luminous-halo-selected-writings-by-virginia-woolf/"],
+        "Selected writings by Woolf, gathered by Cita.\n\nGuest editor: JoAnn Borri · Cover: Mariana Matos",
+        "https://citapress.org/a-luminous-halo-selected-writings-by-virginia-woolf/"],
+      ["book", "Men, Women and Ghosts", "Amy Lowell · 1916", cita("https://citapress.org/img/books/men-women-and-ghosts/post.png"),
+        "Stories told in poems. \"Patterns\", on the wall, is the first of them.\n\nCover: Annika Leppäaho",
+        "https://citapress.org/men-women-and-ghosts/"],
+      ["poem", "Patterns", "Amy Lowell · 1916", null, "I walk down the garden paths,\nAnd all the daffodils\nAre blowing, and the bright blue squills.\nI walk down the patterned garden-paths\nIn my stiff, brocaded gown.\nWith my powdered hair and jewelled fan,\nI too am a rare\nPattern. As I wander down\nThe garden paths.\n\nMy dress is richly figured,\nAnd the train\nMakes a pink and silver stain\nOn the gravel, and the thrift\nOf the borders.\nJust a plate of current fashion,\nTripping by in high-heeled, ribboned shoes.\nNot a softness anywhere about me,\nOnly whalebone and brocade.\nAnd I sink on a seat in the shade\nOf a lime tree. For my passion\nWars against the stiff brocade.\nThe daffodils and squills\nFlutter in the breeze\nAs they please.\nAnd I weep;\nFor the lime-tree is in blossom\nAnd one small flower has dropped upon my bosom.\n\nAnd the plashing of waterdrops\nIn the marble fountain\nComes down the garden-paths.\nThe dripping never stops.\nUnderneath my stiffened gown\nIs the softness of a woman bathing in a marble basin,\nA basin in the midst of hedges grown\nSo thick, she cannot see her lover hiding,\nBut she guesses he is near,\nAnd the sliding of the water\nSeems the stroking of a dear\nHand upon her.\nWhat is Summer in a fine brocaded gown!\nI should like to see it lying in a heap upon the ground.\nAll the pink and silver crumpled up on the ground.\n\nI would be the pink and silver as I ran along the paths,\nAnd he would stumble after,\nBewildered by my laughter.\nI should see the sun flashing from his sword-hilt and the buckles on his shoes.\nI would choose\nTo lead him in a maze along the patterned paths,\nA bright and laughing maze for my heavy-booted lover,\nTill he caught me in the shade,\nAnd the buttons of his waistcoat bruised my body as he clasped me,\nAching, melting, unafraid.\nWith the shadows of the leaves and the sundrops,\nAnd the plopping of the waterdrops,\nAll about us in the open afternoon—\nI am very like to swoon\nWith the weight of this brocade,\nFor the sun sifts through the shade.\n\nUnderneath the fallen blossom\nIn my bosom,\nIs a letter I have hid.\nIt was brought to me this morning by a rider from the Duke.\n\"Madam, we regret to inform you that Lord Hartwell\nDied in action Thursday se'nnight.\"\nAs I read it in the white, morning sunlight,\nThe letters squirmed like snakes.\n\"Any answer, Madam,\" said my footman.\n\"No,\" I told him.\n\"See that the messenger takes some refreshment.\nNo, no answer.\"\nAnd I walked into the garden,\nUp and down the patterned paths,\nIn my stiff, correct brocade.\nThe blue and yellow flowers stood up proudly in the sun,\nEach one.\nI stood upright too,\nHeld rigid to the pattern\nBy the stiffness of my gown.\nUp and down I walked,\nUp and down.\n\nIn a month he would have been my husband.\nIn a month, here, underneath this lime,\nWe would have broke the pattern;\nHe for me, and I for him,\nHe as Colonel, I as Lady,\nOn this shady seat.\nHe had a whim\nThat sunlight carried blessing.\nAnd I answered, \"It shall be as you have said.\"\nNow he is dead.\n\nIn Summer and in Winter I shall walk\nUp and down\nThe patterned garden-paths\nIn my stiff, brocaded gown.\nThe squills and daffodils\nWill give place to pillared roses, and to asters, and to snow.\nI shall go\nUp and down,\nIn my gown.\nGorgeously arrayed,\nBoned and stayed.\nAnd the softness of my body will be guarded from embrace\nBy each button, hook, and lace.\nFor the man who should loose me is dead,\nFighting with the Duke in Flanders,\nIn a pattern called a war.\nChrist! What are patterns for?", "https://citapress.org/men-women-and-ghosts/read/"],
+      ["song", "The March of the Women", "Ethel Smyth · 1911", "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/be/ca/c7/becac7a6-2bfa-f11d-c72c-fed71aa27434/190295321994.jpg/600x600bb.jpg",
+        "The suffragettes' anthem, written by a woman composer. Sung here by the Chorus of the Plymouth Music Series.",
+        "https://music.apple.com/us/album/songs-of-sunrise-no-3-the-march-of-the-women/1484841192?i=1484841203",
+        { preview_url: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/b2/5a/6b/b25a6bdb-848c-30ca-c051-9d9be663e8a3/mzaf_14803217788646270337.plus.aac.p.m4a" }],
+      ["scene", "The Yellow Wallpaper", "Kevin Pontuti · 2021", "https://i.ytimg.com/vi/zgws4d1_APY/hqdefault.jpg",
+        "Charlotte Perkins Gilman's story on screen. The trailer.", "https://www.youtube.com/watch?v=zgws4d1_APY"],
+      ["scene", "10 Days in a Madhouse", "Timothy Hines · 2015", "https://i.ytimg.com/vi/5P3Tz3tLX90/hqdefault.jpg",
+        "Nellie Bly's ten days, filmed. The trailer.", "https://www.youtube.com/watch?v=5P3Tz3tLX90"],
+      ["scene", "Grand Isle", "Mary Lambert · 1991", "https://i.ytimg.com/vi/aFrn5smk4uM/hqdefault.jpg",
+        "Kate Chopin's The Awakening, on film. The trailer.", "https://www.youtube.com/watch?v=aFrn5smk4uM"],
     ]),
+    es: {
+      name: "Cita Press",
+      tagline: "Escritura de mujeres, libre para todo el mundo. Cada libro de esta estantería se puede leer gratis en citapress.org.",
+      source: "Libros y portadas de la biblioteca de acceso abierto de Cita Press.",
+      draft: "Un borrador hecho para que Cita Press lo vea. No aparece en ningún lugar de Bottega hasta que digan que sí, y cada línea se puede cambiar.",
+      lines: {
+        "The Yellow Wall-Paper": "Una mujer a la que mandan descansar, un cuarto del que no puede salir y un papel tapiz que no deja de leer.",
+        "The Awakening": "Un verano en la costa del Golfo y una mujer que deja de fingir.",
+        "Ten Days in a Mad-House": "La periodista que se hizo internar para contar la verdad sobre un manicomio.",
+        "Incidents in the Life of a Slave Girl": "Su propio relato de la esclavitud y la huida, escrito con su propio nombre.",
+        "Behind a Mask": "La autora de Mujercitas, escribiendo un thriller con otro nombre.",
+        "Mathilda": "Escrita en 1819–20 y apartada de los lectores durante más de un siglo.",
+        "Silly Novels by Silly Lady Novelists": "La crítica afilada de una gran novelista a la ficción que se esperaba que escribieran las mujeres.",
+        "Dolores: Scenes from a Woman's Life": "Un clásico colombiano, en una nueva traducción al inglés.",
+        "A Luminous Halo": "Escritos escogidos de Woolf, reunidos por Cita.",
+        "Men, Women and Ghosts": "Historias contadas en poemas. «Patterns», en la pared, es la primera.",
+        "Patterns": "",
+        "The March of the Women": "El himno de las sufragistas, compuesto por una mujer.",
+        "The Yellow Wallpaper": "El cuento de Charlotte Perkins Gilman en la pantalla. El tráiler.",
+        "10 Days in a Madhouse": "Los diez días de Nellie Bly, en película. El tráiler.",
+        "Grand Isle": "El despertar de Kate Chopin, en película. El tráiler.",
+      },
+    },
   },
 ];
 

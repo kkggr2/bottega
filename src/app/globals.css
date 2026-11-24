@@ -1606,3 +1606,6 @@ html.native.kb-open .tabbar { display: none; }
 .watch-lock { margin: 0; font-size: 13px; }
 .notes.live { max-height: 320px; overflow-y: auto; }
 .watch-along > .linkish { justify-self: start; }
+
+/* Famous rooms with a Spanish version: the English / Español switch under the source line. */
+.famous-lang { margin-top: 12px; }
