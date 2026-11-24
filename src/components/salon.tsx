@@ -7,6 +7,7 @@ import { ago, myThreads, type Thread } from "@/lib/chat";
 import { SALON, usePalette } from "@/lib/room-colors";
 import { TonightRooms } from "./chat";
 import { ClubsSection } from "./club";
+import { ClubSuggestionCard } from "./club-discovery";
 import { Gate } from "./gate";
 import { useAuth } from "./auth";
 import { useRemembered } from "@/lib/remember";
@@ -32,6 +33,7 @@ export function SalonView() {
       </header>
       <TonightRooms />
       <ClubsSection />
+      <ClubSuggestionCard />
       <Letters />
     </div>
   );

@@ -1790,3 +1790,31 @@ html.native.kb-open .tabbar { display: none; }
 .club-tabs button.on .club-tab-badge { background: var(--bg); color: var(--fg); }
 /* Your own messages sit on gold: their name and time take the message's ink, not the page's grey. */
 .club .chat-msg.mine .who, .club .chat-msg.mine .when, .club .chat-msg.mine .muted { color: inherit; opacity: .72; }
+
+/* ---------------------------------------------------------------------------
+   Clubs that grow (components/club-discovery.tsx). Calm and plain: one switch for hosts, one card in the Salon.
+   --------------------------------------------------------------------------- */
+.club-settings .club-open { flex: 0 0 100%; display: grid; gap: 6px; justify-items: start; margin: 0 0 6px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.club-open .settings-row { width: 100%; border: 0; padding: 4px 0; text-align: left; }
+.club-open .settings-row > span { font: 600 16px/1.35 var(--font-ui); }
+.club-open .settings-row small { font: 400 14px/1.4 var(--font-ui); color: var(--fg); opacity: .8; }
+.club-open .linkish { font-size: 14.5px; }
+.discover-how { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; font: 400 15.5px/1.45 var(--font-ui); }
+.discover-where { border: 0; margin: 0; padding: 0; display: grid; gap: 10px; }
+.discover-where legend { font: 600 15px/1.3 var(--font-ui); margin-bottom: 8px; }
+.discover-where .check { font-size: 16px; align-items: center; }
+.discover-where .field { margin: 0 0 0 28px; }
+.club-suggest { display: grid; gap: 8px; padding: 18px; border-radius: 18px; background: color-mix(in srgb, var(--fg) 6%, transparent); border: 1px solid color-mix(in srgb, var(--fg) 9%, transparent); }
+.club-suggest-label { margin: 0; font: 600 14px/1.3 var(--font-ui); color: var(--brass, #E2B464); }
+.club-suggest-name { display: flex; align-items: center; gap: 10px; }
+.club-suggest-name span { font-size: 26px; line-height: 1; }
+.club-suggest-name h2 { margin: 0; font: 400 24px/1.15 var(--font-display); }
+.club-suggest-where { margin: 0; font: 600 15.5px/1.4 var(--font-ui); }
+.club-suggest-why { margin: 0; font: 400 16px/1.45 var(--font-ui); }
+.club-suggest .row { margin-top: 6px; gap: 10px; }
+.town-ask { display: grid; gap: 10px; }
+.town-ask h2 { margin: 0; font: 400 22px/1.2 var(--font-display); }
+.town-ask p { margin: 0; font: 400 15.5px/1.45 var(--font-ui); }
+.town-ask-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.town-ask-form input { font: 400 16px/1.3 var(--font-ui); }
+.town-ask .linkish { justify-self: start; font-size: 14.5px; }

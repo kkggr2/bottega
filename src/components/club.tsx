@@ -28,6 +28,7 @@ import { Gate } from "./gate";
 import { Sheet } from "./sheet";
 import { ClubMeeting, ClubPin, ClubReading } from "./club-life";
 import { FilmNight, SeasonScores } from "./film-night";
+import { ClubOpenSwitch } from "./club-discovery";
 import { PushAsk } from "./push-ask";
 import { notifyClub } from "@/lib/push";
 
@@ -523,6 +524,7 @@ function ClubSettings({ club, me, people, onChanged }: { club: MyClub; me: Profi
 
   return (
     <div className="club-settings">
+      {club.is_host && <ClubOpenSwitch clubId={club.id} clubName={club.name} />}
       <MuteSwitch clubId={club.id} />
       {club.is_host && <button type="button" className="linkish" onClick={() => setOpen("members")}>{t("Manage members")}</button>}
       {owner ? (

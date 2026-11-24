@@ -386,3 +386,48 @@ export async function openRating(clubId: string, itemId: string | null): Promise
   const { error } = await supabase().rpc("open_club_rating", { p_club: clubId, p_item: itemId });
   return error ? rpcError(error.message) : null;
 }
+
+// ---------------------------------------------------------------------------
+// Clubs that grow: people whose rooms share the club's taste can find it
+// (supabase/migrations/20261209000000_club_discovery.sql)
+// ---------------------------------------------------------------------------
+
+export type Discovery = { discoverable: boolean; meets_in: string; meets_online: boolean; meets_when: string; reach: number };
+export type Suggestion = {
+  club_id: string; slug: string; name: string; emoji: string;
+  meets_in: string; meets_online: boolean; meets_when: string; members: number; shared: string[];
+};
+
+export async function clubDiscovery(clubId: string): Promise<Discovery | null> {
+  const { data } = await supabase().rpc("club_discovery", { p_club: clubId });
+  return ((data ?? []) as Discovery[])[0] ?? null;
+}
+
+export async function setClubDiscovery(clubId: string, on: boolean, where: { town: string; online: boolean; when: string }): Promise<string | null> {
+  const { error } = await supabase().rpc("set_club_discovery", { p_club: clubId, p_on: on, p_in: where.town, p_online: where.online, p_when: where.when });
+  return error ? rpcError(error.message) : null;
+}
+
+export async function clubSuggestion(): Promise<Suggestion | null> {
+  const { data } = await supabase().rpc("club_suggestion");
+  return ((data ?? []) as Suggestion[])[0] ?? null;
+}
+
+export async function notForMe(clubId: string): Promise<void> {
+  await supabase().rpc("not_for_me", { p_club: clubId });
+}
+
+export async function myTown(): Promise<string> {
+  const { data } = await supabase().rpc("my_town");
+  return (data as string | null) ?? "";
+}
+
+export async function setMyTown(town: string): Promise<boolean> {
+  const { error } = await supabase().rpc("set_my_town", { p_town: town });
+  return !error;
+}
+
+/** "Milton Keynes · Wednesdays, 6:30pm" or "Online". */
+export function meetsLine(d: { meets_in: string; meets_online: boolean; meets_when: string }): string {
+  return [d.meets_online ? "Online" : d.meets_in, d.meets_when].filter(Boolean).join(" · ");
+}
