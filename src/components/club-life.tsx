@@ -52,7 +52,7 @@ export function ClubMeeting({ clubId, clubName, me, isHost }: { clubId: string; 
   if (!meeting && !isHost) return null;
 
   return (
-    <section className="hub-section meeting" aria-label={t("Next meeting")}>
+    <section className={`hub-section meeting${meeting ? "" : " hub-empty"}`} aria-label={t("Next meeting")}>
       <div className="tonight-head">
         <h2>{t("Next meeting")}</h2>
         {isHost && <button className="btn ghost small" type="button" onClick={() => setEditing(true)}>{meeting ? t("Change") : t("Plan one")}</button>}
@@ -85,9 +85,7 @@ export function ClubMeeting({ clubId, clubName, me, isHost }: { clubId: string; 
           {failed && <p className="msg err">{t("Couldn't save your answer. Try again.")}</p>}
           <button type="button" className="linkish" onClick={() => downloadIcs(meeting, clubName)}>{t("Add to my calendar")}</button>
         </>
-      ) : (
-        <p className="muted">{t("Set a date and a place, and everyone can say if they're coming. They're reminded the day before.")}</p>
-      )}
+      ) : null}
 
       {editing && (
         <MeetingSheet clubId={clubId} me={me} meeting={meeting ?? null} onClose={() => setEditing(false)}
@@ -236,12 +234,11 @@ export function ClubReading({ clubId, me, isHost, people, onShelved }: {
   if (!reading) {
     if (!isHost) return null;
     return (
-      <section className="hub-section reading" aria-label={t("Read or watch together")}>
+      <section className="hub-section reading hub-empty" aria-label={t("Read or watch together")}>
         <div className="tonight-head">
           <h2>{t("Read or watch together")}</h2>
-          <button className="btn small" type="button" onClick={() => setStarting(true)}>{t("Choose")}</button>
+          <button className="btn ghost small" type="button" onClick={() => setStarting(true)}>{t("Choose")}</button>
         </div>
-        <p className="muted">{t("Set the book or film you're on together. Everyone says how far they are, and notes stay folded until they get there, so nobody is spoiled.")}</p>
         {starting && <StartReadingSheet clubId={clubId} me={me} onClose={() => setStarting(false)}
           onDone={() => { setStarting(false); void load(); void notifyClub(clubId, "reading"); }} />}
       </section>

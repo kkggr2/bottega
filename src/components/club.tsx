@@ -175,6 +175,10 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [shelfTick, setShelfTick] = useState(0);
+  const [tab, setTab] = useState<ClubTab>(() => {
+    if (isNew) return "shelf";
+    try { return (localStorage.getItem(`bottega.clubTab.${slug}`) as ClubTab | null) ?? "now"; } catch { return "now"; }
+  });
 
   const load = useCallback(async () => {
     const mine = (await myClubs()).find((c) => c.slug === slug) ?? null;
@@ -217,100 +221,100 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
   const label: Record<RosterRow["relation"], string> = { me: t("You"), friends: t("Keys swapped"), asked: t("Asked"), asking: t("Accept"), none: t("Swap keys") };
   const canSwap = people.some((p) => p.relation === "none" || p.relation === "asking");
 
+  const tabs: { id: ClubTab; label: string; badge?: number }[] = [
+    { id: "now", label: t("Now") },
+    { id: "chat", label: t("Chat"), badge: tab !== "chat" && club.messages > 0 ? club.messages : undefined },
+    { id: "shelf", label: t("Shelf") },
+    { id: "people", label: t("People") },
+  ];
+  const pick = (id: ClubTab) => { setTab(id); try { localStorage.setItem(`bottega.clubTab.${club.slug}`, id); } catch {} };
+
   return (
     <section className="chat club">
       <Link href="/salon" className="mono muted back">&larr; {t("Salon")}</Link>
-      <p className="join-emoji small" aria-hidden="true">{club.emoji}</p>
-      <h1>{club.name}</h1>
+      <header className="club-head">
+        <span className="join-emoji small" aria-hidden="true">{club.emoji}</span>
+        <h1>{club.name}</h1>
+        <button className="btn ghost small" type="button" onClick={() => setSharing(true)}>{t("Invite")}</button>
+      </header>
       <GuestNote />
-      <div className="row club-actions">
-        <button className="btn" type="button" onClick={() => setSharing(true)}>{t("Invite people")}</button>
-        {canSwap && <button className="btn ghost" type="button" disabled={busy} onClick={swapAll}>{t("Swap keys with everyone")}</button>}
-      </div>
-      <p className="msg ok" aria-live="polite">{note}</p>
 
-      {stats && stats.members > 0 && (
-        <div className="club-stats" aria-label={t("How the link is doing")}>
-          <span><b>{stats.members}</b> {t("joined")}</span>
-          <span><b>{stats.joined_7d}</b> {t("this week")}</span>
-          <span><b>{stats.came_back}</b> {t("came back")}</span>
-          <span><b>{stats.active_7d}</b> {t("active this week")}</span>
+      {/* One thing at a time: what's happening, the conversation, what we've done together, who's here. */}
+      <nav className="club-tabs" role="tablist" aria-label={club.name}>
+        {tabs.map((x) => (
+          <button key={x.id} type="button" role="tab" aria-selected={tab === x.id} className={tab === x.id ? "on" : ""} onClick={() => pick(x.id)}>
+            {x.label}{x.badge ? <span className="club-tab-badge" aria-label={t("{n} new", { n: x.badge })}>{x.badge}</span> : null}
+          </button>
+        ))}
+      </nav>
+
+      {tab === "now" && (
+        <div className="club-now" role="tabpanel" data-empty={t("Nothing planned yet. A meeting, a book or a vote will show up here.")}>
+          <PushAsk userId={me.id} text={t("Get a nudge when {club} posts, votes or meets.", { club: club.name })} />
+          <ClubMeeting clubId={club.id} clubName={club.name} me={me.id} isHost={club.is_host} />
+          <ClubReading clubId={club.id} me={me.id} isHost={club.is_host} people={people} onShelved={() => setShelfTick((n) => n + 1)} />
+          <NextUp clubId={club.id} isHost={club.is_host} onShelved={() => setShelfTick((n) => n + 1)} />
         </div>
       )}
 
-      {club.is_host && <FirstSteps club={club} onInvite={() => setSharing(true)} />}
+      {tab === "chat" && (
+        <div role="tabpanel">
+          <ChatLog me={me} roomKey={`club:${club.slug}`} people={people.map((p) => ({ user_id: p.user_id, username: p.username, title: p.now_title }))}
+            placeholder={t("Write to {club}…", { club: club.name })} empty={t("Nobody has written yet. Say hello, or ask what everyone's into this week.")}
+            canModerate={club.is_host} onSent={() => void notifyClub(club.id, "message")} />
+          <p className="muted club-chat-note">{t("Only members can read it. Messages last a week.")}</p>
+        </div>
+      )}
 
-      <PushAsk userId={me.id} text={t("Get a nudge when {club} posts, votes or meets.", { club: club.name })} />
+      {tab === "shelf" && (
+        <div role="tabpanel" className="club-shelf-tab">
+          <ClubShelf clubId={club.id} me={me.id} isHost={club.is_host} refresh={shelfTick} startOpen={isNew} />
+          <ClubQuizzes club={club} />
+        </div>
+      )}
 
-      <ClubMeeting clubId={club.id} clubName={club.name} me={me.id} isHost={club.is_host} />
-
-      <ClubReading clubId={club.id} me={me.id} isHost={club.is_host} people={people} onShelved={() => setShelfTick((n) => n + 1)} />
-
-      <NextUp clubId={club.id} isHost={club.is_host} onShelved={() => setShelfTick((n) => n + 1)} />
-
-      <ClubQuizzes slug={club.slug} />
-
-      <ClubShelf clubId={club.id} me={me.id} isHost={club.is_host} refresh={shelfTick} startOpen={isNew} />
-
-      <h2 className="thread-h">{t("Members")}</h2>
-      <ul className="roster">
-        {people.map((p) => (
-          <li key={p.user_id}>
-            <Link href={`/r/${p.username}`}>
-              <b>@{p.username}</b>{p.is_host ? <span className="mono muted"> {t("host")}</span> : p.role === "cohost" ? <span className="mono muted"> {t("co-host")}</span> : null}
-              {p.now_title && <span className="muted"> · {p.now_title}</span>}
-            </Link>
-            {p.relation === "none" || p.relation === "asking"
-              ? <button className="btn small" type="button" disabled={busy} onClick={() => swap(p)}>{label[p.relation]}</button>
-              : <span className="mono muted">{label[p.relation]}</span>}
-          </li>
-        ))}
-      </ul>
-
-      <h2 className="thread-h">{t("Club chat")}</h2>
-      <p className="muted">{t("Only members can read it. Messages last a week.")}</p>
-      <ChatLog me={me} roomKey={`club:${club.slug}`} people={people.map((p) => ({ user_id: p.user_id, username: p.username, title: p.now_title }))}
-        placeholder={t("Write to {club}…", { club: club.name })} empty={t("Nobody has written yet. Say hello, or ask what everyone's into this week.")}
-        canModerate={club.is_host} onSent={() => void notifyClub(club.id, "message")} />
-
-      <ClubSettings club={club} me={me} people={people} onChanged={load} />
+      {tab === "people" && (
+        <div role="tabpanel" className="club-people">
+          {stats && stats.members > 0 && (
+            <div className="club-stats" aria-label={t("How the link is doing")}>
+              <span><b>{stats.members}</b> {t("joined")}</span>
+              <span><b>{stats.joined_7d}</b> {t("this week")}</span>
+              <span><b>{stats.came_back}</b> {t("came back")}</span>
+              <span><b>{stats.active_7d}</b> {t("active this week")}</span>
+            </div>
+          )}
+          <ul className="roster">
+            {people.map((p) => (
+              <li key={p.user_id}>
+                <Link href={`/r/${p.username}`}>
+                  <b>@{p.username}</b>{p.is_host ? <span className="mono muted"> {t("host")}</span> : p.role === "cohost" ? <span className="mono muted"> {t("co-host")}</span> : null}
+                  {p.now_title && <span className="muted"> · {p.now_title}</span>}
+                </Link>
+                {p.relation === "none" || p.relation === "asking"
+                  ? <button className="btn small" type="button" disabled={busy} onClick={() => swap(p)}>{label[p.relation]}</button>
+                  : <span className="mono muted">{label[p.relation]}</span>}
+              </li>
+            ))}
+          </ul>
+          {canSwap && <button className="btn ghost small" type="button" disabled={busy} onClick={swapAll}>{t("Swap keys with everyone")}</button>}
+          <p className="msg ok" aria-live="polite">{note}</p>
+          <ClubSettings club={club} me={me} people={people} onChanged={load} />
+        </div>
+      )}
 
       {sharing && <InviteSheet club={club} onClose={() => setSharing(false)} />}
     </section>
   );
 }
 
-/** For a new club's host: four first steps, until they're done with it. */
-function FirstSteps({ club, onInvite }: { club: MyClub; onInvite: () => void }) {
-  const t = useT();
-  const key = `bottega.firstSteps.${club.slug}`;
-  const [hidden, setHidden] = useState(true);
-  useEffect(() => {
-    try { setHidden(localStorage.getItem(key) === "done"); } catch { setHidden(false); } // eslint-disable-line react-hooks/set-state-in-effect -- reading a saved preference once
-  }, [key]);
-  if (hidden || club.members > 5) return null;
-  const quizMail = `mailto:hello@bottegarooms.com?subject=${encodeURIComponent(`A quiz for ${club.name}`)}&body=${encodeURIComponent(
-    `Hi Çağla,\n\nWe'd love a quiz for ${club.name} (${joinUrl(club.slug)}).\n\nTheme (our next book or film, a director, an author…): \n\nAnything we love or joke about: \n`)}`;
-  const done = () => { try { localStorage.setItem(key, "done"); } catch {} setHidden(true); };
-  return (
-    <section className="first-steps" aria-label={t("First steps")}>
-      <div className="tonight-head">
-        <h2>{t("Your club is ready")}</h2>
-        <button type="button" className="btn ghost small" onClick={done}>{t("Done")}</button>
-      </div>
-      <ol>
-        <li><button type="button" className="linkish" onClick={onInvite}>{t("Invite your members")}</button><span>{t("One link, or a QR code for your next meeting.")}</span></li>
-        <li><a href="#shelf" className="linkish">{t("Fill the shelf")}</a><span>{t("Add a few books or films you've done together.")}</span></li>
-        <li><a href="#next" className="linkish">{t("Ask what's next")}</a><span>{t("Put up two to four choices and let everyone vote.")}</span></li>
-        <li><a href={quizMail} className="linkish">{t("Ask for your club's quiz")}</a><span>{t("Tell us your theme; your quiz appears here, usually within a day.")}</span></li>
-      </ol>
-    </section>
-  );
-}
+type ClubTab = "now" | "chat" | "shelf" | "people";
 
 /** The club's own quizzes: one try each, with a high score table only the club sees. */
-function ClubQuizzes({ slug }: { slug: string }) {
+function ClubQuizzes({ club }: { club: MyClub }) {
   const t = useT();
+  const slug = club.slug;
+  const quizMail = `mailto:hello@bottegarooms.com?subject=${encodeURIComponent(`A quiz for ${club.name}`)}&body=${encodeURIComponent(
+    `Hi Çağla,\n\nWe'd love a quiz for ${club.name} (${joinUrl(club.slug)}).\n\nTheme (our next book or film, a director, an author…): \n\nAnything we love or joke about: \n`)}`;
   const [quizzes, setQuizzes] = useState<ClubQuizCard[] | null>(null);
   useEffect(() => {
     (async () => {
@@ -321,10 +325,13 @@ function ClubQuizzes({ slug }: { slug: string }) {
       setQuizzes(res.ok ? ((await res.json()) as ClubQuizCard[]) : []);
     })().catch(() => setQuizzes([]));
   }, [slug]);
-  if (!quizzes?.length) return null;
+  if (!quizzes) return null;
   return (
     <>
-      <h2 className="thread-h">{t("Club quizzes")}</h2>
+      <div className="tonight-head">
+        <h2 className="thread-h">{t("Club quizzes")}</h2>
+        {club.is_host && <a href={quizMail} className="linkish">{t("Ask for your club's quiz")}</a>}
+      </div>
       <div className="club-quizzes">
         {quizzes.map((q) => (
           <Link key={q.id} href={`/club/${slug}/quiz/${q.id}`} className={`quiz-card${q.mine?.done ? " played" : ""}`}>

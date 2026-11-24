@@ -71,12 +71,15 @@ export function NextUp({ clubId, isHost, onShelved }: { clubId: string; isHost: 
   if (poll === undefined) return null;
   const open = poll && !poll.closed_at;
   const max = poll ? Math.max(1, ...poll.counts) : 1;
+  const nothing = !open && !(poll && poll.winner != null);
+  // Members don't see an empty vote; hosts get one quiet line to ask.
+  if (nothing && !isHost) return null;
 
   return (
-    <section className="hub-section" id="next" aria-label="What's next">
+    <section className={`hub-section${nothing ? " hub-empty" : ""}`} id="next" aria-label="What's next">
       <div className="tonight-head">
         <h2>{open ? (poll.question === "What's next?" ? t("What's next?") : poll.question) : t("What's next?")}</h2>
-        {isHost && !open && <button className="btn small" type="button" onClick={() => setAsking(true)}>{t("Ask the club")}</button>}
+        {isHost && !open && <button className="btn ghost small" type="button" onClick={() => setAsking(true)}>{t("Ask the club")}</button>}
       </div>
 
       {open ? (
@@ -108,9 +111,7 @@ export function NextUp({ clubId, isHost, onShelved }: { clubId: string; isHost: 
         </>
       ) : poll && poll.winner != null ? (
         <p className="muted">{t("Last time the club picked")} <b className="ink">{poll.options[poll.winner]?.title}</b>.{isHost ? ` ${t("Ask again when you're ready for the next one.")}` : ""}</p>
-      ) : (
-        <p className="muted">{isHost ? t("Put up two to four choices for the next film, book or record, and let the club vote.") : t("When the host asks what's next, the vote shows up here.")}</p>
-      )}
+      ) : null}
       <p className="msg err" aria-live="polite">{msg}</p>
 
       {asking && <AskSheet clubId={clubId} onClose={() => setAsking(false)} onDone={() => { setAsking(false); void load(); }} />}

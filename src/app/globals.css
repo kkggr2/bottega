@@ -1612,3 +1612,21 @@ html.native.kb-open .tabbar { display: none; }
 
 /* "On Letterboxd? Bring your films in a tap", under the welcome page buttons. */
 .lb-line { margin: 10px 0 0; font-size: 15px; }
+
+/* The club page, calmer: a quiet header, four tabs, one thing at a time. */
+.club-head { display: flex; align-items: center; gap: 10px; margin: 4px 0 2px; }
+.club-head .join-emoji.small { margin: 0; font-size: 26px; line-height: 1; }
+.club-head h1 { flex: 1; min-width: 0; margin: 0; font-size: clamp(26px, 7vw, 36px); line-height: 1.1; overflow-wrap: anywhere; }
+.club-tabs { display: flex; gap: 4px; margin: 14px 0 18px; padding: 4px; border-radius: 999px; background: color-mix(in srgb, var(--fg) 7%, transparent); }
+.club-tabs button { flex: 1; border: 0; background: none; color: var(--muted); font: 500 14px/1 var(--font-body, inherit); padding: 9px 6px; border-radius: 999px; cursor: pointer; display: inline-flex; justify-content: center; align-items: center; gap: 6px; }
+.club-tabs button.on { background: var(--surface); color: var(--fg); box-shadow: 0 1px 3px rgba(0,0,0,.18); }
+.club-tab-badge { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--brass); color: #1E140C; font-size: 11px; line-height: 18px; text-align: center; }
+.club-now { display: grid; gap: 22px; }
+.club-now:not(:has(section))::before { content: attr(data-empty); color: var(--muted); padding: 18px 0; }
+/* Nothing planned yet (for hosts): one quiet line each, read as one short list. */
+.hub-section.hub-empty { gap: 0; }
+.hub-section.hub-empty .tonight-head h2 { font-size: 17px; color: var(--muted); }
+.club-now > .hub-empty + .hub-empty { margin-top: -10px; padding-top: 12px; border-top: 1px solid var(--line); }
+.club-chat-note { font-size: 12.5px; text-align: center; margin-top: 10px; }
+.club-shelf-tab, .club-people { display: grid; gap: 18px; }
+.club-people .club-settings { margin-top: 10px; }

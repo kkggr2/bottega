@@ -795,4 +795,11 @@ export const TR: Record<string, string> = {
   "Your favourite films in gold frames, in under a minute. Add the books and records too, then step into your friends' rooms and see how alike you are.": "En sevdiğin filmler bir dakikadan kısa sürede altın çerçevede. Kitaplarını ve plaklarını da ekle, sonra arkadaşlarının odalarına gir ve ne kadar benzediğinizi gör.",
   "Bring my Letterboxd": "Letterboxd'umu getir",
   "On Letterboxd? Bring your films in a tap": "Letterboxd'da mısın? Filmlerini tek dokunuşla getir",
+  "Now": "Şimdi",
+  "Chat": "Sohbet",
+  "Shelf": "Raf",
+  "People": "Kişiler",
+  "Invite": "Davet et",
+  "{n} new": "{n} yeni",
+  "Nothing planned yet. A meeting, a book or a vote will show up here.": "Henüz planlanan bir şey yok. Bir buluşma, bir kitap ya da bir oylama burada görünür.",
 };
