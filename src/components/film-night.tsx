@@ -199,12 +199,18 @@ export function FilmNight({ clubId, slug, me, isHost, refresh = 0, onChanged }: 
   const [open, setOpen] = useState<RatingOpen | null | undefined>(undefined);
   const [picking, setPicking] = useState(false);
 
-  const load = useCallback(async () => setOpen(await ratingOpen(slug)), [slug]);
+  // Film clubs only: a book club never sees "film night" (a club with a film on its shelf is a film club).
+  const [hasFilms, setHasFilms] = useState(false);
+  const load = useCallback(async () => {
+    const o = await ratingOpen(slug);
+    setOpen(o);
+    if (isHost && o && !o.item_id) setHasFilms((await shelfOf(clubId)).some((s) => s.type === "film"));
+  }, [slug, clubId, isHost]);
   useEffect(() => { void load(); }, [load, refresh]); // eslint-disable-line react-hooks/set-state-in-effect -- fetching on open
 
   if (open === undefined || open === null) return null;
-  // Members only see it while a film is open; hosts get one quiet line to start it.
-  if (!open.item_id && !isHost) return null;
+  // Members only see it while a film is open; hosts of a film club get one quiet line to start it.
+  if (!open.item_id && !(isHost && hasFilms)) return null;
 
   return (
     <section className={`hub-section film-night${open.item_id ? "" : " hub-empty"}`} aria-label={t("Film night")}>
