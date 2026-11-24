@@ -31,9 +31,10 @@ export async function chatMembers(key: string): Promise<ChatMember[]> {
 }
 
 export async function chatMessages(key: string): Promise<ChatMessage[]> {
+  // The newest 300, shown oldest first (a club keeps three months, so there can be more).
   const { data } = await supabase().from("chat_messages").select("*").eq("room_key", key)
-    .order("created_at", { ascending: true }).limit(300);
-  return (data ?? []) as ChatMessage[];
+    .order("created_at", { ascending: false }).limit(300);
+  return ((data ?? []) as ChatMessage[]).reverse();
 }
 
 /** Returns an error to show, or null. */

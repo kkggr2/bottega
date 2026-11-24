@@ -21,18 +21,22 @@ const C = { paper: "#F2E8D3", card: "#FAF4E6", ink: "#2F2822", muted: "#6B5F52",
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
+/** Which email: the daily one about friends, or club news. */
+export type EmailKind = "digest" | "club";
+
 /** Signs an unsubscribe link so nobody can turn off someone else's email. */
-export function unsubscribeToken(userId: string): string {
-  return createHmac("sha256", process.env.CRON_SECRET ?? "").update(`unsubscribe:${userId}`).digest("hex").slice(0, 32);
+export function unsubscribeToken(userId: string, kind: EmailKind = "digest"): string {
+  const purpose = kind === "club" ? `unsubscribe-club:${userId}` : `unsubscribe:${userId}`;
+  return createHmac("sha256", process.env.CRON_SECRET ?? "").update(purpose).digest("hex").slice(0, 32);
 }
 
-export function validUnsubscribe(userId: string, token: string): boolean {
+export function validUnsubscribe(userId: string, token: string, kind: EmailKind = "digest"): boolean {
   if (!process.env.CRON_SECRET || !/^[0-9a-f-]{36}$/.test(userId) || !/^[0-9a-f]{32}$/.test(token)) return false;
-  return timingSafeEqual(Buffer.from(unsubscribeToken(userId)), Buffer.from(token));
+  return timingSafeEqual(Buffer.from(unsubscribeToken(userId, kind)), Buffer.from(token));
 }
 
-export function unsubscribeUrl(userId: string): string {
-  return `${SITE}/api/unsubscribe?u=${userId}&t=${unsubscribeToken(userId)}`;
+export function unsubscribeUrl(userId: string, kind: EmailKind = "digest"): string {
+  return `${SITE}/api/unsubscribe?u=${userId}&t=${unsubscribeToken(userId, kind)}${kind === "club" ? "&k=club" : ""}`;
 }
 
 /** Groups items by friend, newest friend first, into lines like "@cagla put on Teardrop and left Normal People on the armchair". */

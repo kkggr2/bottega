@@ -1,10 +1,12 @@
 import type { NextRequest } from "next/server";
+import { renderLetter, sendEmail, type LetterClub } from "@/lib/club-email";
 import { renderDigest, unsubscribeUrl, type DigestItem } from "@/lib/digest-email";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 /*
  * GET /api/digest — run once a day by Vercel Cron (see vercel.json).
  * Emails each person what their friends put on since their last email, only if something changed.
+ * On Sundays it also sends the weekly club letter to members without notifications (see clubLetters below).
  * Vercel sends "Authorization: Bearer $CRON_SECRET"; anything else is turned away.
  */
 
@@ -49,5 +51,21 @@ export async function GET(request: NextRequest) {
     const { error: markError } = await db.rpc("mark_digest_sent", { p_users: sent });
     if (markError) return Response.json({ sent: sent.length, failed: failed.length, error: markError.message }, { status: 500 });
   }
-  return Response.json({ people: batch.length, sent: sent.length, failed: failed.length });
+  const letters = new Date().getUTCDay() === 0 ? await clubLetters(db) : null;
+  return Response.json({ people: batch.length, sent: sent.length, failed: failed.length, letters });
+}
+
+/**
+ * The weekly club letter: for members with notifications off, what's on in each of their clubs
+ * (the host's note, the next meeting, the book or film, how many new messages). Only when there is something.
+ */
+async function clubLetters(db: NonNullable<ReturnType<typeof supabaseAdmin>>) {
+  const { data, error } = await db.rpc("club_letter_batch");
+  if (error) return { error: error.message };
+  const sent: string[] = [];
+  for (const p of (data ?? []) as { user_id: string; email: string; clubs: LetterClub[] }[]) {
+    if (p.clubs?.length && await sendEmail(p.email, p.user_id, renderLetter(p.user_id, p.clubs))) sent.push(p.user_id);
+  }
+  if (sent.length) await db.rpc("mark_club_letter_sent", { p_users: sent });
+  return { sent: sent.length };
 }

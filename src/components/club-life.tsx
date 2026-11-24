@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { localTimeZone, meetingWhen } from "@/lib/club-time";
 import {
-  addNote, answerMeeting, cancelMeeting, finishReading, nextMeeting, readingNotes, readingNow, removeNote, saveMeeting,
-  setProgress, startReading, updateReading,
-  type ClubNote, type Meeting, type PartWord, type Reading, type ReadingKind, type Rsvp,
+  addNote, answerMeeting, cancelMeeting, clubPinned, finishReading, nextMeeting, readingNotes, readingNow, removeNote, saveMeeting,
+  setClubPin, setProgress, startReading, updateReading,
+  type ClubNote, type Meeting, type PartWord, type Pinned, type Reading, type ReadingKind, type Rsvp,
 } from "@/lib/clubs";
 import { useT } from "@/lib/i18n";
 import { filmDetails, searchBooks, searchFilms, type Found } from "@/lib/lookup";
@@ -17,12 +17,86 @@ import { Sheet } from "./sheet";
 
 /*
  * What a book club needs between meetings, and nothing more:
+ *   From the host — one pinned note at the top (what's next, a change of plan), so it doesn't get lost in the chat.
  *   Next meeting — when and where, who's coming, add it to your calendar. Reminded the day before.
  *   Now reading / Now watching — the book or film, how far you are, and notes that stay folded until you get there:
  *   by chapter for a book; by minute for a film, where Watch along runs a clock from when you press play.
  */
 
 type Person = { user_id: string; username: string };
+
+// ---------------------------------------------------------------------------
+// From the host: one pinned note
+// ---------------------------------------------------------------------------
+
+export function ClubPin({ clubId, isHost, refresh = 0 }: { clubId: string; isHost: boolean; refresh?: number }) {
+  const t = useT();
+  const [pinned, setPinned] = useState<Pinned | null | undefined>(undefined);
+  const [editing, setEditing] = useState(false);
+
+  const load = useCallback(async () => setPinned(await clubPinned(clubId)), [clubId]);
+  useEffect(() => { void load(); }, [load, refresh]); // eslint-disable-line react-hooks/set-state-in-effect -- fetching on open
+
+  if (pinned === undefined) return null;
+  if (!pinned && !isHost) return null;
+
+  return (
+    <section className={`hub-section club-pin${pinned ? "" : " hub-empty"}`} aria-label={t("From the host")}>
+      <div className="tonight-head">
+        <h2>{pinned ? <><span aria-hidden="true">📌 </span>{t("From the host")}</> : t("A note for everyone")}</h2>
+        {isHost && <button className="btn ghost small" type="button" onClick={() => setEditing(true)}>{pinned ? t("Change") : t("Write one")}</button>}
+      </div>
+      {pinned && (
+        <>
+          <p className="club-pin-note">{pinned.note}</p>
+          <p className="muted club-pin-who">{pinned.by_username ? `@${pinned.by_username} · ` : ""}{pinnedWhen(pinned.pinned_at, t)}</p>
+        </>
+      )}
+      {editing && (
+        <PinSheet clubId={clubId} current={pinned?.note ?? ""} onClose={() => setEditing(false)}
+          onDone={(told) => { setEditing(false); void load(); if (told) void notifyClub(clubId, "pin"); }} />
+      )}
+    </section>
+  );
+}
+
+function pinnedWhen(iso: string, t: ReturnType<typeof useT>): string {
+  const days = Math.floor((Date.now() - Date.parse(iso)) / 864e5);
+  return days < 1 ? t("today") : days === 1 ? t("yesterday") : new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function PinSheet({ clubId, current, onClose, onDone }: { clubId: string; current: string; onClose: () => void; onDone: (told: boolean) => void }) {
+  const t = useT();
+  const [note, setNote] = useState(current);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function save(text: string) {
+    setBusy(true);
+    const err = await setClubPin(clubId, text);
+    setBusy(false);
+    if (err) return setError(t(err));
+    onDone(Boolean(text.trim()) && text.trim() !== current.trim());
+  }
+
+  return (
+    <Sheet onClose={onClose} onSubmit={() => save(note)} label={t("A note for everyone")}>
+      <h2>{t("A note for everyone")}</h2>
+      <p className="muted">{t("It stays at the top of the club until you change it. Members get one nudge.")}</p>
+      <div className="field">
+        <label htmlFor="pin-note" className="sr-only">{t("Note")}</label>
+        <textarea id="pin-note" rows={4} maxLength={600} autoFocus value={note} onChange={(e) => setNote(e.target.value)}
+          placeholder={t("Next book is Middlemarch. We meet upstairs this time, not the back room.")} />
+      </div>
+      <p className="msg err" aria-live="polite">{error}</p>
+      <div className="row">
+        {current && <button className="btn ghost danger" type="button" disabled={busy} onClick={() => save("")}>{t("Take it down")}</button>}
+        <button className="btn ghost" type="button" onClick={onClose}>{t("Close")}</button>
+        <button className="btn" type="submit" disabled={busy || !note.trim()}>{busy ? t("Saving…") : t("Pin it")}</button>
+      </div>
+    </Sheet>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Next meeting
@@ -68,6 +142,7 @@ export function ClubMeeting({ clubId, clubName, me, isHost }: { clubId: string; 
             </p>
           )}
           {meeting.note && <p className="muted meeting-note">{meeting.note}</p>}
+          <MeetingPrep meeting={meeting} />
 
           <div className="rsvp" role="group" aria-label={t("Are you coming?")}>
             {(["yes", "maybe", "no"] as Rsvp[]).map((a) => (
@@ -109,6 +184,8 @@ function MeetingSheet({ clubId, me, meeting, onClose, onDone }: {
   const [place, setPlace] = useState(meeting?.place ?? "");
   const [link, setLink] = useState(meeting?.link ?? "");
   const [note, setNote] = useState(meeting?.note ?? "");
+  const [questions, setQuestions] = useState(meeting?.questions ?? "");
+  const [guide, setGuide] = useState(meeting?.guide_url ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -118,9 +195,15 @@ function MeetingSheet({ clubId, me, meeting, onClose, onDone }: {
     if (when.getTime() < Date.now() - 60e3) return setError(t("That's in the past."));
     const url = link.trim();
     if (url && !/^https:\/\/\S+$/.test(url)) return setError(t("A video link starts with https://"));
+    const guideUrl = guide.trim();
+    if (guideUrl && !/^https:\/\/\S+$/.test(guideUrl)) return setError(t("A reading guide link starts with https://"));
     setBusy(true);
     const iso = when.toISOString();
-    const err = await saveMeeting(clubId, me, { starts_at: iso, place: place.trim(), link: url || null, note: note.trim(), tz: localTimeZone() }, meeting?.id);
+    const draft = { starts_at: iso, place: place.trim(), link: url || null, note: note.trim(), tz: localTimeZone() };
+    // Questions and a guide only when there are some, so a club still saves meetings before the update is in.
+    const extra = questions.trim() || guideUrl || meeting?.questions || meeting?.guide_url
+      ? { questions: questions.trim(), guide_url: guideUrl || null } : {};
+    const err = await saveMeeting(clubId, me, { ...draft, ...extra }, meeting?.id);
     setBusy(false);
     if (err) return setError(t(err));
     onDone(!meeting || meeting.starts_at !== iso);
@@ -159,6 +242,18 @@ function MeetingSheet({ clubId, me, meeting, onClose, onDone }: {
         <label htmlFor="m-note">{t("Note (optional)")}</label>
         <textarea id="m-note" rows={2} maxLength={500} placeholder={t("Read up to chapter 12 · bring a snack")} value={note} onChange={(e) => setNote(e.target.value)} />
       </div>
+      <details className="meeting-more" open={Boolean(questions || guide)}>
+        <summary>{t("Discussion questions and a reading guide")}</summary>
+        <div className="field">
+          <label htmlFor="m-questions">{t("Questions (one per line)")}</label>
+          <textarea id="m-questions" rows={4} maxLength={2000} value={questions} onChange={(e) => setQuestions(e.target.value)}
+            placeholder={t("Who do you trust most by the end?\nWhat would you have done in her place?")} />
+        </div>
+        <div className="field">
+          <label htmlFor="m-guide">{t("Reading guide link")}</label>
+          <input id="m-guide" type="url" inputMode="url" maxLength={500} placeholder="https://" value={guide} onChange={(e) => setGuide(e.target.value)} />
+        </div>
+      </details>
       <p className="msg err" aria-live="polite">{error}</p>
       <div className="row">
         {meeting && <button className="btn ghost danger" type="button" disabled={busy} onClick={cancel}>{t("Cancel the meeting")}</button>}
@@ -166,6 +261,24 @@ function MeetingSheet({ clubId, me, meeting, onClose, onDone }: {
         <button className="btn" type="submit" disabled={busy}>{busy ? t("Saving…") : meeting ? t("Save") : t("Tell the club")}</button>
       </div>
     </Sheet>
+  );
+}
+
+/** The questions for the evening, folded until you want them, and the reading guide. */
+function MeetingPrep({ meeting }: { meeting: Meeting }) {
+  const t = useT();
+  const questions = (meeting.questions ?? "").split("\n").map((q) => q.trim()).filter(Boolean);
+  if (!questions.length && !meeting.guide_url) return null;
+  return (
+    <div className="meeting-prep">
+      {questions.length > 0 && (
+        <details>
+          <summary>{questions.length === 1 ? t("1 question for the evening") : t("{n} questions for the evening", { n: questions.length })}</summary>
+          <ol>{questions.map((q, i) => <li key={i}>{q}</li>)}</ol>
+        </details>
+      )}
+      {meeting.guide_url && <a href={meeting.guide_url} target="_blank" rel="noopener noreferrer">{t("Reading guide")} ↗</a>}
+    </div>
   );
 }
 
@@ -187,7 +300,7 @@ function downloadIcs(m: Meeting, clubName: string) {
     `UID:${m.id}@bottegarooms.com`, `DTSTAMP:${stamp(new Date())}`, `DTSTART:${stamp(start)}`, `DTEND:${stamp(end)}`,
     `SUMMARY:${esc(clubName)}`,
     m.place ? `LOCATION:${esc(m.place)}` : "",
-    `DESCRIPTION:${esc([m.note, m.link].filter(Boolean).join("\n"))}`,
+    `DESCRIPTION:${esc([m.note, m.link, m.questions, m.guide_url].filter(Boolean).join("\n"))}`,
     m.link ? `URL:${m.link}` : "",
     "END:VEVENT", "END:VCALENDAR",
   ].filter(Boolean).join("\r\n");

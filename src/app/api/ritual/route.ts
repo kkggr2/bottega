@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { renderReminder, sendEmail } from "@/lib/club-email";
 import { meetingWhen } from "@/lib/club-time";
 import { notifyConfigured, notifyUsers, type Note } from "@/lib/notify";
 import { quizFor, today } from "@/lib/quiz/server";
@@ -10,7 +11,8 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
  * your phone gets one quiet line: "Your turntable is free again. What are you playing today?"
  * Only for people who used it in the last week, and at most once a day.
  * Anyone else who used Bottega in the last two weeks and hasn't played today gets today's quiz instead.
- * Clubs: everyone who hasn't said "can't come" is reminded of a meeting the day before.
+ * Clubs: everyone who hasn't said "can't come" is reminded of a meeting the day before
+ * (by email, for members with no phone or browser to buzz).
  * Never more than one line a day per person: a meeting reminder first, then their best news
  * (new notes they can read, a vote, someone asking to swap keys, visitors), then the free turntable, then the quiz.
  */
@@ -42,12 +44,13 @@ export async function GET(request: NextRequest) {
 
   // One line a day at most per person: the first of these that applies.
   const told = new Set<string>();
-  const tell = async (users: string[], note: Note) => {
+  const reach = async (users: string[], note: Note): Promise<string[]> => {
     const fresh = [...new Set(users)].filter((u) => !told.has(u));
-    if (!fresh.length) return 0;
+    if (!fresh.length) return [];
     for (const u of fresh) told.add(u); // Even if their phone is off: don't stack a second line on them today.
-    return (await notifyUsers(db, fresh, note)).length;
+    return notifyUsers(db, fresh, note);
   };
+  const tell = async (users: string[], note: Note) => (await reach(users, note)).length;
   const sent: Record<string, number> = {};
   const count = (kind: string, n: number) => { sent[kind] = (sent[kind] ?? 0) + n; };
 
@@ -55,11 +58,20 @@ export async function GET(request: NextRequest) {
   const { data: due } = await db.rpc("due_meeting_reminders");
   for (const m of (due ?? []) as { slug: string; club_name: string; starts_at: string; place: string; tz: string; users: string[] }[]) {
     const where = m.place ? ` · ${m.place}` : "";
-    count("meeting", await tell(m.users, {
+    const reached = await reach(m.users, {
       title: m.club_name,
       body: `Coming up: ${meetingWhen(m.starts_at, m.tz)}${where}. Still coming?`,
       url: `bottega://club/${m.slug}`,
-    }));
+    });
+    count("meeting", reached.length);
+    // Members with no phone or browser to buzz get it by email instead (unless they turned club emails off).
+    const unreached = m.users.filter((u) => !reached.includes(u));
+    if (unreached.length) {
+      const { data: emails } = await db.rpc("club_email_targets", { p_users: unreached });
+      for (const e of (emails ?? []) as { user_id: string; email: string }[]) {
+        if (await sendEmail(e.email, e.user_id, renderReminder(e.user_id, m))) count("meeting_email", 1);
+      }
+    }
   }
 
   // 2. Each person's best news: new notes they can read, a vote, a friend request, visitors.

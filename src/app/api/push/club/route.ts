@@ -9,10 +9,11 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
  *   poll     a new vote on what's next
  *   meeting  a new or moved meeting
  *   reading  a new book to read, or film to watch
+ *   pin      a new note from the host, pinned at the top of the club
  * The server reads what happened itself and checks the caller did it. Muted members aren't told.
  */
 
-const QUIET: Record<string, string> = { message: "30 minutes", poll: "1 minute", meeting: "1 minute", reading: "1 minute" };
+const QUIET: Record<string, string> = { message: "30 minutes", poll: "1 minute", meeting: "1 minute", reading: "1 minute", pin: "1 minute" };
 const FRESH_MS = 2 * 60 * 1000;
 const fresh = (iso?: string | null) => Boolean(iso && Date.now() - Date.parse(iso) < FRESH_MS);
 const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
   if (!clubId || !/^[0-9a-f-]{36}$/.test(clubId) || !kind || !(kind in QUIET)) return new Response("Bad request", { status: 400 });
 
   const [{ data: club }, { data: member }, { data: who }] = await Promise.all([
-    db.from("clubs").select("id, slug, name, host").eq("id", clubId).maybeSingle(),
+    db.from("clubs").select("*").eq("id", clubId).maybeSingle(),
     db.from("club_members").select("role").eq("club_id", clubId).eq("user_id", me).maybeSingle(),
     db.from("profiles").select("username").eq("id", me).maybeSingle(),
   ]);
@@ -54,6 +55,8 @@ export async function POST(request: Request) {
         ? `Now watching: ${clip(data.title as string, 100)}. Tap Watch along when you press play.`
         : `Now reading: ${clip(data.title as string, 100)}`;
     }
+  } else if (isHost && kind === "pin") {
+    if (club.pinned_note && fresh(club.pinned_at as string)) body = `📌 ${clip(club.pinned_note as string, 140)}`;
   }
   if (!body) return Response.json({ sent: 0 });
 

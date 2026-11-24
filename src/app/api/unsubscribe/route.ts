@@ -3,7 +3,7 @@ import { validUnsubscribe } from "@/lib/digest-email";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 /*
- * Stop the daily email.
+ * Stop the daily email (or, with &k=club, club emails: meeting reminders and the weekly club letter).
  * GET shows a page with one button (so link checkers in mail apps can't unsubscribe anyone by visiting).
  * POST does it: from that button, or from the mail app's own one-click unsubscribe.
  */
@@ -16,23 +16,28 @@ button,a.btn{display:inline-block;margin-top:16px;padding:10px 18px;border:0;bor
 p{color:#6B5F52}</style></head><body><main>${body}</main></body></html>`, { headers: { "Content-Type": "text/html; charset=utf-8" } });
 
 function params(request: NextRequest) {
-  return { u: request.nextUrl.searchParams.get("u") ?? "", t: request.nextUrl.searchParams.get("t") ?? "" };
+  const q = request.nextUrl.searchParams;
+  return { u: q.get("u") ?? "", t: q.get("t") ?? "", club: q.get("k") === "club" };
 }
 
 export async function GET(request: NextRequest) {
-  const { u, t } = params(request);
-  if (!validUnsubscribe(u, t)) return page("Link not valid", `<h1>That link doesn't work.</h1><p>You can turn the emails off in your library instead.</p><a class="btn" href="/">Open Bottega</a>`);
+  const { u, t, club } = params(request);
+  if (!validUnsubscribe(u, t, club ? "club" : "digest")) return page("Link not valid", `<h1>That link doesn't work.</h1><p>You can turn the emails off in your library instead.</p><a class="btn" href="/">Open Bottega</a>`);
+  if (club) return page("Stop club emails", `<h1>Stop club emails?</h1>
+<p>No more meeting reminders or weekly club letters by email. Your clubs stay as they are, and you can still turn on notifications in the app.</p>
+<form method="post"><button type="submit">Stop club emails</button></form>`);
   return page("Stop emails", `<h1>Stop the daily email?</h1>
 <p>You won't hear when friends put something on. You can turn it back on in your library.</p>
 <form method="post"><button type="submit">Stop these emails</button></form>`);
 }
 
 export async function POST(request: NextRequest) {
-  const { u, t } = params(request);
-  if (!validUnsubscribe(u, t)) return new Response("Link not valid", { status: 400 });
+  const { u, t, club } = params(request);
+  if (!validUnsubscribe(u, t, club ? "club" : "digest")) return new Response("Link not valid", { status: 400 });
   const db = supabaseAdmin();
   if (!db) return new Response("Not set up", { status: 500 });
-  const { error } = await db.rpc("stop_digest", { p_user: u });
+  const { error } = await db.rpc(club ? "stop_club_letter" : "stop_digest", { p_user: u });
   if (error) return new Response("Couldn't update. Try again.", { status: 500 });
+  if (club) return page("Club emails stopped", `<h1>Done. No more club emails.</h1><p>Your clubs are still there. Open Bottega to see what's on.</p><a class="btn" href="/salon">Open Bottega</a>`);
   return page("Emails stopped", `<h1>Done. No more daily emails.</h1><p>You can turn them back on in your library whenever you like.</p><a class="btn" href="/">Open Bottega</a>`);
 }

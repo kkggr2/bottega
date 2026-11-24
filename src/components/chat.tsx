@@ -115,7 +115,7 @@ export function ChatView({ me }: { me: Profile }) {
 }
 
 /** A live chat: the messages, a box to write in, and the tap-a-message menu. Used by tonight's rooms and clubs. */
-export function ChatLog({ me, roomKey, people, placeholder, empty, canModerate = false, onSent }: {
+export function ChatLog({ me, roomKey, people, placeholder, empty, canModerate = false, onSent, onPin }: {
   me: Profile;
   roomKey: string;
   people: { user_id: string; username: string; title?: string | null }[];
@@ -125,6 +125,8 @@ export function ChatLog({ me, roomKey, people, placeholder, empty, canModerate =
   canModerate?: boolean;
   /** After a message goes out (a club tells its members). */
   onSent?: () => void;
+  /** A club's hosts can pin any message to the top of the club. Returns an error to show, or null. */
+  onPin?: (body: string) => Promise<string | null>;
 }) {
   const { guest } = useAuth();
   const t = useT();
@@ -197,7 +199,7 @@ export function ChatLog({ me, roomKey, people, placeholder, empty, canModerate =
       <p className="msg err" aria-live="polite">{error}</p>
 
       {picked && (
-        <MessageSheet me={me} message={picked} username={nameOf(picked.author)} kind="chat" moderate={canModerate}
+        <MessageSheet me={me} message={picked} username={nameOf(picked.author)} kind="chat" moderate={canModerate} onPin={onPin}
           onClose={() => setPicked(null)} onChanged={() => { setPicked(null); void load(); }} />
       )}
     </>
@@ -205,7 +207,7 @@ export function ChatLog({ me, roomKey, people, placeholder, empty, canModerate =
 }
 
 /** Tap a message: write privately, swap keys, report it, or block the person. Your own: delete it. */
-export function MessageSheet({ me, message, username, kind, onClose, onChanged, moderate = false }: {
+export function MessageSheet({ me, message, username, kind, onClose, onChanged, moderate = false, onPin }: {
   me: Profile;
   message: { id: string; body: string; author?: string; sender?: string };
   username: string;
@@ -214,6 +216,8 @@ export function MessageSheet({ me, message, username, kind, onClose, onChanged, 
   onChanged: () => void;
   /** A club host looking at someone else's message: they can delete it for everyone. */
   moderate?: boolean;
+  /** A club host: pin this message to the top of the club. */
+  onPin?: (body: string) => Promise<string | null>;
 }) {
   const t = useT();
   const router = useRouter();
@@ -250,6 +254,14 @@ export function MessageSheet({ me, message, username, kind, onClose, onChanged, 
     onChanged();
   }
 
+  async function pin() {
+    if (!onPin) return;
+    setBusy(true);
+    const err = await onPin(message.body);
+    setBusy(false);
+    setNote(err ? t(err) : t("Pinned to the top of the club."));
+  }
+
   async function report() {
     if (!reason.trim()) return setNote(t("Say what's wrong in a few words."));
     setBusy(true);
@@ -273,6 +285,9 @@ export function MessageSheet({ me, message, username, kind, onClose, onChanged, 
       <blockquote className="sheet-quote">&ldquo;{message.body}&rdquo;</blockquote>
       {mode === "menu" && (
         <div className="stack">
+          {onPin && kind === "chat" && (
+            <button className="btn ghost" type="button" disabled={busy} onClick={pin}>{t("Pin to the top of the club")}</button>
+          )}
           {mine ? (
             <button className="btn ghost danger-text" type="button" disabled={busy} onClick={remove}>{t("Delete my message")}</button>
           ) : (

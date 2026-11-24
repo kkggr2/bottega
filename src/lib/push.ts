@@ -136,4 +136,4 @@ async function authedPost(path: string, body?: unknown): Promise<void> {
 export const notifyFriends = () => authedPost("/api/push/now");
 
 /** Right after something happens in a club (a message, a vote, a meeting, a new book): tell its members. Fire and forget. */
-export const notifyClub = (clubId: string, kind: "message" | "poll" | "meeting" | "reading") => authedPost("/api/push/club", { clubId, kind });
+export const notifyClub = (clubId: string, kind: "message" | "poll" | "meeting" | "reading" | "pin") => authedPost("/api/push/club", { clubId, kind });

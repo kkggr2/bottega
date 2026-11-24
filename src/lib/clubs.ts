@@ -225,6 +225,8 @@ export async function leaveClub(clubId: string, me: string): Promise<string | nu
 export type Rsvp = "yes" | "maybe" | "no";
 export type Meeting = {
   id: string; starts_at: string; place: string; link: string | null; note: string;
+  /** Missing until supabase/migrations/20261207000000_club_tools.sql has run. */
+  questions?: string; guide_url?: string | null;
   going: string[]; maybe: number; not_going: number; my_answer: Rsvp | null;
 };
 
@@ -233,14 +235,17 @@ export async function nextMeeting(clubId: string): Promise<Meeting | null> {
   return ((data ?? []) as Meeting[])[0] ?? null;
 }
 
-export type MeetingDraft = { starts_at: string; place: string; link: string | null; note: string; tz: string };
+export type MeetingDraft = {
+  starts_at: string; place: string; link: string | null; note: string; tz: string;
+  questions?: string; guide_url?: string | null;
+};
 
 export async function saveMeeting(clubId: string, me: string, draft: MeetingDraft, id?: string): Promise<string | null> {
   const sb = supabase();
   const { error } = id
     ? await sb.from("club_meetings").update(draft).eq("id", id)
     : await sb.from("club_meetings").insert({ ...draft, club_id: clubId, created_by: me });
-  return error ? "Couldn't save the meeting. Check the link starts with https://, and try again." : null;
+  return error ? "Couldn't save the meeting. Check the links start with https://, and try again." : null;
 }
 
 export async function cancelMeeting(id: string): Promise<void> {
@@ -322,4 +327,21 @@ export async function clubMuted(clubId: string): Promise<boolean> {
 
 export async function setClubMuted(clubId: string, on: boolean): Promise<void> {
   await supabase().rpc("set_club_muted", { p_club: clubId, p_on: on });
+}
+
+// ---------------------------------------------------------------------------
+// The host's pinned note (supabase/migrations/20261207000000_club_tools.sql)
+// ---------------------------------------------------------------------------
+
+export type Pinned = { note: string; pinned_at: string; by_username: string | null };
+
+export async function clubPinned(clubId: string): Promise<Pinned | null> {
+  const { data } = await supabase().rpc("club_pinned", { p_club: clubId });
+  return ((data ?? []) as Pinned[])[0] ?? null;
+}
+
+/** An empty note takes it down. Returns an error to show, or null. */
+export async function setClubPin(clubId: string, note: string): Promise<string | null> {
+  const { error } = await supabase().rpc("set_club_pin", { p_club: clubId, p_note: note });
+  return error ? rpcError(error.message) : null;
 }

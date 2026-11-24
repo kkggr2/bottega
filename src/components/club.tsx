@@ -8,7 +8,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   APP_STORE, bannedFrom, clubMuted, setClubMuted, clubPublic, clubStats, createClub, deleteClub, isOwner, joinClub, leaveClub, makeHost, joinUrl, myClubs, rememberClub, rememberInvite,
-  removeMember, roster, setCohost, shelfPreview, slugify, unban,
+  removeMember, roster, setClubPin, setCohost, shelfPreview, slugify, unban,
   type Banned, type ClubPublic, type ClubStats, type MyClub, type RosterRow,
 } from "@/lib/clubs";
 import { befriend } from "@/lib/friends";
@@ -26,7 +26,7 @@ import { ClubShelf, NextUp } from "./club-hub";
 import { SALON, usePalette } from "@/lib/room-colors";
 import { Gate } from "./gate";
 import { Sheet } from "./sheet";
-import { ClubMeeting, ClubReading } from "./club-life";
+import { ClubMeeting, ClubPin, ClubReading } from "./club-life";
 import { PushAsk } from "./push-ask";
 import { notifyClub } from "@/lib/push";
 
@@ -35,7 +35,7 @@ import { notifyClub } from "@/lib/push";
 /*
  * Clubs. A host starts one and shares its link (bottegarooms.com/join/gray-fox) or QR code.
  * Joining connects you with the host, shows you everyone else to swap keys with,
- * and opens a club chat that stays open (messages last a week).
+ * and opens a club chat that keeps three months of history.
  */
 
 // ---------------------------------------------------------------------------
@@ -175,6 +175,7 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [shelfTick, setShelfTick] = useState(0);
+  const [pinTick, setPinTick] = useState(0);
   const [tab, setTab] = useState<ClubTab>(() => {
     if (isNew) return "shelf";
     try { return (localStorage.getItem(`bottega.clubTab.${slug}`) as ClubTab | null) ?? "now"; } catch { return "now"; }
@@ -227,6 +228,13 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
     { id: "shelf", label: t("Shelf") },
     { id: "people", label: t("People") },
   ];
+  async function pinFromChat(body: string): Promise<string | null> {
+    const err = await setClubPin(club!.id, body);
+    if (err) return err;
+    setPinTick((n) => n + 1);
+    void notifyClub(club!.id, "pin");
+    return null;
+  }
   const pick = (id: ClubTab) => { setTab(id); try { localStorage.setItem(`bottega.clubTab.${club.slug}`, id); } catch {} };
 
   return (
@@ -251,6 +259,7 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
       {/* All four load together and stay mounted, so switching is instant and the chat keeps its place. */}
       <div className="club-now" role="tabpanel" hidden={tab !== "now"} data-empty={t("Nothing planned yet. A meeting, a book or a vote will show up here.")}>
           <PushAsk userId={me.id} text={t("Get a nudge when {club} posts, votes or meets.", { club: club.name })} />
+          <ClubPin clubId={club.id} isHost={club.is_host} refresh={pinTick} />
           <ClubMeeting clubId={club.id} clubName={club.name} me={me.id} isHost={club.is_host} />
           <ClubReading clubId={club.id} me={me.id} isHost={club.is_host} people={people} onShelved={() => setShelfTick((n) => n + 1)} />
           <NextUp clubId={club.id} isHost={club.is_host} onShelved={() => setShelfTick((n) => n + 1)} />
@@ -259,8 +268,9 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
       <div role="tabpanel" hidden={tab !== "chat"}>
           <ChatLog me={me} roomKey={`club:${club.slug}`} people={people.map((p) => ({ user_id: p.user_id, username: p.username, title: p.now_title }))}
             placeholder={t("Write to {club}…", { club: club.name })} empty={t("Nobody has written yet. Say hello, or ask what everyone's into this week.")}
-            canModerate={club.is_host} onSent={() => void notifyClub(club.id, "message")} />
-          <p className="muted club-chat-note">{t("Only members can read it. Messages last a week.")}</p>
+            canModerate={club.is_host} onSent={() => void notifyClub(club.id, "message")}
+            onPin={club.is_host ? pinFromChat : undefined} />
+          <p className="muted club-chat-note">{t("Only members can read it. Messages stay for three months.")}</p>
         </div>
 
       <div role="tabpanel" className="club-shelf-tab" hidden={tab !== "shelf"}>
