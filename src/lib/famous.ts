@@ -20,12 +20,18 @@ export type FamousRoom = {
   theme: ThemeKey;
   wallpaper: Wallpaper;
   pieces: Piece[];
+  /**
+   * A draft made for someone to look at before they agree: reachable by its link only, left out of every
+   * list and of search engines, with this note at the top.
+   */
+  draft?: string;
 };
 
-function build(slug: string, items: [PieceType, string, string, string | null][]): Piece[] {
-  return items.map(([type, title, subtitle, cover_url], i) => ({
-    id: `famous-${slug}-${i + 1}`, owner_id: `famous:${slug}`, type, title, subtitle, body: "", image_path: null, audio_path: null,
-    link: null, cover_url, preview_url: null, clip_start: null, clip_end: null, position: i + 1, created_at: "",
+/** Each item: type, title, subtitle, cover, and optionally a line about it and a link (for example to read it free). */
+function build(slug: string, items: [PieceType, string, string, string | null, string?, string?][]): Piece[] {
+  return items.map(([type, title, subtitle, cover_url, body, link], i) => ({
+    id: `famous-${slug}-${i + 1}`, owner_id: `famous:${slug}`, type, title, subtitle, body: body ?? "", image_path: null, audio_path: null,
+    link: link ?? null, cover_url, preview_url: null, clip_start: null, clip_end: null, position: i + 1, created_at: "",
   }));
 }
 
@@ -170,7 +176,42 @@ export const FAMOUS: FamousRoom[] = [
       ["poster", "Vertigo", "Alfred Hitchcock · 1958", tmdb("15uOEfqBNTVtDUT7hGBVCka0rZz")],
     ]),
   },
+  // A draft for Cita Press (citapress.org), an open library and press for women's writing. Not listed until they agree.
+  // Every book links to its free edition on citapress.org. The lines are Bottega's placeholders for Cita to rewrite.
+  {
+    slug: "citapress",
+    person: "Cita Press", short: "Cita",
+    name: "Cita Press",
+    tagline: "Women's writing, free for everyone. Every book on this shelf can be read free at citapress.org.",
+    source: "Books from Cita Press's open-access library.",
+    sourceUrl: "https://citapress.org/",
+    theme: "rose", wallpaper: "stripe",
+    draft: "A draft made for Cita Press to look at. It isn't listed anywhere on Bottega until they say yes, and every line can be changed.",
+    pieces: build("citapress", [
+      ["book", "The Yellow Wall-Paper", "Charlotte Perkins Gilman · 1892", null,
+        "A woman told to rest, a room she can't leave, and a wallpaper she can't stop reading.", "https://citapress.org/the-yellow-wall-paper/"],
+      ["book", "The Awakening", "Kate Chopin · 1899", null,
+        "A summer on the Gulf Coast, and a woman who stops pretending.", "https://citapress.org/the-awakening/"],
+      ["book", "Ten Days in a Mad-House", "Nellie Bly · 1887", null,
+        "The reporter who had herself committed to tell the truth about an asylum.", "https://citapress.org/ten-days-in-a-mad-house/"],
+      ["book", "Incidents in the Life of a Slave Girl", "Harriet Jacobs · 1861", null,
+        "Her own account of slavery and escape, written in her own name.", "https://citapress.org/incidents-in-the-life-of-a-slave-girl/"],
+      ["book", "Behind a Mask", "Louisa May Alcott · 1866", null,
+        "The Little Women author, writing a thriller under another name.", "https://citapress.org/behind-a-mask/"],
+      ["book", "Mathilda", "Mary Shelley", null,
+        "Written in 1819–20 and kept from readers for more than a century.", "https://citapress.org/mathilda/"],
+      ["book", "Silly Novels by Silly Lady Novelists", "George Eliot · 1856", null,
+        "A great novelist's sharp review of the fiction women were expected to write.", "https://citapress.org/silly-novels/"],
+      ["book", "Dolores: Scenes from a Woman's Life", "Soledad Acosta de Samper", null,
+        "A Colombian classic, in a new English translation.", "https://citapress.org/dolores-scenes-from-a-womans-life/"],
+      ["book", "A Luminous Halo", "Virginia Woolf", null,
+        "Selected writings by Woolf, gathered by Cita.", "https://citapress.org/a-luminous-halo-selected-writings-by-virginia-woolf/"],
+    ]),
+  },
 ];
+
+/** The famous rooms shown in lists: everything except drafts. */
+export const LISTED: FamousRoom[] = FAMOUS.filter((f) => !f.draft);
 
 export function famousRoom(slug: string): FamousRoom | null {
   return FAMOUS.find((f) => f.slug === slug) ?? null;

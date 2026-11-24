@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { asRoom, FAMOUS, type FamousRoom } from "@/lib/famous";
+import { asRoom, LISTED, type FamousRoom } from "@/lib/famous";
 import { useT } from "@/lib/i18n";
 import { useRoomColors } from "@/lib/room-colors";
 import { roomStyle, THEMES } from "@/lib/themes";
@@ -32,7 +32,7 @@ export function FamousRoomView({ room: f }: { room: FamousRoom }) {
   const wall: Piece[] = f.pieces.filter((p) => p.type === "poster");
   const hung = wall.length ? wall : books.slice(0, 6);
   const detail = f.pieces.find((p) => p.id === detailId) ?? null;
-  const others = FAMOUS.filter((o) => o.slug !== f.slug);
+  const others = LISTED.filter((o) => o.slug !== f.slug);
 
   return (
     <div>
@@ -42,6 +42,7 @@ export function FamousRoomView({ room: f }: { room: FamousRoom }) {
           <p className="who">{f.person} · {t("put together by Bottega")}</p>
           <h1>{f.name}</h1>
           <p className="tag">{t(f.tagline)}</p>
+          {f.draft && <p className="msg ok famous-draft">{f.draft}</p>}
           <p className="famous-source">{t("Source:")} <a href={f.sourceUrl} target="_blank" rel="noreferrer">{t(f.source)}</a></p>
         </div>
       </section>
@@ -81,7 +82,7 @@ export function FamousRoomView({ room: f }: { room: FamousRoom }) {
 }
 
 /** A row of famous rooms, for the Library, the welcome page and the end of a famous room. */
-export function FamousRooms({ rooms = FAMOUS, title, heading = true }: { rooms?: FamousRoom[]; title?: string; heading?: boolean }) {
+export function FamousRooms({ rooms = LISTED, title, heading = true }: { rooms?: FamousRoom[]; title?: string; heading?: boolean }) {
   const t = useT();
   if (!rooms.length) return null;
   return (
