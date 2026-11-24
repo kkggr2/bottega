@@ -756,4 +756,5 @@ export const TR: Record<string, string> = {
   "Messages, votes, new books and meeting reminders": "Mesajlar, oylamalar, yeni kitaplar ve buluşma hatırlatmaları",
   "Couldn't save your answer. Try again.": "Cevabın kaydedilemedi. Tekrar dene.",
   "Couldn't save where you are. Try again.": "Nerede olduğun kaydedilemedi. Tekrar dene.",
+  "The club's shelf, votes, meetings, reading notes, quiz scores and chat are deleted for everyone, and the invite link stops working. This can't be undone.": "Kulübün rafı, oylamaları, buluşmaları, okuma notları, quiz skorları ve sohbeti herkes için silinir, davet linki de çalışmaz. Bu geri alınamaz.",
 };

@@ -548,7 +548,7 @@ function ClubSettings({ club, me, people, onChanged }: { club: MyClub; me: Profi
       {open === "delete" && (
         <Sheet onClose={close} label={t("Delete the club")}>
           <h2>{t("Delete {club}?", { club: club.name })}</h2>
-          <p>{t("The club's shelf, votes, quiz scores and chat are deleted for everyone, and the invite link stops working. This can't be undone.")}</p>
+          <p>{t("The club's shelf, votes, meetings, reading notes, quiz scores and chat are deleted for everyone, and the invite link stops working. This can't be undone.")}</p>
           <p className="msg err" aria-live="polite">{error}</p>
           <div className="row">
             <button className="btn ghost" type="button" onClick={close}>{t("Cancel")}</button>

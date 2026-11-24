@@ -28,9 +28,11 @@ export function StartClubScreen() {
         <h1>Start your club on Bottega</h1>
         <p className="lede">A home for your film club, book club or group of friends — free, no ads.</p>
         <ul className="start-perks">
+          <li><b>Read together, no spoilers</b><span>Everyone says how far they are; notes on each chapter stay folded until they get there.</span></li>
+          <li><b>Meetings</b><span>Date and place, who&rsquo;s coming, and a reminder the day before.</span></li>
           <li><b>Your shelf</b><span>Everything you&rsquo;ve read or watched together, so new members see what you&rsquo;re about.</span></li>
           <li><b>What&rsquo;s next?</b><span>Put up a few choices and let everyone vote.</span></li>
-          <li><b>A club chat</b><span>Only for members, apart from everyone&rsquo;s other messages.</span></li>
+          <li><b>A club chat</b><span>Only for members, with co-hosts who can keep it friendly. Notifications on iPhone, Android and computers.</span></li>
           <li><b>Your own quiz</b><span>Made for your club, on your next book or film, with your own high score table.</span></li>
           <li><b>One link</b><span>Everyone who opens it lands in your club, on the web or the iPhone app.</span></li>
         </ul>
