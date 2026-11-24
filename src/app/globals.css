@@ -1609,3 +1609,6 @@ html.native.kb-open .tabbar { display: none; }
 
 /* Famous rooms with a Spanish version: the English / Español switch under the source line. */
 .famous-lang { margin-top: 12px; }
+
+/* "On Letterboxd? Bring your films in a tap", under the welcome page buttons. */
+.lb-line { margin: 10px 0 0; font-size: 15px; }

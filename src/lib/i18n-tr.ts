@@ -791,4 +791,8 @@ export const TR: Record<string, string> = {
   "Start watching": "İzlemeye başla",
   "Edit the film": "Filmi düzenle",
   "Finish the current one first.": "Önce şu ankini bitirin.",
+  "Your Letterboxd, as a room.": "Letterboxd'un, bir oda olarak.",
+  "Your favourite films in gold frames, in under a minute. Add the books and records too, then step into your friends' rooms and see how alike you are.": "En sevdiğin filmler bir dakikadan kısa sürede altın çerçevede. Kitaplarını ve plaklarını da ekle, sonra arkadaşlarının odalarına gir ve ne kadar benzediğinizi gör.",
+  "Bring my Letterboxd": "Letterboxd'umu getir",
+  "On Letterboxd? Bring your films in a tap": "Letterboxd'da mısın? Filmlerini tek dokunuşla getir",
 };

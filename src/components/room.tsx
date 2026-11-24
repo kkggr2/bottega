@@ -28,6 +28,7 @@ import { DOOR_AT, DoorOpen, DoorProgress } from "./door-progress";
 import { ADD_EVENT, takeAddRequest } from "./tab-bar";
 import { Gate } from "./gate";
 import { ImportSheet } from "./import-sheet";
+import { takeLetterboxd } from "@/lib/letterboxd-intent";
 import { StarterPicks } from "./starter-picks";
 import { MusicCorner } from "./music-corner";
 import { PieceDetail } from "./piece-detail";
@@ -164,6 +165,12 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
   useEffect(() => {
     load(); // eslint-disable-line react-hooks/set-state-in-effect -- fetching on mount
   }, [load]);
+
+  // Came for "Bring your Letterboxd": your own room opens with the import ready.
+  const ownRoom = data.state === "ready" && data.owner.id === meId;
+  useEffect(() => {
+    if (ownRoom && takeLetterboxd()) setImporting(true); // eslint-disable-line react-hooks/set-state-in-effect -- once, on arrival
+  }, [ownRoom]);
 
   // Checked again every two minutes while you're in the room, so it appears and goes away by itself.
   useEffect(() => {

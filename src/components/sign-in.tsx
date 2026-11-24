@@ -13,6 +13,7 @@ import { cameFrom, track } from "@/lib/track";
 import { startAsGuest } from "@/lib/guest";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./auth";
+import { rememberLetterboxd } from "@/lib/letterboxd-intent";
 
 /*
  * Accounts use an email and a password.
@@ -35,6 +36,19 @@ export function SignIn({ forClub = false }: { forClub?: boolean } = {}) {
   const [from] = useState(cameFrom);
   const joinRef = useRef<HTMLDivElement>(null);
   useEffect(() => track("landing", { detail: from ? "from_room" : "" }), [from]);
+
+  // bottegarooms.com/?letterboxd (from /letterboxd, bios and Reels): a welcome made for Letterboxd people.
+  const [lb, setLb] = useState(false);
+  useEffect(() => {
+    if (!new URLSearchParams(window.location.search).has("letterboxd")) return;
+    rememberLetterboxd();
+    setLb(true); // eslint-disable-line react-hooks/set-state-in-effect -- reading the address once
+  }, []);
+  function bringLetterboxd() {
+    rememberLetterboxd();
+    track("make_yours", { detail: "letterboxd" });
+    goToForm("create");
+  }
 
   function goToForm(next: Mode) {
     switchTo(next);
@@ -189,12 +203,21 @@ export function SignIn({ forClub = false }: { forClub?: boolean } = {}) {
     <div className={forClub ? "landing for-club" : "landing"}>
       {!forClub && <>
       <section className="landing-hero">
-        <h1>{t("Step into your friends' taste.")}</h1>
-        <p className="lede">{t("Fill one room with what you love. Then visit theirs.")}</p>
+        <h1>{lb ? t("Your Letterboxd, as a room.") : t("Step into your friends' taste.")}</h1>
+        <p className="lede">{lb
+          ? t("Your favourite films in gold frames, in under a minute. Add the books and records too, then step into your friends' rooms and see how alike you are.")
+          : t("Fill one room with what you love. Then visit theirs.")}</p>
         <div className="chips">
-          <button className="btn" type="button" onClick={() => goToForm("create")}>{t("Make my own room")}</button>
+          {lb
+            ? <button className="btn" type="button" onClick={bringLetterboxd}>{t("Bring my Letterboxd")}</button>
+            : <button className="btn" type="button" onClick={() => goToForm("create")}>{t("Make my own room")}</button>}
           <button className="btn ghost" type="button" onClick={() => goToForm("login")}>{t("Log in")}</button>
         </div>
+        {!lb && (
+          <p className="lb-line">
+            <button type="button" className="linkish" onClick={bringLetterboxd}>{t("On Letterboxd? Bring your films in a tap")} →</button>
+          </p>
+        )}
       </section>
 
       <section className="landing-room" aria-label={t("An example room you can try")}>
