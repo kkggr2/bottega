@@ -1730,3 +1730,63 @@ html.native.kb-open .tabbar { display: none; }
   .rate-slide-club, .rate-slide-url { color: #111; }
   .rate-slide-print { display: none; }
 }
+
+/* ---------------------------------------------------------------------------
+   Club page, easy to read. Two typefaces with clear jobs: the serif for titles only, a clean sans for
+   everything people read. Four sizes: title 21–22px, body 16.5px, details 14px, plus the club's name.
+   Each section sits on its own soft card so the eye knows where one thing ends. No tiny capitals.
+   --------------------------------------------------------------------------- */
+.club [role="tabpanel"] { font: 400 16.5px/1.55 var(--font-ui); }
+.club [role="tabpanel"] .muted { color: var(--muted); }
+
+/* Titles: serif. */
+.club .tonight-head h2, .club .hub-section > h2, .club .season-scores h2 { font: 400 21px/1.2 var(--font-display); }
+.club .meeting-when { font: 400 22px/1.25 var(--font-display); }
+.club .reading-title, .club .film-night-film b { font: 400 21px/1.2 var(--font-display); }
+
+/* Labels: sentence case, readable, never tiny capitals. */
+.club [role="tabpanel"] .mono, .club [role="tabpanel"] .smallcaps, .club .reading-due, .club .notes-part h3 {
+  font: 600 14px/1.35 var(--font-ui); letter-spacing: 0; text-transform: none;
+}
+.club [role="tabpanel"] label { font: 600 14px/1.35 var(--font-ui); }
+
+/* Details: 14px, quieter. */
+.club .club-pin-who, .club .meeting-who, .club .reading-book .muted, .club .chat-msg .who, .club .film-night-film .muted { font-size: 14px; }
+.club .chat-msg .when { font: 500 12.5px/1.3 var(--font-ui); letter-spacing: 0; text-transform: none; }
+
+/* Body text. */
+.club .club-pin-note { font: 400 17px/1.55 var(--font-ui); }
+.club .meeting-where { font-weight: 600; }
+.club .meeting-note { color: var(--fg); }
+.club .meeting-prep summary { color: var(--fg); font: 600 15.5px/1.4 var(--font-ui); }
+.club .meeting-prep ol { font-size: 16px; gap: 8px; }
+.club .note-line { font-size: 16px; line-height: 1.5; }
+.club .note-line b { display: block; font: 600 14px/1.3 var(--font-ui); margin: 0 0 2px; }
+.club .chat-msg { font: 400 16px/1.45 var(--font-ui); }
+.club textarea, .club input, .club select { font-family: var(--font-ui); font-size: 16px; }
+.club ::placeholder { color: var(--muted); opacity: 1; }
+.club .linkish { font-size: 14.5px; }
+.club .btn.small { font: 600 14px/1.2 var(--font-ui); padding: 8px 14px; }
+.club .rsvp .chip { font: 500 15px/1.2 var(--font-ui); padding: 9px 16px; }
+.club .roster li { font-size: 16px; }
+.club .film-night-hint, .club .club-chat-note { font-size: 15px; }
+
+/* Each section on a soft card; the quiet "set this up" lines stay plain rows. */
+.club-now { display: grid; gap: 14px; }
+.club-now > .hub-section:not(.hub-empty),
+.club-shelf-tab > .hub-section,
+.club-shelf-tab > section {
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fg) 9%, transparent);
+  border-radius: 18px; padding: 18px 18px 20px; gap: 14px;
+}
+.club-now > .hub-empty { padding: 4px 4px; }
+.club-now > .hub-section:not(.hub-empty) + .hub-empty { margin-top: 6px; }
+
+/* Tabs: the one you're on is clearly filled. */
+.club-tabs { background: color-mix(in srgb, var(--fg) 8%, transparent); }
+.club-tabs button { font: 500 15px/1 var(--font-ui); color: var(--fg); opacity: .78; padding: 11px 6px; }
+.club-tabs button.on { opacity: 1; background: var(--fg); color: var(--bg); font-weight: 600; box-shadow: none; }
+.club-tabs button.on .club-tab-badge { background: var(--bg); color: var(--fg); }
+/* Your own messages sit on gold: their name and time take the message's ink, not the page's grey. */
+.club .chat-msg.mine .who, .club .chat-msg.mine .when, .club .chat-msg.mine .muted { color: inherit; opacity: .72; }
