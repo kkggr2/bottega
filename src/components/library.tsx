@@ -20,12 +20,11 @@ import { joinDid, lastSeen, NOW_SLOTS, NOW_WORDS, nowAt, nowId, type NowPiece } 
 import { friendlyError, supabase } from "@/lib/supabase";
 import { track } from "@/lib/track";
 import { updateWidget } from "@/lib/widget";
-import { dismissPushAsk, enablePush, pushAskDismissed, pushPermission } from "@/lib/push";
 import { useRouter } from "next/navigation";
-import { pathFromUrl } from "./push-setup";
 import { THEMES, USERNAME } from "@/lib/themes";
 import type { Friendship, Profile, RoomWithOwner } from "@/lib/types";
 import { Gate } from "./gate";
+import { PushAsk } from "./push-ask";
 import { Sheet } from "./sheet";
 
 export function LibraryScreen() {
@@ -336,7 +335,7 @@ function Library({ me }: { me: Profile }) {
       <ConnoisseursRow />
       <RoomsToVisit />
       <FamousRooms />
-      {friendCount > 0 && <PushAsk userId={me.id} />}
+      {friendCount > 0 && <PushAsk userId={me.id} text={t("Get a nudge when a friend puts something on.")} hint={t("At most one per friend every few hours.")} />}
       {friendCount === 0 && (
         <div className="invite">
           <p>{t("Your shelf is just you for now.")} {t("Send your room link. When a friend makes their own room from it, you'll get their friend request.")}</p>
@@ -478,31 +477,6 @@ function WatchingSwitch({ userId }: { userId: string }) {
       <span>{t("Show what I'm watching")}<small className="muted">{t("On the TV in your room, while you watch in Margins")}</small></span>
       <input className="switch" type="checkbox" role="switch" checked={on} onChange={(e) => change(e.target.checked)} />
     </label>
-  );
-}
-
-/** iPhone app only: once you have a friend, offer a nudge when they put something on. Asked once. */
-function PushAsk({ userId }: { userId: string }) {
-  const t = useT();
-  const router = useRouter();
-  const [show, setShow] = useState(false);
-  useEffect(() => {
-    if (pushAskDismissed()) return;
-    pushPermission().then((p) => setShow(p === "prompt"));
-  }, []);
-  if (!show) return null;
-  return (
-    <div className="invite push-ask">
-      <p>{t("Get a nudge when a friend puts something on.")} <span className="muted">{t("At most one per friend every few hours.")}</span></p>
-      <div className="row">
-        <button className="btn" type="button" onClick={async () => {
-          await enablePush(userId, (url) => router.push(pathFromUrl(url)));
-          dismissPushAsk();
-          setShow(false);
-        }}>{t("Turn on")}</button>
-        <button className="btn ghost" type="button" onClick={() => { dismissPushAsk(); setShow(false); }}>{t("Not now")}</button>
-      </div>
-    </div>
   );
 }
 

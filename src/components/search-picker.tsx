@@ -14,6 +14,7 @@ export function SearchPicker({
   source,
   search,
   onPick,
+  manual,
 }: {
   id: string;
   label: string;
@@ -21,6 +22,8 @@ export function SearchPicker({
   source: string;
   search: (term: string, signal: AbortSignal) => Promise<Found[]>;
   onPick: (found: Found) => void;
+  /** Lets people type something the search doesn't know (a new book, a pamphlet): the second field's label. */
+  manual?: { subtitle: string };
 }) {
   const t = useT();
   const [term, setTerm] = useState("");
@@ -49,6 +52,18 @@ export function SearchPicker({
 
   const showResults = term.trim().length >= 2 && results.length > 0;
 
+  // "Add it yourself": title and one line under it, no cover.
+  const [byHand, setByHand] = useState(false);
+  const [handTitle, setHandTitle] = useState("");
+  const [handSub, setHandSub] = useState("");
+  const openByHand = () => { setByHand(true); setHandTitle(term.trim()); };
+  const addByHand = () => {
+    const title = handTitle.trim().slice(0, 120);
+    if (!title) return;
+    onPick({ id: `hand-${Date.now()}`, title, subtitle: handSub.trim().slice(0, 120), cover_url: null, link: null });
+    setByHand(false); setHandTitle(""); setHandSub(""); setTerm(""); setResults([]);
+  };
+
   // Listen to a result before picking it, so you can find the right version.
   const audio = useRef<HTMLAudioElement | null>(null);
   const [listening, setListening] = useState<string | null>(null);
@@ -72,10 +87,27 @@ export function SearchPicker({
         aria-controls={`${id}-results`} />
       <span className="hint" aria-live="polite">
         {state === "searching" ? t("Searching…")
-          : state === "empty" ? t("Nothing found. Try fewer words, or fill it in by hand below.")
-          : state === "error" ? t("Can't reach {source} right now. Fill it in by hand below.", { source })
+          : state === "empty" ? (manual ? t("Nothing found. Try fewer words, or add it yourself.") : t("Nothing found. Try fewer words, or fill it in by hand below."))
+          : state === "error" ? (manual ? t("Can't reach {source} right now. Add it yourself.", { source }) : t("Can't reach {source} right now. Fill it in by hand below.", { source }))
           : t("Results from {source}.", { source })}
+        {manual && !byHand && (
+          <>{" "}<button type="button" className="linkish" onClick={openByHand}>{t("Can't find it? Add it yourself")}</button></>
+        )}
       </span>
+      {manual && byHand && (
+        <div className="by-hand">
+          <input type="text" aria-label={t("Title")} placeholder={t("Title")} maxLength={120} value={handTitle}
+            onChange={(e) => setHandTitle(e.target.value)} autoFocus
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addByHand(); } }} />
+          <input type="text" aria-label={manual.subtitle} placeholder={manual.subtitle} maxLength={120} value={handSub}
+            onChange={(e) => setHandSub(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addByHand(); } }} />
+          <div className="row">
+            <button type="button" className="btn ghost small" onClick={() => setByHand(false)}>{t("Cancel")}</button>
+            <button type="button" className="btn small" disabled={!handTitle.trim()} onClick={addByHand}>{t("Add")}</button>
+          </div>
+        </div>
+      )}
       {showResults && (
         <ul className="results" id={`${id}-results`}>
           {results.map((r) => (

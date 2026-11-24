@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { apnsConfigured, sendApns } from "@/lib/apns";
+import { notifyConfigured, notifyUsers } from "@/lib/notify";
 import { joinDid, NOW_SLOTS, NOW_WORDS, nowAt, nowId } from "@/lib/now";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { Room } from "@/lib/types";
@@ -15,7 +15,7 @@ const WINDOW_MS = 6 * 60 * 60 * 1000;
 
 export async function POST(request: NextRequest) {
   const db = supabaseAdmin();
-  if (!db || !apnsConfigured()) return Response.json({ sent: 0, reason: "not set up" });
+  if (!db || !notifyConfigured()) return Response.json({ sent: 0, reason: "not set up" });
 
   const token = request.headers.get("authorization")?.replace(/^Bearer /, "") ?? "";
   const { data: auth } = await db.auth.getUser(token);
@@ -42,18 +42,11 @@ export async function POST(request: NextRequest) {
 
   const { data: targets, error } = await db.rpc("push_targets", { p_owner: ownerId });
   if (error) return Response.json({ error: error.message }, { status: 500 });
-  const ios = ((targets ?? []) as { recipient_id: string; token: string; platform: string }[]).filter((t) => t.platform === "ios");
-  if (!ios.length) return Response.json({ sent: 0 });
+  const recipients = ((targets ?? []) as { recipient_id: string }[]).map((t) => t.recipient_id);
+  if (!recipients.length) return Response.json({ sent: 0 });
 
   const username = profile.username as string;
-  const results = await sendApns(ios.map((t) => t.token), {
-    title: "Bottega",
-    body: `@${username} ${line}`,
-    url: `bottega://r/${username}`,
-  });
-
-  await Promise.all(results.filter((x) => x.gone).map((x) => db.rpc("drop_push_token", { p_token: x.token })));
-  const reached = [...new Set(ios.filter((t) => results.find((x) => x.token === t.token)?.ok).map((t) => t.recipient_id))];
+  const reached = await notifyUsers(db, recipients, { title: "Bottega", body: `@${username} ${line}`, url: `bottega://r/${username}` });
   if (reached.length) await db.rpc("log_push", { p_owner: ownerId, p_recipients: reached });
-  return Response.json({ sent: reached.length, failed: results.filter((x) => !x.ok).length });
+  return Response.json({ sent: reached.length });
 }

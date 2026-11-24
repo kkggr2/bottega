@@ -7,11 +7,18 @@ import { supabase } from "./supabase";
  */
 
 export type ClubPublic = { id: string; slug: string; name: string; emoji: string; host_username: string; members: number };
-export type MyClub = { id: string; slug: string; name: string; emoji: string; is_host: boolean; members: number; messages: number };
+/** is_host: owner or co-host (runs the club). is_owner: can hand it over or delete it. */
+export type MyClub = { id: string; slug: string; name: string; emoji: string; is_host: boolean; members: number; messages: number; is_owner?: boolean };
+export type ClubRole = "owner" | "cohost" | "member";
 export type RosterRow = {
   user_id: string; username: string; joined_at: string; is_host: boolean;
   relation: "me" | "friends" | "asked" | "asking" | "none"; now_title: string | null;
+  /** Missing until supabase/migrations/20261202000000_club_admin.sql has run. */
+  role?: ClubRole;
 };
+
+/** The owner, until the admin update is in: then it's whatever my_clubs says. */
+export const isOwner = (club: MyClub) => club.is_owner ?? club.is_host;
 export type ClubStats = { members: number; joined_7d: number; came_back: number; active_7d: number };
 
 export const SITE = "https://bottegarooms.com";
@@ -180,8 +187,136 @@ export async function deleteClub(clubId: string): Promise<string | null> {
   return error ? rpcError(error.message) : null;
 }
 
+// ---------------------------------------------------------------------------
+// Co-hosts, removing and banning (supabase/migrations/20261202000000_club_admin.sql)
+// ---------------------------------------------------------------------------
+
+export async function setCohost(clubId: string, userId: string, on: boolean): Promise<string | null> {
+  const { error } = await supabase().rpc("set_club_cohost", { p_club: clubId, p_user: userId, p_on: on });
+  return error ? rpcError(error.message) : null;
+}
+
+export async function removeMember(clubId: string, userId: string, ban: boolean): Promise<string | null> {
+  const { error } = await supabase().rpc("remove_club_member", { p_club: clubId, p_user: userId, p_ban: ban });
+  return error ? rpcError(error.message) : null;
+}
+
+export type Banned = { user_id: string; username: string; created_at: string };
+export async function bannedFrom(clubId: string): Promise<Banned[]> {
+  const { data } = await supabase().rpc("club_banned", { p_club: clubId });
+  return (data ?? []) as Banned[];
+}
+
+export async function unban(clubId: string, userId: string): Promise<string | null> {
+  const { error } = await supabase().rpc("unban_club_member", { p_club: clubId, p_user: userId });
+  return error ? rpcError(error.message) : null;
+}
+
 export async function leaveClub(clubId: string, me: string): Promise<string | null> {
   const { data, error } = await supabase().from("club_members").delete().eq("club_id", clubId).eq("user_id", me).select("user_id");
   if (error) return rpcError(error.message);
   return data?.length ? null : "Hand the club to someone else, or delete it, before you leave.";
+}
+
+// ---------------------------------------------------------------------------
+// Meetings, the club's current book, and muting (supabase/migrations/20261203000000_club_life.sql)
+// ---------------------------------------------------------------------------
+
+export type Rsvp = "yes" | "maybe" | "no";
+export type Meeting = {
+  id: string; starts_at: string; place: string; link: string | null; note: string;
+  going: string[]; maybe: number; not_going: number; my_answer: Rsvp | null;
+};
+
+export async function nextMeeting(clubId: string): Promise<Meeting | null> {
+  const { data } = await supabase().rpc("club_next_meeting", { p_club: clubId });
+  return ((data ?? []) as Meeting[])[0] ?? null;
+}
+
+export type MeetingDraft = { starts_at: string; place: string; link: string | null; note: string; tz: string };
+
+export async function saveMeeting(clubId: string, me: string, draft: MeetingDraft, id?: string): Promise<string | null> {
+  const sb = supabase();
+  const { error } = id
+    ? await sb.from("club_meetings").update(draft).eq("id", id)
+    : await sb.from("club_meetings").insert({ ...draft, club_id: clubId, created_by: me });
+  return error ? "Couldn't save the meeting. Check the link starts with https://, and try again." : null;
+}
+
+export async function cancelMeeting(id: string): Promise<void> {
+  await supabase().from("club_meetings").delete().eq("id", id);
+}
+
+export async function answerMeeting(meetingId: string, me: string, answer: Rsvp): Promise<void> {
+  await supabase().from("club_rsvps").upsert(
+    { meeting_id: meetingId, user_id: me, answer, updated_at: new Date().toISOString() },
+    { onConflict: "meeting_id,user_id" },
+  );
+}
+
+export type PartWord = "chapter" | "part" | "section" | "episode";
+export type Reading = {
+  id: string; title: string; subtitle: string; cover_url: string | null; link: string | null;
+  parts: number; part_word: PartWord; due_on: string | null; started_at: string;
+  my_part: number; readers: number; finished: number; notes_ahead: number;
+};
+export type ClubNote = { id: string; author: string; part: number; body: string; created_at: string };
+
+export async function readingNow(clubId: string): Promise<Reading | null> {
+  const { data } = await supabase().rpc("club_reading_now", { p_club: clubId });
+  return ((data ?? []) as Reading[])[0] ?? null;
+}
+
+export async function startReading(
+  clubId: string, me: string, book: { title: string; subtitle?: string; cover_url?: string | null; link?: string | null },
+  parts: number, partWord: PartWord, dueOn: string | null,
+): Promise<string | null> {
+  const { error } = await supabase().from("club_readings").insert({
+    club_id: clubId, started_by: me, title: book.title.slice(0, 160), subtitle: (book.subtitle ?? "").slice(0, 160),
+    cover_url: book.cover_url ?? null, link: book.link ?? null, parts, part_word: partWord, due_on: dueOn,
+  });
+  if (!error) return null;
+  return /one_current/.test(error.message) ? "Finish the current book first." : "Couldn't start it. Try again.";
+}
+
+export async function updateReading(id: string, patch: { parts?: number; part_word?: PartWord; due_on?: string | null }): Promise<void> {
+  await supabase().from("club_readings").update(patch).eq("id", id);
+}
+
+export async function finishReading(id: string, shelve: boolean): Promise<string | null> {
+  const { error } = await supabase().rpc("finish_club_reading", { p_reading: id, p_shelve: shelve });
+  return error ? rpcError(error.message) : null;
+}
+
+export async function setProgress(readingId: string, me: string, part: number): Promise<void> {
+  await supabase().from("club_progress").upsert(
+    { reading_id: readingId, user_id: me, part, updated_at: new Date().toISOString() },
+    { onConflict: "reading_id,user_id" },
+  );
+}
+
+/** The notes this person may see (the database leaves out anything past where they are). */
+export async function readingNotes(readingId: string): Promise<ClubNote[]> {
+  const { data } = await supabase().from("club_notes").select("id, author, part, body, created_at")
+    .eq("reading_id", readingId).order("part").order("created_at");
+  return (data ?? []) as ClubNote[];
+}
+
+export async function addNote(readingId: string, me: string, part: number, body: string): Promise<string | null> {
+  const { error } = await supabase().from("club_notes").insert({ reading_id: readingId, author: me, part, body: body.trim() });
+  if (!error) return null;
+  return /kind|Slow down/.test(error.message) ? rpcError(error.message) : "Couldn't post it. Try again.";
+}
+
+export async function removeNote(id: string): Promise<void> {
+  await supabase().from("club_notes").delete().eq("id", id);
+}
+
+export async function clubMuted(clubId: string): Promise<boolean> {
+  const { data } = await supabase().rpc("club_muted", { p_club: clubId });
+  return Boolean(data);
+}
+
+export async function setClubMuted(clubId: string, on: boolean): Promise<void> {
+  await supabase().rpc("set_club_muted", { p_club: clubId, p_on: on });
 }

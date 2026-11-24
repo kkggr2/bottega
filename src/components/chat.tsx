@@ -115,12 +115,16 @@ export function ChatView({ me }: { me: Profile }) {
 }
 
 /** A live chat: the messages, a box to write in, and the tap-a-message menu. Used by tonight's rooms and clubs. */
-export function ChatLog({ me, roomKey, people, placeholder, empty }: {
+export function ChatLog({ me, roomKey, people, placeholder, empty, canModerate = false, onSent }: {
   me: Profile;
   roomKey: string;
   people: { user_id: string; username: string; title?: string | null }[];
   placeholder: string;
   empty: string;
+  /** A club's hosts can delete anyone's message. */
+  canModerate?: boolean;
+  /** After a message goes out (a club tells its members). */
+  onSent?: () => void;
 }) {
   const { guest } = useAuth();
   const t = useT();
@@ -157,6 +161,7 @@ export function ChatLog({ me, roomKey, people, placeholder, empty }: {
     setBusy(false);
     if (err) return setError(err);
     track("chat_send", { detail: roomKey.slice(0, 40) });
+    onSent?.();
     setDraft("");
     setError(null);
     void load();
@@ -192,7 +197,7 @@ export function ChatLog({ me, roomKey, people, placeholder, empty }: {
       <p className="msg err" aria-live="polite">{error}</p>
 
       {picked && (
-        <MessageSheet me={me} message={picked} username={nameOf(picked.author)} kind="chat"
+        <MessageSheet me={me} message={picked} username={nameOf(picked.author)} kind="chat" moderate={canModerate}
           onClose={() => setPicked(null)} onChanged={() => { setPicked(null); void load(); }} />
       )}
     </>
@@ -200,13 +205,15 @@ export function ChatLog({ me, roomKey, people, placeholder, empty }: {
 }
 
 /** Tap a message: write privately, swap keys, report it, or block the person. Your own: delete it. */
-export function MessageSheet({ me, message, username, kind, onClose, onChanged }: {
+export function MessageSheet({ me, message, username, kind, onClose, onChanged, moderate = false }: {
   me: Profile;
   message: { id: string; body: string; author?: string; sender?: string };
   username: string;
   kind: "chat" | "dm";
   onClose: () => void;
   onChanged: () => void;
+  /** A club host looking at someone else's message: they can delete it for everyone. */
+  moderate?: boolean;
 }) {
   const t = useT();
   const router = useRouter();
@@ -232,6 +239,14 @@ export function MessageSheet({ me, message, username, kind, onClose, onChanged }
     setBusy(true);
     await supabase().from(kind === "chat" ? "chat_messages" : "direct_messages").delete().eq("id", message.id);
     setBusy(false);
+    onChanged();
+  }
+
+  async function removeForEveryone() {
+    setBusy(true);
+    const { data, error } = await supabase().from("chat_messages").delete().eq("id", message.id).select("id");
+    setBusy(false);
+    if (error || !data?.length) return setNote(t("Couldn't delete it. Try again."));
     onChanged();
   }
 
@@ -265,6 +280,9 @@ export function MessageSheet({ me, message, username, kind, onClose, onChanged }
               {kind === "chat" && <Link className="btn" href={`/messages?with=${encodeURIComponent(username)}`}>{t("Write to @{name} privately", { name: username })}</Link>}
               <button className="btn ghost" type="button" disabled={busy} onClick={swapKeys}>{t("Swap keys with @{name}", { name: username })}</button>
               <Link className="btn ghost" href={`/r/${username}`}>{t("See @{name}'s room", { name: username })}</Link>
+              {moderate && kind === "chat" && (
+                <button className="btn ghost danger-text" type="button" disabled={busy} onClick={removeForEveryone}>{t("Delete this message for everyone")}</button>
+              )}
               <button className="btn ghost" type="button" onClick={() => setMode("report")}>{t("Report this message")}</button>
               <button className="btn ghost danger-text" type="button" onClick={() => setMode("block")}>{t("Block @{name}", { name: username })}</button>
             </>

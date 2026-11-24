@@ -1,4 +1,4 @@
-import { apnsConfigured, sendApns } from "@/lib/apns";
+import { notifyConfigured, notifyUsers } from "@/lib/notify";
 import { callerId } from "@/lib/server-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
@@ -11,7 +11,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(request: Request) {
   const db = supabaseAdmin();
-  if (!db || !apnsConfigured()) return Response.json({ sent: 0, reason: "not set up" });
+  if (!db || !notifyConfigured()) return Response.json({ sent: 0, reason: "not set up" });
   const me = await callerId(db, request);
   if (!me) return new Response("Sign in first", { status: 401 });
   const { to } = (await request.json().catch(() => ({}))) as { to?: string };
@@ -24,16 +24,11 @@ export async function POST(request: Request) {
   if (!last || Date.now() - Date.parse(last.created_at) > 60e3) return Response.json({ sent: 0 });
   if (before && Date.parse(last.created_at) - Date.parse(before.created_at) < 3 * 60e3) return Response.json({ sent: 0, reason: "burst" });
 
-  const [{ data: who }, { data: tokens }] = await Promise.all([
-    db.from("profiles").select("username").eq("id", me).maybeSingle(),
-    db.from("push_tokens").select("token, platform").eq("user_id", to),
-  ]);
-  const ios = ((tokens ?? []) as { token: string; platform: string }[]).filter((t) => t.platform === "ios").map((t) => t.token);
-  if (!who || !ios.length) return Response.json({ sent: 0 });
+  const { data: who } = await db.from("profiles").select("username").eq("id", me).maybeSingle();
+  if (!who) return Response.json({ sent: 0 });
 
   const username = who.username as string;
   const text = last.body.length > 120 ? `${last.body.slice(0, 117)}…` : last.body;
-  const results = await sendApns(ios, { title: "Bottega", body: `@${username}: ${text}`, url: `bottega://messages/${username}` });
-  await Promise.all(results.filter((r) => r.gone).map((r) => db.rpc("drop_push_token", { p_token: r.token })));
-  return Response.json({ sent: results.filter((r) => r.ok).length });
+  const reached = await notifyUsers(db, [to], { title: "Bottega", body: `@${username}: ${text}`, url: `bottega://messages/${username}` });
+  return Response.json({ sent: reached.length });
 }

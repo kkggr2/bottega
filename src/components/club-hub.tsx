@@ -7,6 +7,7 @@ import {
   type PollOption, type PollState, type ShelfItem, type ShelfKind,
 } from "@/lib/clubs";
 import { searchBooks, searchFilms, searchSongs, type Found } from "@/lib/lookup";
+import { notifyClub } from "@/lib/push";
 import { SearchPicker } from "./search-picker";
 import { Sheet } from "./sheet";
 
@@ -17,10 +18,10 @@ import { Sheet } from "./sheet";
  * shelf (everything the club has watched, read or listened to together).
  */
 
-const KINDS: { kind: ShelfKind; label: string; search: typeof searchSongs; source: string; placeholder: string }[] = [
-  { kind: "book", label: "Book", search: searchBooks, source: "Open Library", placeholder: "Title or author" },
-  { kind: "film", label: "Film", search: searchFilms, source: "TMDB", placeholder: "Film or show" },
-  { kind: "song", label: "Record", search: searchSongs, source: "Apple Music", placeholder: "Album, song or artist" },
+const KINDS: { kind: ShelfKind; label: string; search: typeof searchSongs; source: string; placeholder: string; by: string }[] = [
+  { kind: "book", label: "Book", search: searchBooks, source: "Open Library", placeholder: "Title or author", by: "Author or publisher" },
+  { kind: "film", label: "Film", search: searchFilms, source: "TMDB", placeholder: "Film or show", by: "Director · year" },
+  { kind: "song", label: "Record", search: searchSongs, source: "Apple Music", placeholder: "Album, song or artist", by: "Artist" },
 ];
 
 const toOption = (kind: ShelfKind, f: Found): PollOption =>
@@ -131,6 +132,7 @@ function AskSheet({ clubId, onClose, onDone }: { clubId: string; onClose: () => 
     const err = await openPoll(clubId, choices, question.trim() || t("What's next?"));
     setBusy(false);
     if (err) return setError(err);
+    void notifyClub(clubId, "poll");
     onDone();
   }
 
@@ -146,7 +148,8 @@ function AskSheet({ clubId, onClose, onDone }: { clubId: string; onClose: () => 
       </div>
       {choices.length < 4 && (
         <SearchPicker key={kind} id="poll-search" label={t("Add a {kind} ({n} of 4)", { kind: t(meta.label).toLocaleLowerCase(), n: choices.length })} placeholder={t(meta.placeholder)}
-          source={meta.source} search={meta.search} onPick={(f) => setChoices((c) => [...c, toOption(kind, f)].slice(0, 4))} />
+          source={meta.source} search={meta.search} manual={{ subtitle: t(meta.by) }}
+          onPick={(f) => setChoices((c) => [...c, toOption(kind, f)].slice(0, 4))} />
       )}
       {choices.length > 0 && (
         <ul className="hub-picked">
@@ -264,7 +267,7 @@ function AddSheet({ clubId, me, count, onAdded, onClose }: { clubId: string; me:
         {KINDS.map((k) => <button key={k.kind} type="button" className="chip" aria-pressed={kind === k.kind} onClick={() => setKind(k.kind)}>{t(k.label)}</button>)}
       </div>
       <SearchPicker key={`${kind}-${round}`} id="shelf-search" label={t("Find a {kind}", { kind: t(meta.label).toLocaleLowerCase() })} placeholder={t(meta.placeholder)}
-        source={meta.source} search={meta.search} onPick={pick} />
+        source={meta.source} search={meta.search} manual={{ subtitle: t(meta.by) }} onPick={pick} />
       <p className="msg err">{error}</p>
       {added.length > 0 && (
         <ul className="hub-picked" aria-label={t("Just added")}>

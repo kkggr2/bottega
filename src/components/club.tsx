@@ -7,8 +7,9 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  APP_STORE, clubPublic, clubStats, createClub, deleteClub, joinClub, leaveClub, makeHost, joinUrl, myClubs, rememberClub, rememberInvite, roster, shelfPreview, slugify,
-  type ClubPublic, type ClubStats, type MyClub, type RosterRow,
+  APP_STORE, bannedFrom, clubMuted, setClubMuted, clubPublic, clubStats, createClub, deleteClub, isOwner, joinClub, leaveClub, makeHost, joinUrl, myClubs, rememberClub, rememberInvite,
+  removeMember, roster, setCohost, shelfPreview, slugify, unban,
+  type Banned, type ClubPublic, type ClubStats, type MyClub, type RosterRow,
 } from "@/lib/clubs";
 import { befriend } from "@/lib/friends";
 import { isNativeApp, shareLink } from "@/lib/native";
@@ -25,6 +26,9 @@ import { ClubShelf, NextUp } from "./club-hub";
 import { SALON, usePalette } from "@/lib/room-colors";
 import { Gate } from "./gate";
 import { Sheet } from "./sheet";
+import { ClubMeeting, ClubReading } from "./club-life";
+import { PushAsk } from "./push-ask";
+import { notifyClub } from "@/lib/push";
 
 /* eslint-disable @next/next/no-img-element -- club shelf covers from Apple Music, TMDB and Open Library */
 
@@ -236,6 +240,12 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
 
       {club.is_host && <FirstSteps club={club} onInvite={() => setSharing(true)} />}
 
+      <PushAsk userId={me.id} text={t("Get a nudge when {club} posts, votes or meets.", { club: club.name })} />
+
+      <ClubMeeting clubId={club.id} clubName={club.name} me={me.id} isHost={club.is_host} />
+
+      <ClubReading clubId={club.id} me={me.id} isHost={club.is_host} people={people} onShelved={() => setShelfTick((n) => n + 1)} />
+
       <NextUp clubId={club.id} isHost={club.is_host} onShelved={() => setShelfTick((n) => n + 1)} />
 
       <ClubQuizzes slug={club.slug} />
@@ -247,7 +257,7 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
         {people.map((p) => (
           <li key={p.user_id}>
             <Link href={`/r/${p.username}`}>
-              <b>@{p.username}</b>{p.is_host && <span className="mono muted"> {t("host")}</span>}
+              <b>@{p.username}</b>{p.is_host ? <span className="mono muted"> {t("host")}</span> : p.role === "cohost" ? <span className="mono muted"> {t("co-host")}</span> : null}
               {p.now_title && <span className="muted"> · {p.now_title}</span>}
             </Link>
             {p.relation === "none" || p.relation === "asking"
@@ -260,7 +270,8 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
       <h2 className="thread-h">{t("Club chat")}</h2>
       <p className="muted">{t("Only members can read it. Messages last a week.")}</p>
       <ChatLog me={me} roomKey={`club:${club.slug}`} people={people.map((p) => ({ user_id: p.user_id, username: p.username, title: p.now_title }))}
-        placeholder={t("Write to {club}…", { club: club.name })} empty={t("Nobody has written yet. Say hello, or ask what everyone's into this week.")} />
+        placeholder={t("Write to {club}…", { club: club.name })} empty={t("Nobody has written yet. Say hello, or ask what everyone's into this week.")}
+        canModerate={club.is_host} onSent={() => void notifyClub(club.id, "message")} />
 
       <ClubSettings club={club} me={me} people={people} onChanged={load} />
 
@@ -476,11 +487,12 @@ export function StartClubForm({ onDone }: { onDone: (slug: string) => void }) {
   );
 }
 
-/** At the bottom of a club: the host can hand it over or delete it; members can leave. */
+/** At the bottom of a club: hosts manage members; the owner can hand it over or delete it; everyone else can leave. */
 function ClubSettings({ club, me, people, onChanged }: { club: MyClub; me: Profile; people: RosterRow[]; onChanged: () => void }) {
   const t = useT();
   const router = useRouter();
-  const [open, setOpen] = useState<"none" | "host" | "delete" | "leave">("none");
+  const [open, setOpen] = useState<"none" | "host" | "delete" | "leave" | "members">("none");
+  const owner = isOwner(club);
   const [pick, setPick] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -498,7 +510,9 @@ function ClubSettings({ club, me, people, onChanged }: { club: MyClub; me: Profi
 
   return (
     <div className="club-settings">
-      {club.is_host ? (
+      <MuteSwitch clubId={club.id} />
+      {club.is_host && <button type="button" className="linkish" onClick={() => setOpen("members")}>{t("Manage members")}</button>}
+      {owner ? (
         <>
           {others.length > 0 && <button type="button" className="linkish" onClick={() => setOpen("host")}>{t("Hand the club to someone else")}</button>}
           <button type="button" className="linkish danger-text" onClick={() => setOpen("delete")}>{t("Delete the club")}</button>
@@ -506,6 +520,8 @@ function ClubSettings({ club, me, people, onChanged }: { club: MyClub; me: Profi
       ) : (
         <button type="button" className="linkish" onClick={() => setOpen("leave")}>{t("Leave the club")}</button>
       )}
+
+      {open === "members" && <MembersSheet club={club} people={others} owner={owner} onClose={close} onChanged={onChanged} />}
 
       {open === "host" && (
         <Sheet onClose={close} label={t("Hand the club to someone else")}>
@@ -557,5 +573,131 @@ function ClubSettings({ club, me, people, onChanged }: { club: MyClub; me: Profi
         </Sheet>
       )}
     </div>
+  );
+}
+
+/**
+ * For hosts: who's in the club and what they can do. The owner makes co-hosts; any host can remove
+ * someone, or ban them (they can't rejoin from the link, and their messages here go).
+ */
+function MembersSheet({ club, people, owner, onClose, onChanged }: {
+  club: MyClub; people: RosterRow[]; owner: boolean; onClose: () => void; onChanged: () => void;
+}) {
+  const t = useT();
+  const [open, setOpen] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<"remove" | "ban" | null>(null);
+  const [banned, setBanned] = useState<Banned[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadBanned = useCallback(async () => setBanned(await bannedFrom(club.id)), [club.id]);
+  useEffect(() => { void loadBanned(); }, [loadBanned]); // eslint-disable-line react-hooks/set-state-in-effect -- fetching on open
+
+  const toggle = (id: string) => { setOpen((o) => (o === id ? null : id)); setConfirm(null); setError(null); };
+
+  async function run(task: () => Promise<string | null>) {
+    setBusy(true);
+    setError(null);
+    const err = await task();
+    setBusy(false);
+    if (err) return setError(t(err));
+    setOpen(null);
+    setConfirm(null);
+    onChanged();
+    void loadBanned();
+  }
+
+  const roleOf = (p: RosterRow) => (p.is_host ? "owner" : p.role ?? "member");
+  const label = (p: RosterRow) => ({ owner: t("host"), cohost: t("co-host"), member: "" })[roleOf(p)];
+
+  return (
+    <Sheet onClose={onClose} label={t("Manage members")}>
+      <h2>{t("Manage members")}</h2>
+      <p className="muted">
+        {owner
+          ? t("Co-hosts can add to the shelf, start votes, remove people and delete messages. Only you can hand the club over or delete it.")
+          : t("As a co-host you can remove people and delete messages in the chat.")}
+      </p>
+      {people.length === 0 ? <p className="muted">{t("Nobody else has joined yet.")}</p> : (
+        <ul className="manage-list">
+          {people.map((p) => {
+            const role = roleOf(p);
+            const canRemove = role !== "owner" && (role !== "cohost" || owner);
+            const canPromote = owner && role !== "owner";
+            const expanded = open === p.user_id;
+            return (
+              <li key={p.user_id}>
+                <button type="button" className="manage-row" aria-expanded={expanded} onClick={() => toggle(p.user_id)}
+                  disabled={!canRemove && !canPromote}>
+                  <b>@{p.username}</b>
+                  {label(p) && <span className="mono muted">{label(p)}</span>}
+                  {(canRemove || canPromote) && <span className="muted" aria-hidden="true">{expanded ? "\u2212" : "\u2026"}</span>}
+                </button>
+                {expanded && (
+                  confirm ? (
+                    <div className="manage-actions">
+                      <p>{confirm === "ban"
+                        ? t("Ban @{name}? They're removed, can't join again from the link, and their messages here are deleted.", { name: p.username })
+                        : t("Remove @{name}? They can join again from the club's link.", { name: p.username })}</p>
+                      <div className="row">
+                        <button className="btn ghost small" type="button" onClick={() => setConfirm(null)}>{t("Cancel")}</button>
+                        <button className="btn danger-solid small" type="button" disabled={busy}
+                          onClick={() => run(() => removeMember(club.id, p.user_id, confirm === "ban"))}>
+                          {confirm === "ban" ? t("Ban") : t("Remove")}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="manage-actions row">
+                      {canPromote && (
+                        <button className="btn ghost small" type="button" disabled={busy}
+                          onClick={() => run(() => setCohost(club.id, p.user_id, role !== "cohost"))}>
+                          {role === "cohost" ? t("No longer co-host") : t("Make co-host")}
+                        </button>
+                      )}
+                      {canRemove && <button className="btn ghost small" type="button" onClick={() => setConfirm("remove")}>{t("Remove")}</button>}
+                      {canRemove && <button className="btn ghost small danger-text" type="button" onClick={() => setConfirm("ban")}>{t("Ban")}</button>}
+                    </div>
+                  )
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <p className="msg err" aria-live="polite">{error}</p>
+
+      {banned.length > 0 && (
+        <>
+          <h3 className="smallcaps muted">{t("Banned")}</h3>
+          <ul className="manage-list">
+            {banned.map((b) => (
+              <li key={b.user_id}>
+                <div className="manage-row">
+                  <b>@{b.username}</b>
+                  <button className="btn ghost small" type="button" disabled={busy} onClick={() => run(() => unban(club.id, b.user_id))}>{t("Unban")}</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      <div className="row"><button className="btn" type="button" onClick={onClose}>{t("Done")}</button></div>
+    </Sheet>
+  );
+}
+
+/** Each member can mute a busy club. They still see everything when they open it. */
+function MuteSwitch({ clubId }: { clubId: string }) {
+  const t = useT();
+  const [muted, setMuted] = useState<boolean | null>(null);
+  useEffect(() => { clubMuted(clubId).then(setMuted).catch(() => setMuted(null)); }, [clubId]);
+  if (muted === null) return null;
+  return (
+    <label className="settings-row club-mute">
+      <span>{t("Notifications from this club")}<small className="muted">{t("Messages, votes, new books and meeting reminders")}</small></span>
+      <input className="switch" type="checkbox" role="switch" checked={!muted}
+        onChange={(e) => { const on = e.target.checked; setMuted(!on); void setClubMuted(clubId, !on); }} />
+    </label>
   );
 }
