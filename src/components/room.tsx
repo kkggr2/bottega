@@ -467,7 +467,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
                   : `Only @${owner.username}'s friends can step inside.`}
               </p>
             </div>
-          ) : !isOwner && pieces.length === 0 ? (
+          ) : !isOwner && pieces.length === 0 && !watching ? (
             <div className="empty-wall">
               <h2>Nothing in here yet.</h2>
               <p>Check back soon.</p>

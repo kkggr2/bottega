@@ -147,7 +147,7 @@ export function PieceDetail({
           loading="lazy"
         />
       )}
-      {piece.link && (
+      {piece.link && piece.type !== "moment" && (
         <p>
           <a href={piece.link} target="_blank" rel="noopener noreferrer">Open link ↗</a>{" "}
           <span className="muted">{hostOf(piece.link)}</span>
