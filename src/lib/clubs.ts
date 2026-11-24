@@ -255,9 +255,10 @@ export async function answerMeeting(meetingId: string, me: string, answer: Rsvp)
   return !error;
 }
 
-export type PartWord = "chapter" | "part" | "section" | "episode";
+export type PartWord = "chapter" | "part" | "section" | "episode" | "minute";
+export type ReadingKind = "book" | "film";
 export type Reading = {
-  id: string; title: string; subtitle: string; cover_url: string | null; link: string | null;
+  id: string; kind: ReadingKind; title: string; subtitle: string; cover_url: string | null; link: string | null;
   parts: number; part_word: PartWord; due_on: string | null; started_at: string;
   my_part: number; readers: number; finished: number; notes_ahead: number;
 };
@@ -270,14 +271,14 @@ export async function readingNow(clubId: string): Promise<Reading | null> {
 
 export async function startReading(
   clubId: string, me: string, book: { title: string; subtitle?: string; cover_url?: string | null; link?: string | null },
-  parts: number, partWord: PartWord, dueOn: string | null,
+  parts: number, partWord: PartWord, dueOn: string | null, kind: ReadingKind = "book",
 ): Promise<string | null> {
   const { error } = await supabase().from("club_readings").insert({
     club_id: clubId, started_by: me, title: book.title.slice(0, 160), subtitle: (book.subtitle ?? "").slice(0, 160),
-    cover_url: book.cover_url ?? null, link: book.link ?? null, parts, part_word: partWord, due_on: dueOn,
+    cover_url: book.cover_url ?? null, link: book.link ?? null, parts, part_word: partWord, due_on: dueOn, kind,
   });
   if (!error) return null;
-  return /one_current/.test(error.message) ? "Finish the current book first." : "Couldn't start it. Try again.";
+  return /one_current/.test(error.message) ? "Finish the current one first." : "Couldn't start it. Try again.";
 }
 
 export async function updateReading(id: string, patch: { parts?: number; part_word?: PartWord; due_on?: string | null }): Promise<void> {

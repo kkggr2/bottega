@@ -8,7 +8,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
  *   message  a chat message (members hear at most once every 30 minutes per club, so a busy evening is one buzz)
  *   poll     a new vote on what's next
  *   meeting  a new or moved meeting
- *   reading  a new book to read
+ *   reading  a new book to read, or film to watch
  * The server reads what happened itself and checks the caller did it. Muted members aren't told.
  */
 
@@ -48,8 +48,12 @@ export async function POST(request: Request) {
       .gt("starts_at", new Date().toISOString()).order("starts_at").limit(1).maybeSingle();
     if (data) body = `Meeting: ${meetingWhen(data.starts_at as string, data.tz as string)}${data.place ? ` · ${clip(data.place as string, 60)}` : ""}. Are you coming?`;
   } else if (isHost && kind === "reading") {
-    const { data } = await db.from("club_readings").select("title, started_at").eq("club_id", clubId).is("finished_at", null).maybeSingle();
-    if (data && fresh(data.started_at as string)) body = `Now reading: ${clip(data.title as string, 100)}`;
+    const { data } = await db.from("club_readings").select("title, kind, started_at").eq("club_id", clubId).is("finished_at", null).maybeSingle();
+    if (data && fresh(data.started_at as string)) {
+      body = data.kind === "film"
+        ? `Now watching: ${clip(data.title as string, 100)}. Tap Watch along when you press play.`
+        : `Now reading: ${clip(data.title as string, 100)}`;
+    }
   }
   if (!body) return Response.json({ sent: 0 });
 

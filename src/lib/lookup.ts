@@ -123,6 +123,8 @@ export type FilmDetails = {
   stills: string[];
   trailer: string | null;
   link: string;
+  /** Minutes, for films (not series). */
+  runtime?: number | null;
 };
 
 /** Films and TV from TMDB, through our own server so the token stays private. */

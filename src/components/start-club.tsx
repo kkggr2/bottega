@@ -28,7 +28,7 @@ export function StartClubScreen() {
         <h1>Start your club on Bottega</h1>
         <p className="lede">A home for your film club, book club or group of friends — free, no ads.</p>
         <ul className="start-perks">
-          <li><b>Read together, no spoilers</b><span>Everyone says how far they are; notes on each chapter stay folded until they get there.</span></li>
+          <li><b>Read or watch together, no spoilers</b><span>Notes on each chapter stay folded until you get there. For films, tap Watch along when you press play and notes appear at their minute.</span></li>
           <li><b>Meetings</b><span>Date and place, who&rsquo;s coming, and a reminder the day before.</span></li>
           <li><b>Your shelf</b><span>Everything you&rsquo;ve read or watched together, so new members see what you&rsquo;re about.</span></li>
           <li><b>What&rsquo;s next?</b><span>Put up a few choices and let everyone vote.</span></li>

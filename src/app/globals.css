@@ -1593,3 +1593,16 @@ html.native.kb-open .tabbar { display: none; }
 .hub-picked.one { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; }
 .club-settings .club-mute { flex: 0 0 100%; max-width: none; display: flex; justify-content: center; align-items: center; gap: 18px; margin: 0 0 8px; border: 0; }
 .club-settings { flex-wrap: wrap; }
+
+/* Film clubs: minutes watched, and Watch along (a clock that runs with the film). */
+.watched-row { align-items: center; gap: 10px; flex-wrap: wrap; }
+.watched-row input { width: 90px; }
+.watch-along-btn { justify-self: start; margin-top: 4px; }
+.watch-along { display: grid; gap: 12px; padding: 14px; border-radius: 14px; background: color-mix(in srgb, var(--fg) 6%, transparent); }
+.watch-sync { display: grid; justify-items: center; gap: 8px; text-align: center; padding: 10px 0; }
+.sync-btn { width: 120px; height: 120px; border-radius: 50%; font: 500 20px/1 var(--font-display); }
+.watch-clock { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.watch-clock > b { font-size: 28px; font-variant-numeric: tabular-nums; color: var(--brass); }
+.watch-lock { margin: 0; font-size: 13px; }
+.notes.live { max-height: 320px; overflow-y: auto; }
+.watch-along > .linkish { justify-self: start; }

@@ -51,7 +51,7 @@ async function details(id: string) {
   if ((media !== "movie" && media !== "tv") || !/^\d+$/.test(num)) throw new Error("bad id");
 
   const d = await tmdb<{
-    title?: string; name?: string; release_date?: string; first_air_date?: string;
+    title?: string; name?: string; release_date?: string; first_air_date?: string; runtime?: number | null;
     poster_path?: string | null; backdrop_path?: string | null;
     created_by?: { name: string }[];
     credits?: { crew: { name: string; job: string }[] };
@@ -76,5 +76,6 @@ async function details(id: string) {
       .map((p) => `${IMG}/w780${p}`),
     trailer: trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : null,
     link: `https://www.themoviedb.org/${media}/${num}`,
+    runtime: media === "movie" && d.runtime ? d.runtime : null,
   };
 }
