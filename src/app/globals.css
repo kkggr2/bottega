@@ -1574,8 +1574,9 @@ html.native.kb-open .tabbar { display: none; }
 /* Questions for the evening and the reading guide: folded until wanted. */
 .meeting-prep { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; }
 .meeting-prep details { flex: 1 1 100%; }
+.meeting-prep li::marker { color: var(--muted); }
 .meeting-prep summary, .meeting-more summary { cursor: pointer; color: var(--muted); font-size: 14.5px; }
-.meeting-prep ol { margin: 8px 0 0; padding-left: 1.3em; display: grid; gap: 6px; line-height: 1.45; }
+.meeting-prep ol { list-style: decimal; margin: 8px 0 0; padding-left: 1.4em; display: grid; gap: 6px; line-height: 1.45; }
 .meeting-prep a { font-size: 14.5px; }
 .meeting-more { margin: 4px 0 8px; }
 .meeting-more[open] summary { margin-bottom: 10px; }
