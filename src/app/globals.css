@@ -1630,4 +1630,5 @@ html.native.kb-open .tabbar { display: none; }
 .club-chat-note { font-size: 12.5px; text-align: center; margin-top: 10px; }
 .club-shelf-tab, .club-people { display: grid; gap: 18px; }
 .club-people .club-settings { margin-top: 10px; }
+.club-people > .msg:empty { position: absolute; }
 .club [role="tabpanel"][hidden] { display: none; }
