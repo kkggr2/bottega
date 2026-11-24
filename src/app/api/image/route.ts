@@ -24,6 +24,7 @@ function allowed(url: URL): boolean {
     h === "archive.org" || h.endsWith(".archive.org") || // Open Library covers redirect here
     /^is\d+-ssl\.mzstatic\.com$/.test(h) ||
     h === "i.ytimg.com" ||
+    (h === "citapress.org" && url.pathname.startsWith("/img/books/")) || // Cita Press's covers, for their room
     (supabaseHost !== "" && h === supabaseHost && url.pathname.startsWith("/storage/v1/object/sign/"))
   );
 }

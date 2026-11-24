@@ -195,7 +195,7 @@ function TogetherView({ me, id }: { me: Profile; id: string }) {
 
 const KINDS: { kind: Kind; label: string; search: typeof searchSongs; source: string; placeholder: string }[] = [
   { kind: "poster", label: "Film", search: searchFilms, source: "TMDB", placeholder: "Film or show" },
-  { kind: "book", label: "Book", search: searchBooks, source: "Open Library", placeholder: "Title or author" },
+  { kind: "book", label: "Book", search: searchBooks, source: "Open Library & Apple Books", placeholder: "Title or author" },
   { kind: "song", label: "Record", search: searchSongs, source: "Apple Music", placeholder: "Song or artist" },
 ];
 

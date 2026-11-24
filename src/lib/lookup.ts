@@ -38,8 +38,28 @@ export async function searchSongs(term: string, signal?: AbortSignal): Promise<F
   }));
 }
 
-/** Books from Open Library. */
+/**
+ * Books: Open Library first (the widest catalogue, with first-publication years), then Apple Books to fill the
+ * gaps: new books, translations and small presses Open Library doesn't have yet, and covers it's missing.
+ * Either one can be down; it only fails if both are.
+ */
 export async function searchBooks(term: string, signal?: AbortSignal): Promise<Found[]> {
+  const [ol, apple] = await Promise.allSettled([openLibraryBooks(term, signal), appleBooks(term, signal)]);
+  if (signal?.aborted) throw new Error("aborted");
+  if (ol.status === "rejected" && apple.status === "rejected") throw new Error("search failed");
+  const first = ol.status === "fulfilled" ? ol.value : [];
+  const second = apple.status === "fulfilled" ? apple.value : [];
+
+  const key = (f: Found) => f.title.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, " ").trim();
+  const byTitle = new Map(second.map((b) => [key(b), b]));
+  // Open Library's results, borrowing Apple's cover where Open Library has none.
+  const merged = first.map((b) => (b.cover_url ? b : { ...b, cover_url: byTitle.get(key(b))?.cover_url ?? null }));
+  const seen = new Set(merged.map(key));
+  for (const b of second) if (!seen.has(key(b))) { merged.push(b); seen.add(key(b)); }
+  return merged.slice(0, 14);
+}
+
+async function openLibraryBooks(term: string, signal?: AbortSignal): Promise<Found[]> {
   const url = `https://openlibrary.org/search.json?limit=10&fields=key,title,author_name,first_publish_year,cover_i&q=${encodeURIComponent(term)}`;
   const res = await fetch(url, { signal });
   if (!res.ok) throw new Error("search failed");
@@ -52,6 +72,23 @@ export async function searchBooks(term: string, signal?: AbortSignal): Promise<F
     subtitle: join(d.author_name?.slice(0, 2).join(", "), year(d.first_publish_year)),
     cover_url: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-L.jpg` : null,
     link: `https://openlibrary.org${d.key}`,
+  }));
+}
+
+/** Books from Apple Books (iTunes Search), with covers. */
+async function appleBooks(term: string, signal?: AbortSignal): Promise<Found[]> {
+  const url = `https://itunes.apple.com/search?entity=ebook&limit=8&term=${encodeURIComponent(term)}`;
+  const res = await fetch(url, { signal });
+  if (!res.ok) throw new Error("search failed");
+  const data = (await res.json()) as {
+    results: { trackId: number; trackName: string; artistName: string; releaseDate?: string; artworkUrl100?: string; trackViewUrl?: string }[];
+  };
+  return data.results.map((r) => ({
+    id: `apple-book-${r.trackId}`,
+    title: r.trackName,
+    subtitle: join(r.artistName, year(r.releaseDate)),
+    cover_url: r.artworkUrl100?.replace(/\/\d+x\d+bb\./, "/600x600bb.") ?? null,
+    link: r.trackViewUrl?.replace(/[?&]uo=\d+$/, "") ?? null,
   }));
 }
 

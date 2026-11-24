@@ -533,7 +533,7 @@ function StartReadingSheet({ clubId, me, onClose, onDone }: { clubId: string; me
         <SearchPicker key="film" id="watching-search" label={t("Find the film")} placeholder={t("Film or show")} source="TMDB"
           search={searchFilms} manual={{ subtitle: t("Director · year") }} onPick={pick} />
       ) : (
-        <SearchPicker key="book" id="reading-search" label={t("Find the book")} placeholder={t("Title or author")} source="Open Library"
+        <SearchPicker key="book" id="reading-search" label={t("Find the book")} placeholder={t("Title or author")} source="Open Library & Apple Books"
           search={searchBooks} manual={{ subtitle: t("Author or publisher") }} onPick={pick} />
       )}
       <div className="meeting-fields">

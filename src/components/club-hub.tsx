@@ -19,7 +19,7 @@ import { Sheet } from "./sheet";
  */
 
 const KINDS: { kind: ShelfKind; label: string; search: typeof searchSongs; source: string; placeholder: string; by: string }[] = [
-  { kind: "book", label: "Book", search: searchBooks, source: "Open Library", placeholder: "Title or author", by: "Author or publisher" },
+  { kind: "book", label: "Book", search: searchBooks, source: "Open Library & Apple Books", placeholder: "Title or author", by: "Author or publisher" },
   { kind: "film", label: "Film", search: searchFilms, source: "TMDB", placeholder: "Film or show", by: "Director · year" },
   { kind: "song", label: "Record", search: searchSongs, source: "Apple Music", placeholder: "Album, song or artist", by: "Artist" },
 ];

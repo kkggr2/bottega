@@ -37,6 +37,8 @@ function build(slug: string, items: [PieceType, string, string, string | null, s
 
 const tmdb = (path: string) => `https://image.tmdb.org/t/p/w500/${path}.jpg`;
 const ol = (id: number) => `https://covers.openlibrary.org/b/id/${id}-L.jpg`;
+/** Cita Press's own covers, from citapress.org (each credits its cover artist). */
+const cita = (url: string) => url;
 
 export const FAMOUS: FamousRoom[] = [
   {
@@ -183,28 +185,28 @@ export const FAMOUS: FamousRoom[] = [
     person: "Cita Press", short: "Cita",
     name: "Cita Press",
     tagline: "Women's writing, free for everyone. Every book on this shelf can be read free at citapress.org.",
-    source: "Books from Cita Press's open-access library.",
+    source: "Books and covers from Cita Press's open-access library.",
     sourceUrl: "https://citapress.org/",
     theme: "rose", wallpaper: "stripe",
     draft: "A draft made for Cita Press to look at. It isn't listed anywhere on Bottega until they say yes, and every line can be changed.",
     pieces: build("citapress", [
-      ["book", "The Yellow Wall-Paper", "Charlotte Perkins Gilman · 1892", null,
+      ["book", "The Yellow Wall-Paper", "Charlotte Perkins Gilman · 1892", cita("https://citapress.org/img/books/the-yellow-wall-paper/post.jpg"),
         "A woman told to rest, a room she can't leave, and a wallpaper she can't stop reading.", "https://citapress.org/the-yellow-wall-paper/"],
-      ["book", "The Awakening", "Kate Chopin · 1899", null,
+      ["book", "The Awakening", "Kate Chopin · 1899", cita("https://citapress.org/img/books/the-awakening/post.png"),
         "A summer on the Gulf Coast, and a woman who stops pretending.", "https://citapress.org/the-awakening/"],
-      ["book", "Ten Days in a Mad-House", "Nellie Bly · 1887", null,
+      ["book", "Ten Days in a Mad-House", "Nellie Bly · 1887", cita("https://citapress.org/img/books/ten-days-in-a-mad-house/post.png"),
         "The reporter who had herself committed to tell the truth about an asylum.", "https://citapress.org/ten-days-in-a-mad-house/"],
-      ["book", "Incidents in the Life of a Slave Girl", "Harriet Jacobs · 1861", null,
+      ["book", "Incidents in the Life of a Slave Girl", "Harriet Jacobs · 1861", cita("https://citapress.org/img/books/incidents-in-the-life-of-a-slave-girl/post.jpg"),
         "Her own account of slavery and escape, written in her own name.", "https://citapress.org/incidents-in-the-life-of-a-slave-girl/"],
-      ["book", "Behind a Mask", "Louisa May Alcott · 1866", null,
+      ["book", "Behind a Mask", "Louisa May Alcott · 1866", cita("https://citapress.org/img/books/behind-a-mask/post.png"),
         "The Little Women author, writing a thriller under another name.", "https://citapress.org/behind-a-mask/"],
-      ["book", "Mathilda", "Mary Shelley", null,
+      ["book", "Mathilda", "Mary Shelley", cita("https://citapress.org/img/books/mathilda/post.jpg"),
         "Written in 1819–20 and kept from readers for more than a century.", "https://citapress.org/mathilda/"],
-      ["book", "Silly Novels by Silly Lady Novelists", "George Eliot · 1856", null,
+      ["book", "Silly Novels by Silly Lady Novelists", "George Eliot · 1856", cita("https://citapress.org/img/books/silly-novels/post.png"),
         "A great novelist's sharp review of the fiction women were expected to write.", "https://citapress.org/silly-novels/"],
-      ["book", "Dolores: Scenes from a Woman's Life", "Soledad Acosta de Samper", null,
+      ["book", "Dolores: Scenes from a Woman's Life", "Soledad Acosta de Samper", cita("https://citapress.org/img/books/dolores-scenes-from-a-womans-life/post.jpeg"),
         "A Colombian classic, in a new English translation.", "https://citapress.org/dolores-scenes-from-a-womans-life/"],
-      ["book", "A Luminous Halo", "Virginia Woolf", null,
+      ["book", "A Luminous Halo", "Virginia Woolf", cita("https://citapress.org/img/books/a-luminous-halo-selected-writings-by-virginia-woolf/post.jpg"),
         "Selected writings by Woolf, gathered by Cita.", "https://citapress.org/a-luminous-halo-selected-writings-by-virginia-woolf/"],
     ]),
   },

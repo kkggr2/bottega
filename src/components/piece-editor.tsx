@@ -250,7 +250,7 @@ export function PieceEditor({
           search={searchSongs} onPick={pick} />
       )}
       {draft.type === "book" && (
-        <SearchPicker key="book" id="find-book" label="Find a book" placeholder="Title or author" source="Open Library"
+        <SearchPicker key="book" id="find-book" label="Find a book" placeholder="Title or author" source="Open Library & Apple Books"
           search={searchBooks} onPick={pick} />
       )}
       {(draft.type === "poster" || draft.type === "scene") && (
