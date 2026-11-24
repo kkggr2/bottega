@@ -345,3 +345,44 @@ export async function setClubPin(clubId: string, note: string): Promise<string |
   const { error } = await supabase().rpc("set_club_pin", { p_club: clubId, p_note: note });
   return error ? rpcError(error.message) : null;
 }
+
+// ---------------------------------------------------------------------------
+// Film night ratings (supabase/migrations/20261208000000_film_night.sql)
+// ---------------------------------------------------------------------------
+
+export const rateUrl = (slug: string) => `${SITE}/rate/${slug}`;
+
+export type RatingOpen = {
+  club_id: string; club_name: string; emoji: string;
+  item_id: string | null; title: string | null; subtitle: string | null; cover_url: string | null;
+  is_member: boolean; ratings: number | null; average: number | null; my_stars: number | null; my_comment: string | null;
+};
+export type RatingLine = { username: string; stars: number; comment: string; at: string };
+export type Score = { item_id: string; title: string; subtitle: string; cover_url: string | null; average: number; ratings: number; my_stars: number | null };
+
+/** What's open for rating in a club (null if there's no such club). */
+export async function ratingOpen(slug: string): Promise<RatingOpen | null> {
+  const { data } = await supabase().rpc("club_rating_open", { p_slug: slug });
+  return ((data ?? []) as RatingOpen[])[0] ?? null;
+}
+
+export async function rateFilm(itemId: string, stars: number, comment: string): Promise<string | null> {
+  const { error } = await supabase().rpc("rate_club_film", { p_item: itemId, p_stars: stars, p_comment: comment });
+  return error ? rpcError(error.message) : null;
+}
+
+export async function ratingLines(itemId: string): Promise<RatingLine[]> {
+  const { data } = await supabase().rpc("club_rating_lines", { p_item: itemId });
+  return (data ?? []) as RatingLine[];
+}
+
+export async function clubScores(clubId: string): Promise<Score[]> {
+  const { data } = await supabase().rpc("club_scores", { p_club: clubId });
+  return (data ?? []) as Score[];
+}
+
+/** Open rating for a film on the shelf, or close it (null). */
+export async function openRating(clubId: string, itemId: string | null): Promise<string | null> {
+  const { error } = await supabase().rpc("open_club_rating", { p_club: clubId, p_item: itemId });
+  return error ? rpcError(error.message) : null;
+}

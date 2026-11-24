@@ -25,7 +25,8 @@ export function usePalette(p: Palette | null, mood?: "salon" | "quiz"): void {
       "--bg": wall,
       "--fg": ink,
       "--surface": `color-mix(in srgb, ${wall} 88%, ${ink})`,
-      "--muted": `color-mix(in srgb, ${ink} 64%, ${wall})`,
+      // Secondary text stays easy to read on a dark wall (64% was too faint at small sizes).
+      "--muted": `color-mix(in srgb, ${ink} 78%, ${wall})`,
       "--line": `color-mix(in srgb, ${ink} 18%, ${wall})`,
       "--brass": accent,
     };

@@ -27,6 +27,7 @@ import { SALON, usePalette } from "@/lib/room-colors";
 import { Gate } from "./gate";
 import { Sheet } from "./sheet";
 import { ClubMeeting, ClubPin, ClubReading } from "./club-life";
+import { FilmNight, SeasonScores } from "./film-night";
 import { PushAsk } from "./push-ask";
 import { notifyClub } from "@/lib/push";
 
@@ -260,6 +261,7 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
       <div className="club-now" role="tabpanel" hidden={tab !== "now"} data-empty={t("Nothing planned yet. A meeting, a book or a vote will show up here.")}>
           <PushAsk userId={me.id} text={t("Get a nudge when {club} posts, votes or meets.", { club: club.name })} />
           <ClubPin clubId={club.id} isHost={club.is_host} refresh={pinTick} />
+          <FilmNight clubId={club.id} slug={club.slug} me={me.id} isHost={club.is_host} onChanged={() => setShelfTick((n) => n + 1)} />
           <ClubMeeting clubId={club.id} clubName={club.name} me={me.id} isHost={club.is_host} />
           <ClubReading clubId={club.id} me={me.id} isHost={club.is_host} people={people} onShelved={() => setShelfTick((n) => n + 1)} />
           <NextUp clubId={club.id} isHost={club.is_host} onShelved={() => setShelfTick((n) => n + 1)} />
@@ -274,6 +276,7 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
         </div>
 
       <div role="tabpanel" className="club-shelf-tab" hidden={tab !== "shelf"}>
+          <SeasonScores clubId={club.id} refresh={shelfTick} />
           <ClubShelf clubId={club.id} me={me.id} isHost={club.is_host} refresh={shelfTick} startOpen={isNew} />
           <ClubQuizzes club={club} />
         </div>
