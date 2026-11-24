@@ -431,3 +431,9 @@ export async function setMyTown(town: string): Promise<boolean> {
 export function meetsLine(d: { meets_in: string; meets_online: boolean; meets_when: string }): string {
   return [d.meets_online ? "Online" : d.meets_in, d.meets_when].filter(Boolean).join(" · ");
 }
+
+/** Where and when a club meets, if its host chose to be found (supabase/migrations/20261210000000_club_meets.sql). */
+export async function clubMeets(slug: string): Promise<{ meets_in: string; meets_online: boolean; meets_when: string } | null> {
+  const { data } = await supabase().rpc("club_meets", { p_slug: slug });
+  return ((data ?? []) as { meets_in: string; meets_online: boolean; meets_when: string }[])[0] ?? null;
+}

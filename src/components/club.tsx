@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  APP_STORE, bannedFrom, clubMuted, setClubMuted, clubPublic, clubStats, createClub, deleteClub, isOwner, joinClub, leaveClub, makeHost, joinUrl, myClubs, rememberClub, rememberInvite,
+  APP_STORE, bannedFrom, clubMeets, clubMuted, setClubMuted, clubPublic, clubStats, createClub, deleteClub, isOwner, joinClub, leaveClub, makeHost, joinUrl, myClubs, rememberClub, rememberInvite,
   removeMember, roster, setClubPin, setCohost, shelfPreview, slugify, unban,
   type Banned, type ClubPublic, type ClubStats, type MyClub, type RosterRow,
 } from "@/lib/clubs";
@@ -67,7 +67,9 @@ export function JoinScreen({ slug }: { slug: string }) {
   }
 
   const [shelf, setShelf] = useState<Awaited<ReturnType<typeof shelfPreview>>>([]);
+  const [meets, setMeets] = useState<Awaited<ReturnType<typeof clubMeets>>>(null);
   useEffect(() => {
+    clubMeets(slug).then(setMeets).catch(() => {});
     clubPublic(slug).then((c) => {
       setClub(c);
       if (c) track("club_view", { detail: c.slug });
@@ -109,6 +111,12 @@ export function JoinScreen({ slug }: { slug: string }) {
       <p className="join-emoji" aria-hidden="true">{club.emoji}</p>
       <p className="mono muted">{t("You're invited")}</p>
       <h1>{club.name}</h1>
+      {meets && (meets.meets_online || meets.meets_in) && (
+        <p className="join-meets">
+          {meets.meets_online ? t("Meets online") : t("Meets in {town}", { town: meets.meets_in })}
+          {meets.meets_when ? <> · {meets.meets_when}</> : null}
+        </p>
+      )}
       <p className="lede">
         {t("@{host} started this club's home on Bottega: what you've read and watched together, a vote on what's next, the club's own chat and quizzes. Everyone also gets a room for the films, books and records they love.", { host: club.host_username })}
       </p>

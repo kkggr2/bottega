@@ -896,4 +896,6 @@ export const TR: Record<string, string> = {
   "Clubs near you": "Yakınındaki kulüpler",
   "Say which town you're in, and film and book clubs there that share your taste can show up here. Nobody else sees your town.": "Hangi şehirde olduğunu yaz; oradaki, zevkini paylaşan film ve kitap kulüpleri burada görünebilir. Şehrini başka kimse görmez.",
   "Your town": "Şehrin",
+  "Meets online": "Çevrimiçi buluşuyor",
+  "Meets in {town}": "{town} şehrinde buluşuyor",
 };
