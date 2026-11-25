@@ -898,4 +898,5 @@ export const TR: Record<string, string> = {
   "Your town": "Şehrin",
   "Meets online": "Çevrimiçi buluşuyor",
   "Meets in {town}": "{town} şehrinde buluşuyor",
+  "{town} · only used to suggest clubs that meet there": "{town} · yalnızca orada buluşan kulüpleri önermek için kullanılır",
 };

@@ -148,6 +148,28 @@ export function ClubSuggestionCard() {
 
 const TOWN_LATER = "bottega.townAsk.later";
 
+/** In Settings: the town you gave, and a way to take it back. Shown only when there is one. */
+export function TownSetting() {
+  const t = useT();
+  const [town, setTown] = useState("");
+  useEffect(() => { myTown().then(setTown).catch(() => {}); }, []);
+  if (!town) return null;
+
+  async function remove() {
+    if (!(await setMyTown(""))) return;
+    // Removing it means "don't use my town", so don't ask for it again in the Salon either.
+    try { localStorage.setItem(TOWN_LATER, "1"); } catch {}
+    setTown("");
+  }
+
+  return (
+    <div className="settings-row">
+      <span>{t("Your town")}<small className="muted">{t("{town} · only used to suggest clubs that meet there", { town })}</small></span>
+      <button type="button" className="btn ghost small" onClick={() => void remove()}>{t("Remove")}</button>
+    </div>
+  );
+}
+
 function TownAsk({ onSaved }: { onSaved: (town: string) => void }) {
   const t = useT();
   const [hidden, setHidden] = useState(() => { try { return Boolean(localStorage.getItem(TOWN_LATER)); } catch { return false; } });

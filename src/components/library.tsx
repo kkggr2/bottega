@@ -14,6 +14,7 @@ import { ConnoisseursRow } from "./connoisseurs";
 import { FamousRooms } from "./famous-room";
 import { TogetherDoors, TogetherInvites } from "./together-library";
 import { DeleteAccount } from "./delete-account";
+import { TownSetting } from "./club-discovery";
 import { accept, befriend, unfriend } from "@/lib/friends";
 import { shareLink, tap } from "@/lib/native";
 import { joinDid, lastSeen, NOW_SLOTS, NOW_WORDS, nowAt, nowId, type NowPiece } from "@/lib/now";
@@ -380,6 +381,7 @@ function Library({ me }: { me: Profile }) {
           <div className="settings-list">
             {!guest && <EmailSwitch userId={me.id} />}
             <WatchingSwitch userId={me.id} />
+            <TownSetting />
             <div className="settings-row"><span>{t("Language")}</span><LangSwitch /></div>
             <p className="muted settings-note">{t("Friends can see your room and you can see theirs. Change who can come in from your room's Customize menu.")}</p>
             <nav className="settings-links">
