@@ -281,6 +281,33 @@ export const FAMOUS: FamousRoom[] = [
       now: { song: "Gracias a la vida", book: "Meditations on the Song of Songs" },
     },
   },
+  // A draft for Alex Rollins Berg, who writes Underexposed (alexrollinsberg.substack.com), a weekly newsletter on
+  // underseen films old and new. Every film here was a subject of one of his issues (Sep–Nov 2026), and each links to
+  // that issue. The lines are left empty for his own words. Not listed until he agrees.
+  {
+    slug: "underexposed",
+    person: "Alex Rollins Berg", short: "Alex",
+    name: "Underexposed",
+    tagline: "Hidden gems of cinema, old and new.",
+    source: "Films picked in Alex Rollins Berg's newsletter, Underexposed. Each one links to his issue about it.",
+    sourceUrl: "https://alexrollinsberg.substack.com/",
+    theme: "oak", wallpaper: "stripe",
+    draft: "A draft made for Alex Rollins Berg to look at, from the films in his newsletter. It isn't listed anywhere on Bottega until he says yes, and the empty lines are waiting for his own words.",
+    pieces: build("underexposed", [
+      ["poster", "The Devils", "Ken Russell · 1971", tmdb("y1k7eiOFc6fzm8XeTa1kNGx6JIs"), "", "https://alexrollinsberg.substack.com/p/the-most-controversial-film-of-all"],
+      ["poster", "Yellow Sky", "William A. Wellman · 1948", tmdb("ahS9YKQSkckF5XSWkAJxpwLmuef"), "", "https://alexrollinsberg.substack.com/p/the-acid-western-must-ride-again"],
+      ["poster", "The Last Detail", "Hal Ashby · 1973", tmdb("zQoNkO99qfaBjh5aoA0pKau1prp"), "", "https://alexrollinsberg.substack.com/p/war-after-war"],
+      ["poster", "The Seashell and the Clergyman", "Germaine Dulac · 1928", tmdb("k5NKxt5XH6rEizJWlHsK0WFLOjg"), "", "https://alexrollinsberg.substack.com/p/who-erased-surrealist-cinemas-godmother"],
+      ["poster", "The Shooting", "Monte Hellman · 1966", tmdb("oaySRq49jlCtoYjhoR7IhSga6Vm"), "", "https://alexrollinsberg.substack.com/p/the-acid-western-must-ride-again"],
+      ["poster", "Late Fame", "Kent Jones · 2026", tmdb("bcyXE0p4XmZUlcxvTDbvdG9lgsN"), "", "https://alexrollinsberg.substack.com/p/the-past-lives-in-the-present"],
+      ["poster", "Walker", "Alex Cox · 1987", tmdb("1C0oYAeNjIBLuj7CVWz3HTIUdeP"), "", "https://alexrollinsberg.substack.com/p/the-acid-western-must-ride-again"],
+      ["poster", "The Messenger", "Oren Moverman · 2009", tmdb("p4fJyH7mMbasiFYwiw2nE7D6pMY"), "", "https://alexrollinsberg.substack.com/p/should-we-declare-cinema-a-religion"],
+      ["poster", "The Phantom of the Open", "Craig Roberts · 2022", tmdb("6bcrhJQLoLNsYX4UGTOMQkCiACA"), "", "https://alexrollinsberg.substack.com/p/who-erased-surrealist-cinemas-godmother"],
+      ["poster", "Mile End Kicks", "Chandler Levack · 2026", tmdb("qq3Q1tsxAxMqP38YTZKl8m5zmA4"), "", "https://alexrollinsberg.substack.com/p/wild-turkeys-2026-box-office-bombs"],
+      ["poster", "Nirvanna the Band the Show the Movie", "Matt Johnson · 2026", tmdb("sm5TGX8WbnCd9Uo26cLyTxVwA1n"), "", "https://alexrollinsberg.substack.com/p/wild-turkeys-2026-box-office-bombs"],
+      ["poster", "Power Ballad", "John Carney · 2026", tmdb("sGgX2K0SJqw90Ju8TONdhDVwlzT"), "", "https://alexrollinsberg.substack.com/p/wild-turkeys-2026-box-office-bombs"],
+    ]),
+  },
 ];
 
 /** The famous rooms shown in lists: everything except drafts. */
