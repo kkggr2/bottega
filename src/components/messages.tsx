@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ago, markRead, myThreads, sendDirect, threadWith, type DirectMessage, type Thread } from "@/lib/chat";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { ago, chatLayout, clockTime, markRead, myThreads, sendDirect, threadWith, type DirectMessage, type Thread } from "@/lib/chat";
 import { supabase } from "@/lib/supabase";
 import { track } from "@/lib/track";
 import type { Profile } from "@/lib/types";
 import { MessageSheet } from "./chat";
 import { SALON, usePalette } from "@/lib/room-colors";
+import { Composer } from "./composer";
 import { Gate } from "./gate";
 import { LinkedText, MessageBubble } from "./linked-text";
 
@@ -140,6 +141,7 @@ function Conversation({ me, username }: { me: Profile; username: string }) {
   const theyWrote = msgs.some((m) => m.sender === other.id);
   const waiting = !friends && iWrote && !theyWrote;
   const isRequest = !friends && theyWrote && !iWrote;
+  const layout = chatLayout(msgs, (m) => m.sender);
 
   return (
     <section className="chat">
@@ -149,13 +151,17 @@ function Conversation({ me, username }: { me: Profile; username: string }) {
       {!friends && !iWrote && !theyWrote && <p className="muted">You haven&rsquo;t swapped keys, so your first message arrives as a request. You can write again once they reply.</p>}
 
       <div className="chat-log">
-        {msgs.map((m) => {
+        {msgs.map((m, i) => {
           const mine = m.sender === me.id;
+          const { day, cont } = layout[i];
           return (
-            <MessageBubble key={m.id} mine={mine} onOpen={() => setPicked(m)}>
-              <span className="body"><LinkedText text={m.body} /></span>
-              <span className="when muted">{ago(m.created_at)}{mine && m.read_at ? " · seen" : ""}</span>
-            </MessageBubble>
+            <Fragment key={m.id}>
+              {day && <p className="chat-day">{day}</p>}
+              <MessageBubble mine={mine} cont={cont} onOpen={() => setPicked(m)}>
+                <span className="body"><LinkedText text={m.body} /></span>
+                <span className="when muted">{clockTime(m.created_at)}{mine && m.read_at ? " · seen" : ""}</span>
+              </MessageBubble>
+            </Fragment>
           );
         })}
         <div ref={end} />
@@ -164,11 +170,7 @@ function Conversation({ me, username }: { me: Profile; username: string }) {
       {waiting ? (
         <p className="muted">Waiting for @{other.username} to reply.</p>
       ) : (
-        <form className="chat-send" onSubmit={(e) => { e.preventDefault(); void send(); }}>
-          <input type="text" value={draft} maxLength={1000} placeholder={`Write to @${other.username}…`} enterKeyHint="send"
-            onChange={(e) => setDraft(e.target.value)} aria-label="Message" />
-          <button className="btn" type="submit" disabled={busy || !draft.trim()}>Send</button>
-        </form>
+        <Composer value={draft} onChange={setDraft} onSend={() => void send()} placeholder={`Write to @${other.username}…`} busy={busy} />
       )}
       <p className="msg err" aria-live="polite">{error}</p>
 

@@ -28,7 +28,9 @@ export async function POST(request: Request) {
   if (!who) return Response.json({ sent: 0 });
 
   const username = who.username as string;
-  const text = last.body.length > 120 ? `${last.body.slice(0, 117)}…` : last.body;
+  // One clean line on the lock screen, however many lines the message has.
+  const flat = last.body.replace(/\s+/g, " ").trim();
+  const text = flat.length > 120 ? `${flat.slice(0, 117)}…` : flat;
   const reached = await notifyUsers(db, [to], { title: "Bottega", body: `@${username}: ${text}`, url: `bottega://messages/${username}` });
   return Response.json({ sent: reached.length });
 }

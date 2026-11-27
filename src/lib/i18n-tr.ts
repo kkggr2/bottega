@@ -899,4 +899,9 @@ export const TR: Record<string, string> = {
   "Meets online": "Çevrimiçi buluşuyor",
   "Meets in {town}": "{town} şehrinde buluşuyor",
   "{town} · only used to suggest clubs that meet there": "{town} · yalnızca orada buluşan kulüpleri önermek için kullanılır",
+  "Today": "Bugün",
+  "Yesterday": "Dün",
+  "1 character left": "1 karakter kaldı",
+  "{n} characters left": "{n} karakter kaldı",
+  "Too long to pin: a pinned note holds up to 600 characters.": "Sabitlemek için çok uzun: sabitlenen not en fazla 600 karakter olabilir.",
 };

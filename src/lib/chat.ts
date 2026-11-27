@@ -1,5 +1,8 @@
-import { t } from "./i18n";
+import { currentLang, t } from "./i18n";
 import { supabase } from "./supabase";
+
+/** How long a chat message or private message can be (the database allows the same). */
+export const MESSAGE_MAX = 2000;
 
 /*
  * Live chat rooms by taste, and private messages. The database decides who may read and write
@@ -88,6 +91,37 @@ function friendly(message: string): string {
   if (/row-level security/i.test(message)) return "You can only talk here while something of theirs is on in your room.";
   if (/fetch|network/i.test(message)) return "Can't reach Bottega. Check your connection.";
   return "Couldn't send that. Try again.";
+}
+
+const dateLocale = () => (currentLang() === "tr" ? "tr-TR" : undefined);
+const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+
+/** The heading above a day's messages: "Today", "Yesterday", "Monday", or "26 November" (with the year if it isn't this one). */
+export function dayLabel(iso: string): string {
+  const d = new Date(iso), now = new Date();
+  const days = Math.round((startOfDay(now) - startOfDay(d)) / 864e5);
+  if (days <= 0) return t("Today");
+  if (days === 1) return t("Yesterday");
+  if (days < 7) return d.toLocaleDateString(dateLocale(), { weekday: "long" });
+  return d.toLocaleDateString(dateLocale(), { day: "numeric", month: "long", ...(d.getFullYear() !== now.getFullYear() ? { year: "numeric" } : {}) });
+}
+
+/** A message's time of day ("18:42", or "6:42 PM" where people write it that way). */
+export const clockTime = (iso: string) => new Date(iso).toLocaleTimeString(dateLocale(), { hour: "numeric", minute: "2-digit" });
+
+/**
+ * How to lay out a conversation (oldest first): a day heading where a new day starts, and `cont` when a message
+ * follows on from the same person within five minutes (so their name isn't repeated above every line).
+ */
+export function chatLayout<M extends { created_at: string }>(list: M[], authorOf: (m: M) => string): { day: string | null; cont: boolean }[] {
+  let lastDay = -1, lastAuthor = "", lastAt = 0;
+  return list.map((m) => {
+    const at = Date.parse(m.created_at), day = startOfDay(new Date(at)), author = authorOf(m);
+    const newDay = day !== lastDay;
+    const cont = !newDay && author === lastAuthor && at - lastAt < 5 * 60e3;
+    lastDay = day; lastAuthor = author; lastAt = at;
+    return { day: newDay ? dayLabel(m.created_at) : null, cont };
+  });
 }
 
 /** "now", "5 min", "2 h" */

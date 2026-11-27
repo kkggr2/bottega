@@ -6,9 +6,9 @@ import { useAuth } from "./auth";
 import { GuestCantWrite } from "./guest";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import {
-  ago, chatMembers, chatMessages, myChatRooms, reportMessage, sendChat, SLOT_PLACE,
+  ago, chatLayout, chatMembers, chatMessages, clockTime, myChatRooms, reportMessage, sendChat, SLOT_PLACE,
   type ChatMember, type ChatMessage, type ChatRoom,
 } from "@/lib/chat";
 import { befriend } from "@/lib/friends";
@@ -17,6 +17,7 @@ import { supabase } from "@/lib/supabase";
 import { track } from "@/lib/track";
 import type { Profile } from "@/lib/types";
 import { SALON, usePalette } from "@/lib/room-colors";
+import { Composer } from "./composer";
 import { Gate } from "./gate";
 import { LinkedText, MessageBubble } from "./linked-text";
 import { Sheet } from "./sheet";
@@ -173,29 +174,31 @@ export function ChatLog({ me, roomKey, people, placeholder, empty, canModerate =
   const nameOf = (id: string) => people.find((m) => m.user_id === id)?.username ?? "someone";
   const titleOf = (id: string) => people.find((m) => m.user_id === id)?.title;
 
+  const layout = chatLayout(messages, (m) => m.author);
+
   return (
     <>
       <div className="chat-log" aria-live="polite">
         {messages.length === 0 && <p className="muted chat-empty">{empty}</p>}
-        {messages.map((m) => {
+        {messages.map((m, i) => {
           const mine = m.author === me.id;
+          const { day, cont } = layout[i];
           return (
-            <MessageBubble key={m.id} mine={mine} onOpen={() => setPicked(m)}>
-              <span className="who">{mine ? "You" : `@${nameOf(m.author)}`}{titleOf(m.author) ? <span className="muted"> · {titleOf(m.author)}</span> : null}</span>
-              <span className="body"><LinkedText text={m.body} /></span>
-              <span className="when muted">{ago(m.created_at)}</span>
-            </MessageBubble>
+            <Fragment key={m.id}>
+              {day && <p className="chat-day">{day}</p>}
+              <MessageBubble mine={mine} cont={cont} onOpen={() => setPicked(m)}>
+                {!cont && <span className="who">{mine ? t("You") : `@${nameOf(m.author)}`}{titleOf(m.author) ? <span className="muted"> · {titleOf(m.author)}</span> : null}</span>}
+                <span className="body"><LinkedText text={m.body} /></span>
+                <span className="when muted">{clockTime(m.created_at)}</span>
+              </MessageBubble>
+            </Fragment>
           );
         })}
         <div ref={end} />
       </div>
 
       {guest ? <GuestCantWrite /> : (
-        <form className="chat-send" onSubmit={(e) => { e.preventDefault(); void send(); }}>
-          <input type="text" value={draft} maxLength={500} placeholder={placeholder} enterKeyHint="send"
-            onChange={(e) => setDraft(e.target.value)} aria-label={t("Message")} />
-          <button className="btn" type="submit" disabled={busy || !draft.trim()}>{t("Send")}</button>
-        </form>
+        <Composer value={draft} onChange={setDraft} onSend={() => void send()} placeholder={placeholder} busy={busy} />
       )}
       <p className="msg err" aria-live="polite">{error}</p>
 
@@ -257,6 +260,7 @@ export function MessageSheet({ me, message, username, kind, onClose, onChanged, 
 
   async function pin() {
     if (!onPin) return;
+    if (message.body.trim().length > 600) return setNote(t("Too long to pin: a pinned note holds up to 600 characters."));
     setBusy(true);
     const err = await onPin(message.body);
     setBusy(false);

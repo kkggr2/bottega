@@ -67,5 +67,10 @@ export function useT() {
 
 /** Outside React (for example in lib code that returns messages). */
 export function t(text: string, vars?: Vars): string {
-  return translate(typeof window === "undefined" ? "en" : getLang(), text, vars);
+  return translate(currentLang(), text, vars);
+}
+
+/** The app's language outside React (for dates written in it). */
+export function currentLang(): Lang {
+  return typeof window === "undefined" ? "en" : getLang();
 }

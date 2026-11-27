@@ -55,9 +55,15 @@ export function LinkedText({ text }: { text: string }) {
  * A chat bubble: tap it for its options (reply privately, report, delete…). It's a div rather than a button
  * so that links inside it can be tapped too (some browsers swallow taps on links inside buttons).
  */
-export function MessageBubble({ mine, onOpen, children }: { mine: boolean; onOpen: () => void; children: ReactNode }) {
+export function MessageBubble({ mine, cont = false, onOpen, children }: {
+  mine: boolean;
+  /** Follows on from the same person: sits closer to the one above, without their name again. */
+  cont?: boolean;
+  onOpen: () => void;
+  children: ReactNode;
+}) {
   return (
-    <div className={`chat-msg${mine ? " mine" : ""}`} tabIndex={0} onClick={onOpen}
+    <div className={`chat-msg${mine ? " mine" : ""}${cont ? " cont" : ""}`} tabIndex={0} onClick={onOpen}
       onKeyDown={(e) => {
         if (e.target !== e.currentTarget || (e.key !== "Enter" && e.key !== " ")) return;
         e.preventDefault();

@@ -16,7 +16,11 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 const QUIET: Record<string, string> = { message: "30 minutes", poll: "1 minute", meeting: "1 minute", reading: "1 minute", pin: "1 minute" };
 const FRESH_MS = 2 * 60 * 1000;
 const fresh = (iso?: string | null) => Boolean(iso && Date.now() - Date.parse(iso) < FRESH_MS);
-const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
+/** One clean line for the lock screen: line breaks become spaces, and long text ends in "…". */
+const clip = (s: string, n: number) => {
+  const flat = s.replace(/\s+/g, " ").trim();
+  return flat.length > n ? `${flat.slice(0, n - 1)}…` : flat;
+};
 
 export async function POST(request: Request) {
   const db = supabaseAdmin();
