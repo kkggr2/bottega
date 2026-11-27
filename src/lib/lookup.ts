@@ -50,10 +50,19 @@ export async function searchBooks(term: string, signal?: AbortSignal): Promise<F
   const first = ol.status === "fulfilled" ? ol.value : [];
   const second = apple.status === "fulfilled" ? apple.value : [];
 
-  const key = (f: Found) => f.title.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, " ").trim();
-  const byTitle = new Map(second.map((b) => [key(b), b]));
+  const tidy = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, " ").trim();
+  const key = (f: Found) => tidy(f.title);
+  // The title without its subtitle: "The Green Socialist: Zack Polanski and…" is Apple's "The Green Socialist".
+  const main = (f: Found) => tidy(f.title.split(/[:(]| [-–—] /)[0]);
+  // Apple's best match comes first, so the first result for each title wins.
+  const byTitle = new Map<string, Found>(), byMain = new Map<string, Found>();
+  for (const b of second) {
+    if (!b.cover_url) continue;
+    if (!byTitle.has(key(b))) byTitle.set(key(b), b);
+    if (!byMain.has(main(b))) byMain.set(main(b), b);
+  }
   // Open Library's results, borrowing Apple's cover where Open Library has none.
-  const merged = first.map((b) => (b.cover_url ? b : { ...b, cover_url: byTitle.get(key(b))?.cover_url ?? null }));
+  const merged = first.map((b) => (b.cover_url ? b : { ...b, cover_url: (byTitle.get(key(b)) ?? byMain.get(main(b)))?.cover_url ?? null }));
   const seen = new Set(merged.map(key));
   for (const b of second) if (!seen.has(key(b))) { merged.push(b); seen.add(key(b)); }
   return merged.slice(0, 14);

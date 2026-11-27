@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Privacy" };
 export default function Privacy() {
   return (
     <article className="legal">
-      <p className="who">Last updated 25 November 2026</p>
+      <p className="who">Last updated 27 November 2026</p>
       <h1>Privacy</h1>
       <p>
         Bottega is run by Cagla Ece Azizoglu. Questions or requests about your data:{" "}
@@ -31,6 +31,7 @@ export default function Privacy() {
       <h2>Clubs</h2>
       <ul>
         <li><b>What you share in a club:</b> the clubs you join and when, and what you add there: chat messages, chapter notes, meeting replies, votes, reading progress, quiz scores, and film ratings with any line you write. Only the club&rsquo;s members see them. Chat messages are deleted after three months.</li>
+        <li><b>Covers:</b> a club&rsquo;s hosts can add a photo of a book&rsquo;s cover to the shelf. It&rsquo;s shown wherever the shelf is, including the club&rsquo;s invitation page, which anyone with the link can open.</li>
         <li><b>Club emails:</b> if you&rsquo;re in a club and don&rsquo;t get notifications, we email you a reminder the day before a meeting and a short letter on Sundays. Every email has a one-click stop.</li>
         <li><b>Your town (optional):</b> if you tell us, it&rsquo;s used only to suggest clubs that meet there. Nobody else sees it. You can remove it in Settings.</li>
         <li><b>Club suggestions:</b> when a club&rsquo;s hosts choose to let people find it, we compare the films, books and records in your room with the club&rsquo;s shelf, and may suggest that club to you with the reason (&ldquo;You both have&nbsp;&hellip;&rdquo;). Hosts see how many people match, never who. Rooms set to &ldquo;Just me&rdquo; are never used.</li>

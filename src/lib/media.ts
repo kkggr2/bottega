@@ -4,8 +4,8 @@ const BUCKET = "media";
 export const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 export const MAX_AUDIO_SECONDS = 60;
 
-/** Shrink a photo to at most 1600px on its long side and re-encode it as JPEG. */
-export async function compressImage(file: File): Promise<Blob> {
+/** Shrink a photo to at most `maxSide` pixels (1600 unless asked) on its long side and re-encode it as JPEG. */
+export async function compressImage(file: File, maxSide = 1600): Promise<Blob> {
   const url = URL.createObjectURL(file);
   try {
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
@@ -14,7 +14,7 @@ export async function compressImage(file: File): Promise<Blob> {
       i.onerror = reject;
       i.src = url;
     });
-    const scale = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+    const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
     const canvas = document.createElement("canvas");
     canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
     canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));

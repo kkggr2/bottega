@@ -1,9 +1,9 @@
 "use client";
 
 import { useT } from "@/lib/i18n";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  addToShelf, closePoll, openPoll, pollState, removeFromShelf, shelfOf, votePoll,
+  addToShelf, closePoll, openPoll, pollState, removeCoverPhoto, removeFromShelf, setClubCover, shelfOf, uploadClubCover, votePoll,
   type PollOption, type PollState, type ShelfItem, type ShelfKind,
 } from "@/lib/clubs";
 import { searchBooks, searchFilms, searchSongs, type Found } from "@/lib/lookup";
@@ -182,6 +182,7 @@ export function ClubShelf({ clubId, me, isHost, refresh, startOpen = false }: { 
   // A brand-new club opens straight into filling its shelf, so nobody ever lands in an empty club.
   const [adding, setAdding] = useState(startOpen && isHost);
   const [picked, setPicked] = useState<ShelfItem | null>(null);
+  const [covering, setCovering] = useState<ShelfItem | null>(null);
 
   const load = useCallback(async () => setItems(await shelfOf(clubId)), [clubId]);
   useEffect(() => { void load(); }, [load, refresh]); // eslint-disable-line react-hooks/set-state-in-effect -- fetching on open
@@ -229,12 +230,111 @@ export function ClubShelf({ clubId, me, isHost, refresh, startOpen = false }: { 
           </div>
           {isHost && (
             <div className="row">
+              <button className="btn ghost" type="button" onClick={() => { setCovering(picked); setPicked(null); }}>{picked.cover_url ? t("Change the cover") : t("Add a cover")}</button>
               <button className="btn ghost danger-text" type="button" onClick={async () => { await removeFromShelf(picked.id); setPicked(null); void load(); }}>{t("Take it off the shelf")}</button>
             </div>
           )}
         </Sheet>
       )}
+      {covering && <CoverSheet clubId={clubId} item={covering} onClose={() => setCovering(null)} onDone={() => { setCovering(null); void load(); }} />}
     </section>
+  );
+}
+
+/** The words that make a title itself: no subtitle, no little words. */
+const STOP = new Set(["the", "and", "for", "with", "from", "into", "that", "this", "les", "der", "die", "das"]);
+const titleWords = (s: string) => new Set(
+  s.split(/[:(]| [-–—] /)[0].toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, " ").split(" ").filter((w) => w.length > 2 && !STOP.has(w)),
+);
+/** A found title belongs to this one when every word of either title's main part is in the other. */
+function sameTitle(a: string, b: string): boolean {
+  const inside = (x: Set<string>, whole: string) => x.size > 0 && [...x].every((w) => whole.toLowerCase().normalize("NFKD").includes(w));
+  return inside(titleWords(a), b) || inside(titleWords(b), a);
+}
+
+/**
+ * For hosts: a cover for something on the shelf. Covers the catalogues have for that title, or a photo of your own
+ * copy (for small-press books nobody lists). It shows wherever the club sees the title, including the invitation.
+ */
+function CoverSheet({ clubId, item, onClose, onDone }: { clubId: string; item: ShelfItem; onClose: () => void; onDone: () => void }) {
+  const t = useT();
+  const [found, setFound] = useState<{ url: string; title: string; by: string }[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const photo = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const search = KINDS.find((k) => k.kind === item.type)!.search;
+    const author = item.type === "book" ? item.subtitle.split("·")[0].trim() : "";
+    const ctrl = new AbortController();
+    // Only covers of this title (a search also brings back look-alikes), each cover once, not the one it has now.
+    const covers = async (term: string) => {
+      const seen = new Set<string>();
+      return (await search(term, ctrl.signal))
+        .filter((f) => f.cover_url && f.cover_url !== item.cover_url && sameTitle(f.title, item.title))
+        .filter((f) => !seen.has(f.cover_url!) && seen.add(f.cover_url!))
+        .map((f) => ({ url: f.cover_url!, title: f.title, by: f.subtitle }));
+    };
+    (async () => {
+      // With the author first (fewer look-alikes), then the title alone.
+      let list = author ? await covers(`${item.title} ${author}`) : [];
+      if (!list.length) list = await covers(item.title);
+      setFound(list.slice(0, 6));
+    })().catch(() => { if (!ctrl.signal.aborted) setFound([]); });
+    return () => ctrl.abort();
+  }, [item]);
+
+  async function pick(url: string) {
+    setBusy(true);
+    setError(null);
+    const err = await setClubCover(clubId, item.title, url, item.cover_url);
+    setBusy(false);
+    if (err) return setError(t(err));
+    onDone();
+  }
+
+  async function addPhoto(file: File | undefined) {
+    if (!file) return;
+    setBusy(true);
+    setError(null);
+    let url: string;
+    try {
+      url = await uploadClubCover(clubId, file);
+    } catch {
+      setBusy(false);
+      return setError(t("That photo couldn't be added. Try a JPG or PNG."));
+    }
+    const err = await setClubCover(clubId, item.title, url, item.cover_url);
+    setBusy(false);
+    if (err) { await removeCoverPhoto(url); return setError(t(err)); }
+    onDone();
+  }
+
+  return (
+    <Sheet onClose={onClose} label={t("A cover for {title}", { title: item.title })}>
+      <h2>{item.cover_url ? t("Change the cover") : t("Add a cover")}</h2>
+      <p className="muted">{t("Pick one we found, or use a photo of your own copy. It shows wherever the club sees this title, including the invitation.")}</p>
+      {found === null ? (
+        <p className="muted">{t("Looking for covers…")}</p>
+      ) : found.length > 0 ? (
+        <div className="cover-picks" aria-label={t("Covers we found")}>
+          {found.map((f) => (
+            <button key={f.url} type="button" disabled={busy} onClick={() => void pick(f.url)} aria-label={`${t("Use this cover")}: ${f.title}${f.by ? `, ${f.by}` : ""}`}>
+              <span className={`hub-cover t-${item.type} m`}><img src={f.url} alt="" loading="lazy" /></span>
+              <span className="cover-pick-by">{f.by || f.title}</span>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="muted">{t("We couldn't find a cover for this one. A photo of your copy works well.")}</p>
+      )}
+      <input ref={photo} type="file" accept="image/*" hidden onChange={(e) => void addPhoto(e.target.files?.[0])} />
+      <p className="msg err" aria-live="polite">{error}</p>
+      <div className="row">
+        <button className="btn ghost" type="button" onClick={onClose}>{t("Cancel")}</button>
+        <button className="btn" type="button" disabled={busy} onClick={() => photo.current?.click()}>{busy ? t("Adding the cover…") : t("Use a photo")}</button>
+      </div>
+    </Sheet>
   );
 }
 

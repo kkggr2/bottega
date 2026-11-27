@@ -16,6 +16,13 @@ export async function POST(request: Request) {
   const { data: files } = await db.storage.from("media").list(id, { limit: 1000 });
   if (files?.length) await db.storage.from("media").remove(files.map((f) => `${id}/${f.name}`));
 
+  // Clubs they host go with the account, and so do those clubs' cover photos (club-covers/<club id>/).
+  const { data: hosted } = await db.from("clubs").select("id").eq("host", id);
+  for (const { id: club } of (hosted ?? []) as { id: string }[]) {
+    const { data: covers } = await db.storage.from("club-covers").list(club, { limit: 1000 });
+    if (covers?.length) await db.storage.from("club-covers").remove(covers.map((f) => `${club}/${f.name}`));
+  }
+
   await db.rpc("forget_user_events", { p_user: id });
   const { error } = await db.auth.admin.deleteUser(id);
   if (error) return Response.json({ error: "Couldn't delete the account. Try again." }, { status: 500 });

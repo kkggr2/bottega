@@ -1,3 +1,4 @@
+import { compressImage } from "./media";
 import { isNativeApp } from "./native";
 import { supabase } from "./supabase";
 
@@ -184,7 +185,47 @@ export async function makeHost(clubId: string, userId: string): Promise<string |
 
 export async function deleteClub(clubId: string): Promise<string | null> {
   const { error } = await supabase().rpc("delete_club", { p_club: clubId });
-  return error ? rpcError(error.message) : null;
+  if (error) return rpcError(error.message);
+  await removeClubCovers(clubId);
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Covers (supabase/migrations/20261212000000_club_covers.sql): one found online, or a photo of the host's own copy
+// ---------------------------------------------------------------------------
+
+const COVERS = "club-covers";
+const coverPath = (url: string | null | undefined) => url?.match(/\/club-covers\/([0-9a-f-]{36}\/[0-9a-f-]{36}\.jpg)$/)?.[1] ?? null;
+
+/** A photo of the host's copy, made small and kept in the club's own cover folder. Returns its address. */
+export async function uploadClubCover(clubId: string, file: File): Promise<string> {
+  const blob = await compressImage(file, 900);
+  const path = `${clubId}/${crypto.randomUUID()}.jpg`;
+  const { error } = await supabase().storage.from(COVERS).upload(path, blob, { contentType: "image/jpeg", upsert: false });
+  if (error) throw error;
+  return supabase().storage.from(COVERS).getPublicUrl(path).data.publicUrl;
+}
+
+/** Sets a title's cover everywhere in the club (shelf and "Now reading"), then tidies away the photo it replaced. */
+export async function setClubCover(clubId: string, title: string, url: string, previous: string | null): Promise<string | null> {
+  const { error } = await supabase().rpc("set_club_cover", { p_club: clubId, p_title: title, p_cover: url });
+  if (error) return rpcError(error.message);
+  if (previous !== url) await removeCoverPhoto(previous);
+  return null;
+}
+
+/** Removes one of the club's own cover photos (nothing happens for covers from a catalogue). */
+export async function removeCoverPhoto(url: string | null | undefined): Promise<void> {
+  const path = coverPath(url);
+  if (path) await supabase().storage.from(COVERS).remove([path]).catch(() => {});
+}
+
+/** A deleted club's cover photos go with it. */
+async function removeClubCovers(clubId: string): Promise<void> {
+  try {
+    const { data } = await supabase().storage.from(COVERS).list(clubId, { limit: 1000 });
+    if (data?.length) await supabase().storage.from(COVERS).remove(data.map((f) => `${clubId}/${f.name}`));
+  } catch {}
 }
 
 // ---------------------------------------------------------------------------
