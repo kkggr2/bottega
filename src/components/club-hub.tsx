@@ -229,7 +229,7 @@ export function ClubShelf({ clubId, me, isHost, refresh, startOpen = false }: { 
             </div>
           </div>
           {isHost && (
-            <div className="row">
+            <div className="row stacked">
               <button className="btn ghost" type="button" onClick={() => { setCovering(picked); setPicked(null); }}>{picked.cover_url ? t("Change the cover") : t("Add a cover")}</button>
               <button className="btn ghost danger-text" type="button" onClick={async () => { await removeFromShelf(picked.id); setPicked(null); void load(); }}>{t("Take it off the shelf")}</button>
             </div>

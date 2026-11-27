@@ -581,6 +581,8 @@ html.native body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px))
   .sheet .row { justify-content: stretch; }
   .sheet .row > .btn { flex: 1; text-align: center; padding-block: 12px; }
   .sheet .row.split > .row { flex: 1 1 100%; }
+  /* Actions with longer names ("Change the cover", "Take it off the shelf"): one full-width button per line. */
+  .sheet .row.stacked > .btn { flex: 1 1 100%; }
 }
 @keyframes sheet-up { from { transform: translateY(100%); } }
 
