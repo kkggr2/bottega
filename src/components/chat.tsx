@@ -194,7 +194,7 @@ export function ChatLog({ me, roomKey, people, placeholder, empty, canModerate =
             </Fragment>
           );
         })}
-        <div ref={end} />
+        <div ref={end} className="chat-end" />
       </div>
 
       {guest ? <GuestCantWrite /> : (

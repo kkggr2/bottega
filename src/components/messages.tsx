@@ -164,7 +164,7 @@ function Conversation({ me, username }: { me: Profile; username: string }) {
             </Fragment>
           );
         })}
-        <div ref={end} />
+        <div ref={end} className="chat-end" />
       </div>
 
       {waiting ? (
