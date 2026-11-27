@@ -10,6 +10,7 @@ import type { Profile } from "@/lib/types";
 import { MessageSheet } from "./chat";
 import { SALON, usePalette } from "@/lib/room-colors";
 import { Gate } from "./gate";
+import { LinkedText, MessageBubble } from "./linked-text";
 
 /*
  * Private messages. Friends (people you've swapped keys with) write freely. Anyone else can send
@@ -151,10 +152,10 @@ function Conversation({ me, username }: { me: Profile; username: string }) {
         {msgs.map((m) => {
           const mine = m.sender === me.id;
           return (
-            <button key={m.id} type="button" className={`chat-msg${mine ? " mine" : ""}`} onClick={() => setPicked(m)}>
-              <span className="body">{m.body}</span>
+            <MessageBubble key={m.id} mine={mine} onOpen={() => setPicked(m)}>
+              <span className="body"><LinkedText text={m.body} /></span>
               <span className="when muted">{ago(m.created_at)}{mine && m.read_at ? " · seen" : ""}</span>
-            </button>
+            </MessageBubble>
           );
         })}
         <div ref={end} />

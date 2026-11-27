@@ -791,6 +791,10 @@ h1, h2, .door-name, .plaque b, .paper b, .now b { hyphens: auto; -webkit-hyphens
 .chat-msg.mine { justify-self: end; border-radius: 16px 16px 4px 16px; background: var(--fg); color: var(--bg); border-color: var(--fg); }
 .chat-msg .who { font-size: 12.5px; font-weight: 600; }
 .chat-msg .body { white-space: pre-wrap; overflow-wrap: anywhere; }
+.chat-msg { cursor: pointer; }
+/* Links in messages and pinned notes: the message's own colour, clearly underlined, easy to tap. */
+.msg-link { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; overflow-wrap: anywhere; padding-block: 2px; }
+.msg-link:hover { text-decoration-thickness: 2px; }
 .chat-msg .when { font-size: 11.5px; }
 .chat-msg.mine .muted { color: color-mix(in srgb, var(--bg) 70%, transparent); }
 .chat-send { position: sticky; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 8px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
@@ -966,7 +970,7 @@ html[data-mood] .tonight-room { background: color-mix(in srgb, var(--bg) 82%, va
 .hub-cover.m.t-song { aspect-ratio: 1; }
 .hub-cover.s { width: 44px; height: 64px; }
 .hub-cover.s.t-song { height: 44px; }
-.hub-cover-title { padding: 6px; font: 400 12px/1.2 var(--font-display); text-align: center; color: var(--fg); }
+.hub-cover-title { padding: 6px; font: 400 12px/1.2 var(--font-display); text-align: center; color: var(--fg); overflow-wrap: break-word; word-break: normal; hyphens: auto; }
 .vote-options { display: grid; gap: 8px; }
 .vote-option { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; text-align: left; padding: 10px 14px 10px 10px;
   border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); }
@@ -1821,4 +1825,9 @@ html.native.kb-open .tabbar { display: none; }
 
 /* The invitation page: where and when, in plain readable words; no tiny capitals. */
 .join-meets { margin: -4px 0 0; font: 600 17px/1.4 var(--font-ui); color: var(--fg); }
-.join > .mono, .join-shelf .smallcaps { font: 600 14px/1.3 var(--font-ui); letter-spacing: 0; text-transform: none; }
+.join > .mono, .join-shelf .smallcaps, .guest-join .smallcaps { font: 600 14px/1.3 var(--font-ui); letter-spacing: 0; text-transform: none; }
+/* The shelf on the invitation: covers big enough to recognise, and titles without covers that break between
+   syllables (with a hyphen), never in the middle of a letter group. */
+.join-shelf .hub-cover.s { width: 64px; height: 92px; }
+.join-shelf .hub-cover.s.t-song { height: 64px; }
+.join-shelf .hub-cover-title { padding: 0 5px; font-size: 11.5px; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 5; line-clamp: 5; overflow: hidden; }

@@ -18,6 +18,7 @@ import { track } from "@/lib/track";
 import type { Profile } from "@/lib/types";
 import { SALON, usePalette } from "@/lib/room-colors";
 import { Gate } from "./gate";
+import { LinkedText, MessageBubble } from "./linked-text";
 import { Sheet } from "./sheet";
 
 /* eslint-disable @next/next/no-img-element -- covers from Apple Music, TMDB and Open Library */
@@ -179,11 +180,11 @@ export function ChatLog({ me, roomKey, people, placeholder, empty, canModerate =
         {messages.map((m) => {
           const mine = m.author === me.id;
           return (
-            <button key={m.id} type="button" className={`chat-msg${mine ? " mine" : ""}`} onClick={() => setPicked(m)}>
+            <MessageBubble key={m.id} mine={mine} onOpen={() => setPicked(m)}>
               <span className="who">{mine ? "You" : `@${nameOf(m.author)}`}{titleOf(m.author) ? <span className="muted"> · {titleOf(m.author)}</span> : null}</span>
-              <span className="body">{m.body}</span>
+              <span className="body"><LinkedText text={m.body} /></span>
               <span className="when muted">{ago(m.created_at)}</span>
-            </button>
+            </MessageBubble>
           );
         })}
         <div ref={end} />

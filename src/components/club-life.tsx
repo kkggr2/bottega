@@ -10,6 +10,7 @@ import {
 import { useT } from "@/lib/i18n";
 import { filmDetails, searchBooks, searchFilms, type Found } from "@/lib/lookup";
 import { notifyClub } from "@/lib/push";
+import { LinkedText } from "./linked-text";
 import { SearchPicker } from "./search-picker";
 import { Sheet } from "./sheet";
 
@@ -48,7 +49,7 @@ export function ClubPin({ clubId, isHost, refresh = 0 }: { clubId: string; isHos
       </div>
       {pinned && (
         <>
-          <p className="club-pin-note">{pinned.note}</p>
+          <p className="club-pin-note"><LinkedText text={pinned.note} /></p>
           <p className="muted club-pin-who">{pinned.by_username ? `@${pinned.by_username} · ` : ""}{pinnedWhen(pinned.pinned_at, t)}</p>
         </>
       )}

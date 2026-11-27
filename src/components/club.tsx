@@ -44,7 +44,11 @@ import { notifyClub } from "@/lib/push";
 // The join page: open to anyone, signed in or not.
 // ---------------------------------------------------------------------------
 
-export function JoinScreen({ slug }: { slug: string }) {
+/**
+ * On the club's own page (/club/…) for people who aren't in it yet, `onJoined` replaces going to the club
+ * (they're already there) and `onLogIn` opens sign-in right here, so an existing member lands back in the club.
+ */
+export function JoinScreen({ slug, onJoined, onLogIn }: { slug: string; onJoined?: () => void; onLogIn?: () => void }) {
   const auth = useAuth();
   const router = useRouter();
   const t = useT();
@@ -63,7 +67,7 @@ export function JoinScreen({ slug }: { slug: string }) {
     const err = await joinAsGuest(club.slug, name);
     if (err) { setBusy(false); return setError(t(err)); }
     await auth.refreshProfile();
-    router.push(`/club/${club.slug}`);
+    if (onJoined) onJoined(); else router.push(`/club/${club.slug}`);
   }
 
   const [shelf, setShelf] = useState<Awaited<ReturnType<typeof shelfPreview>>>([]);
@@ -91,7 +95,7 @@ export function JoinScreen({ slug }: { slug: string }) {
     setBusy(false);
     if (err) return setError(err);
     track("club_join", { detail: club.slug });
-    router.push(`/club/${club.slug}`);
+    if (onJoined) onJoined(); else router.push(`/club/${club.slug}`);
   }
 
   if (club === undefined) return <p className="loading">{t("Finding the club…")}</p>;
@@ -150,7 +154,9 @@ export function JoinScreen({ slug }: { slug: string }) {
             <p className="hint">{t("No email needed to look around, vote and play. Add one later to keep your place.")}</p>
           </form>
           <p className="join-or muted">
-            {t("Already on Bottega?")} <Link href="/">{t("Log in")}</Link>
+            {t("Already on Bottega?")} {onLogIn
+              ? <button type="button" className="linkish" onClick={onLogIn}>{t("Log in")}</button>
+              : <Link href="/">{t("Log in")}</Link>}
             {iphoneBrowser && <> · <a href={APP_STORE}>{t("Get the iPhone app")}</a></>}
           </p>
         </div>
@@ -171,6 +177,11 @@ export function ClubRoute() {
 }
 
 export function ClubScreen({ slug }: { slug: string }) {
+  const auth = useAuth();
+  const [signingIn, setSigningIn] = useState(false);
+  // Someone without an account who opens the club's address sees its invitation, not a sign-in wall.
+  // Joining as a guest signs them in, and the club opens right here.
+  if (auth.status === "signedOut" && !signingIn) return <JoinScreen slug={slug} onJoined={() => {}} onLogIn={() => setSigningIn(true)} />;
   return <Gate>{(me) => <ClubView me={me} slug={slug} />}</Gate>;
 }
 
@@ -219,15 +230,8 @@ export function ClubView({ me, slug }: { me: Profile; slug: string }) {
   }
 
   if (club === undefined) return <p className="loading">{t("Opening the club…")}</p>;
-  if (club === null) {
-    return (
-      <section className="chat">
-        <Link href="/salon" className="mono muted back">&larr; {t("Salon")}</Link>
-        <h1>{t("You're not in this club yet.")}</h1>
-        <Link className="btn" href={`/join/${slug}`}>{t("See the invitation")}</Link>
-      </section>
-    );
-  }
+  // Signed in but not a member: the invitation, with one tap to join, and the club opens here.
+  if (club === null) return <JoinScreen slug={slug} onJoined={() => void load()} />;
 
   const label: Record<RosterRow["relation"], string> = { me: t("You"), friends: t("Keys swapped"), asked: t("Asked"), asking: t("Accept"), none: t("Swap keys") };
   const canSwap = people.some((p) => p.relation === "none" || p.relation === "asking");
