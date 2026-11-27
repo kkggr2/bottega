@@ -42,6 +42,12 @@
             </intent-filter>
         </activity>
 
+        <!-- Notifications (Firebase): the white doorway in the status bar, Bottega's brass, and the
+             "Friends and clubs" channel the app creates (src/lib/push.ts). -->
+        <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_stat_bottega" />
+        <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/notification_accent" />
+        <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="bottega" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -54,4 +60,6 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Android 13 and later ask before showing notifications; the app asks only after "Turn on". -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 </manifest>

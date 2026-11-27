@@ -1,13 +1,14 @@
 import "server-only";
 import webpush from "web-push";
 import { apnsConfigured, sendApns } from "./apns";
+import { fcmConfigured, sendFcm } from "./fcm";
 import { pathFromUrl } from "./links";
 import type { supabaseAdmin } from "./supabase-admin";
 
 /*
- * One way to buzz people, wherever they are: the iPhone app (Apple's push service) and browsers that allow
- * notifications (Chrome, Edge and Firefox on computers and Android phones, through Web Push).
- * Env for Web Push: NEXT_PUBLIC_VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY.
+ * One way to buzz people, wherever they are: the iPhone app (Apple's push service), the Android app (Google's,
+ * see fcm.ts) and browsers that allow notifications (Chrome, Edge and Firefox on computers and Android phones,
+ * through Web Push). Env for Web Push: NEXT_PUBLIC_VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY.
  */
 
 type Db = NonNullable<ReturnType<typeof supabaseAdmin>>;
@@ -27,7 +28,7 @@ function webConfigured(): boolean {
   return true;
 }
 
-export const notifyConfigured = () => apnsConfigured() || webConfigured();
+export const notifyConfigured = () => apnsConfigured() || fcmConfigured() || webConfigured();
 
 export const webUrl = (url: string) => (url.startsWith("https://") ? url : `${SITE}${pathFromUrl(url)}`);
 
@@ -41,14 +42,15 @@ export async function notifyUsers(db: Db, userIds: string[], note: Note): Promis
   const { data } = await db.from("push_tokens").select("user_id, token, platform, p256dh, auth").in("user_id", ids);
   const targets = (data ?? []) as Target[];
   const ios = apnsConfigured() ? targets.filter((t) => t.platform === "ios") : [];
+  const android = fcmConfigured() ? targets.filter((t) => t.platform === "android") : [];
   const web = webConfigured() ? targets.filter((t) => t.platform === "web" && t.p256dh && t.auth) : [];
 
   const reached = new Set<string>();
   const gone: string[] = [];
 
-  const apple = await sendApns(ios.map((t) => t.token), note);
-  for (const r of apple) {
-    if (r.ok) reached.add(ios.find((t) => t.token === r.token)!.user_id);
+  const [apple, google] = await Promise.all([sendApns(ios.map((t) => t.token), note), sendFcm(android.map((t) => t.token), note)]);
+  for (const r of [...apple, ...google]) {
+    if (r.ok) reached.add(targets.find((t) => t.token === r.token)!.user_id);
     if (r.gone) gone.push(r.token);
   }
 

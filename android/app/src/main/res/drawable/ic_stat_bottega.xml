@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The status bar icon for notifications: Bottega's arched doorway as a plain white shape
+     (Android draws small notification icons as a single-colour silhouette). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- The doorway's frame: an arch with the opening cut out. -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M4.5,22V10a7.5,7.5 0 0,1 15,0v12z M7.5,22V10.5a4.5,4.5 0 0,1 9,0V22z" />
+    <!-- The door handle. -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M14.25,15.5m-1,0a1,1 0 1,1 2,0a1,1 0 1,1 -2,0" />
+</vector>

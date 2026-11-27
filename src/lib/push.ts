@@ -1,11 +1,12 @@
+import { App } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import { PushNotifications } from "@capacitor/push-notifications";
 import { supabase } from "./supabase";
 
 /*
- * Notifications: in the iPhone app (Apple's push service), and in browsers that allow them (Chrome, Edge and
- * Firefox on computers and Android phones, through Web Push and /sw.js). Safari on an iPhone only allows them
- * for sites added to the home screen, so iPhone people are pointed to the app instead.
+ * Notifications: in the iPhone app (Apple's push service), the Android app (Google's, through Firebase), and in
+ * browsers that allow them (Chrome, Edge and Firefox on computers and Android phones, through Web Push and /sw.js).
+ * Safari on an iPhone only allows them for sites added to the home screen, so iPhone people are pointed to the app.
  * We only ask once someone has a friend or a club (an empty shelf has nothing to tell them), never on first visit.
  */
 
@@ -13,20 +14,36 @@ const TOKEN_KEY = "bottega.pushToken";
 const DISMISS_KEY = "bottega.pushAskDismissed";
 const VAPID = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
 
-type Kind = "ios" | "web" | null;
+/**
+ * The first Android build with Firebase inside. Every Android build loads this same site, and asking an older one
+ * to register would crash it, so those simply don't offer notifications.
+ */
+const ANDROID_PUSH_BUILD = 3;
+/** The Android channel notifications arrive on; the server sends to the same id (src/lib/fcm.ts). */
+const ANDROID_CHANNEL = "bottega";
 
-function kind(): Kind {
+type Kind = "ios" | "android" | "web" | null;
+
+function platformKind(): Kind {
   if (typeof window === "undefined") return null;
   const platform = Capacitor.getPlatform();
-  if (platform === "ios") return "ios";
-  if (platform !== "web") return null; // The Android app gets its own (Firebase) notifications later.
+  if (platform === "ios" || platform === "android") return platform;
   return VAPID && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window ? "web" : null;
 }
 
-export const pushAvailable = () => kind() !== null;
+let androidReady: Promise<boolean> | null = null;
+
+async function kind(): Promise<Kind> {
+  const k = platformKind();
+  if (k !== "android") return k;
+  androidReady ??= App.getInfo().then((info) => Number(info.build) >= ANDROID_PUSH_BUILD).catch(() => false);
+  return (await androidReady) ? "android" : null;
+}
+
+export const pushAvailable = async () => (await kind()) !== null;
 
 export async function pushPermission(): Promise<"granted" | "denied" | "prompt" | "unavailable"> {
-  const k = kind();
+  const k = await kind();
   if (!k) return "unavailable";
   if (k === "web") {
     const p = Notification.permission;
@@ -40,7 +57,7 @@ export async function pushPermission(): Promise<"granted" | "denied" | "prompt" 
   }
 }
 
-async function save(row: { token: string; platform: "ios" | "web"; p256dh?: string; auth?: string }, userId: string) {
+async function save(row: { token: string; platform: "ios" | "android" | "web"; p256dh?: string; auth?: string }, userId: string) {
   try { localStorage.setItem(TOKEN_KEY, row.token); } catch {}
   await supabase().from("push_tokens").upsert(
     { ...row, user_id: userId, updated_at: new Date().toISOString() },
@@ -70,12 +87,19 @@ let listening = false;
 
 /** Registers this device and keeps it saved to the signed-in account. Safe to call on every visit. */
 export async function registerPush(userId: string, onOpen: (url: string) => void): Promise<void> {
-  const k = kind();
+  const k = await kind();
   if (k === "web") return registerWeb(userId);
-  if (k !== "ios") return;
+  if (!k) return;
   if (!listening) {
     listening = true;
-    await PushNotifications.addListener("registration", ({ value }) => save({ token: value, platform: "ios" }, userId));
+    if (k === "android") {
+      // One calm channel for everything (friends, clubs, messages): a sound and the status bar, no pop-over.
+      await PushNotifications.createChannel({
+        id: ANDROID_CHANNEL, name: "Friends and clubs", description: "When friends put something on, and news from your clubs",
+        importance: 3, visibility: 0,
+      }).catch(() => {});
+    }
+    await PushNotifications.addListener("registration", ({ value }) => save({ token: value, platform: k }, userId));
     await PushNotifications.addListener("pushNotificationActionPerformed", ({ notification }) => {
       const url = (notification.data as { url?: string } | undefined)?.url;
       if (url) onOpen(url);
@@ -86,13 +110,13 @@ export async function registerPush(userId: string, onOpen: (url: string) => void
 
 /** Asks for permission (from a tap), then registers. Returns whether notifications are on. */
 export async function enablePush(userId: string, onOpen: (url: string) => void): Promise<boolean> {
-  const k = kind();
+  const k = await kind();
   if (k === "web") {
     if ((await Notification.requestPermission()) !== "granted") return false;
     await registerWeb(userId);
     return true;
   }
-  if (k !== "ios") return false;
+  if (!k) return false;
   const { receive } = await PushNotifications.requestPermissions();
   if (receive !== "granted") return false;
   await registerPush(userId, onOpen);
@@ -105,7 +129,7 @@ export async function forgetPushToken(): Promise<void> {
     const token = localStorage.getItem(TOKEN_KEY);
     if (token) await supabase().from("push_tokens").delete().eq("token", token);
     localStorage.removeItem(TOKEN_KEY);
-    if (kind() === "web") {
+    if (platformKind() === "web") {
       const reg = await navigator.serviceWorker.getRegistration("/sw.js");
       await (await reg?.pushManager.getSubscription())?.unsubscribe();
     }
