@@ -1,3 +1,4 @@
+import { notifyFriendship } from "./push";
 import { supabase } from "./supabase";
 import type { Friendship } from "./types";
 
@@ -29,6 +30,7 @@ export async function befriend(me: string, other: string): Promise<Relation> {
   if (rel !== "none") return rel;
   const { error } = await supabase().from("friendships").insert({ requester: me, addressee: other });
   if (error) throw error;
+  void notifyFriendship(other, "request");
   return "outgoing";
 }
 
@@ -39,6 +41,7 @@ export async function accept(requester: string, me: string): Promise<void> {
     .eq("requester", requester)
     .eq("addressee", me);
   if (error) throw error;
+  void notifyFriendship(requester, "accepted");
 }
 
 /** Decline, cancel or unfriend: all three delete the row. */

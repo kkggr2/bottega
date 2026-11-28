@@ -7,7 +7,8 @@ import { supabase } from "./supabase";
  * Notifications: in the iPhone app (Apple's push service), the Android app (Google's, through Firebase), and in
  * browsers that allow them (Chrome, Edge and Firefox on computers and Android phones, through Web Push and /sw.js).
  * Safari on an iPhone only allows them for sites added to the home screen, so iPhone people are pointed to the app.
- * We only ask once someone has a friend or a club (an empty shelf has nothing to tell them), never on first visit.
+ * We ask in the library (for a friend request when someone's new, then for what friends put on) and in clubs,
+ * never on the sign-up screens.
  */
 
 const TOKEN_KEY = "bottega.pushToken";
@@ -158,6 +159,9 @@ async function authedPost(path: string, body?: unknown): Promise<void> {
 
 /** Right after putting something on: tell friends. Fire and forget. */
 export const notifyFriends = () => authedPost("/api/push/now");
+
+/** Right after asking someone to swap keys, or accepting their request: tell them. Fire and forget. */
+export const notifyFriendship = (to: string, kind: "request" | "accepted") => authedPost("/api/push/friend", { to, kind });
 
 /** Right after something happens in a club (a message, a vote, a meeting, a new book): tell its members. Fire and forget. */
 export const notifyClub = (clubId: string, kind: "message" | "poll" | "meeting" | "reading" | "pin") => authedPost("/api/push/club", { clubId, kind });

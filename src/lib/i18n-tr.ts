@@ -916,4 +916,6 @@ export const TR: Record<string, string> = {
   "Adding the cover…": "Kapak ekleniyor…",
   "That photo couldn't be added. Try a JPG or PNG.": "Bu fotoğraf eklenemedi. JPG ya da PNG dene.",
   "That picture can't be used as a cover.": "Bu resim kapak olarak kullanılamaz.",
+  "Get a nudge when someone asks to swap keys with you.": "Biri seninle anahtar takası istediğinde haber al.",
+  "And later, when friends put something on.": "Sonra da arkadaşların bir şey açtığında.",
 };

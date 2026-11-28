@@ -332,7 +332,10 @@ function Library({ me }: { me: Profile }) {
           <p className="door-name">{t("Add a friend")}</p>
         </div>
       </div>
-      {friendCount > 0 && <PushAsk userId={me.id} text={t("Get a nudge when a friend puts something on.")} hint={t("At most one per friend every few hours.")} />}
+      {/* New here: the first thing worth a nudge is someone asking to swap keys. With friends: what they put on. */}
+      {friendCount > 0
+        ? <PushAsk userId={me.id} text={t("Get a nudge when a friend puts something on.")} hint={t("At most one per friend every few hours.")} />
+        : <PushAsk userId={me.id} text={t("Get a nudge when someone asks to swap keys with you.")} hint={t("And later, when friends put something on.")} />}
       {friendCount === 0 && (
         <div className="invite">
           <p>{t("Your shelf is just you for now.")} {t("Send your room link. When a friend makes their own room from it, you'll get their friend request.")}</p>

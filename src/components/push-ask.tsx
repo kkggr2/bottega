@@ -7,7 +7,8 @@ import { pathFromUrl } from "@/lib/links";
 import { dismissPushAsk, enablePush, pushAskDismissed, pushPermission } from "@/lib/push";
 
 /**
- * Offers notifications once, where they matter (a friend, a club), in the iPhone app or a browser that allows them.
+ * Offers notifications once, where they matter (friend requests and friends, a club), in the iPhone and Android
+ * apps or a browser that allows them.
  * After "Turn on" or "Not now" it never shows again on this device.
  */
 export function PushAsk({ userId, text, hint }: { userId: string; text: string; hint?: string }) {
