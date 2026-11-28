@@ -38,10 +38,12 @@ export function AreaEditButton({ area, onClick }: { area: Area; onClick: () => v
   return <button type="button" className="area-edit" onClick={onClick}>✎ {AREAS[area].button}</button>;
 }
 
-export function AreaEditor({ area, pieces, urls, onChanged, onClose }: {
+export function AreaEditor({ area, pieces, urls, wallSpace = 12, onChanged, onClose }: {
   area: Area;
   pieces: Piece[];
   urls: Record<string, string>;
+  /** How many more the wall can take (it holds WALL_MAX). */
+  wallSpace?: number;
   /** After a change: reload the room. `removed` lets the room stop a record or film that just went. */
   onChanged: (removed: string[]) => Promise<void> | void;
   onClose: () => void;
@@ -55,6 +57,8 @@ export function AreaEditor({ area, pieces, urls, onChanged, onClose }: {
 
   const chosen = pieces.filter((p) => picked.has(p.id));
   const movable = a.move ? chosen.filter((p) => p.type === a.move!.from) : [];
+  // Hanging on the wall only fits as many as it has space for.
+  const tooMany = area === "screen" && movable.length > wallSpace;
   const all = pieces.length > 0 && picked.size === pieces.length;
 
   const toggle = (id: string) => {
@@ -143,6 +147,11 @@ export function AreaEditor({ area, pieces, urls, onChanged, onClose }: {
       )}
 
       <p className={`msg ${msg?.kind ?? ""}`} aria-live="polite">{msg?.text}</p>
+      {tooMany && (
+        <p className="hint">{wallSpace === 0
+          ? "The wall holds 12 and it's full. Take one down from the wall first."
+          : `The wall has room for ${wallSpace} more. Tick ${wallSpace} or fewer to hang them.`}</p>
+      )}
 
       <div className="row stacked area-actions">
         {chosen.length === 0 ? (
@@ -157,7 +166,9 @@ export function AreaEditor({ area, pieces, urls, onChanged, onClose }: {
         ) : (
           <>
             {a.move && movable.length > 0 && (
-              <button className="btn" type="button" disabled={busy} onClick={() => void move()}>{a.move.label(movable.length)}</button>
+              <button className="btn" type="button" disabled={busy || tooMany} onClick={() => void move()}>
+                {area === "screen" && wallSpace === 0 ? "The wall is full" : a.move.label(movable.length)}
+              </button>
             )}
             <button className="btn ghost danger-text" type="button" disabled={busy} onClick={() => setConfirming(true)}>
               {chosen.length === 1 ? "Take 1 out" : `Take ${chosen.length} out`}

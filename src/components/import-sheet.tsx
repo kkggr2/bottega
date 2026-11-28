@@ -26,8 +26,10 @@ type Place = "poster" | "scene" | "skip";
 
 const stars = (rating: number | null) => (rating ? "★".repeat(Math.floor(rating)) + (rating % 1 ? "½" : "") : "");
 
-export function ImportSheet({ ownerId, pieces, onClose, onImported }: {
+export function ImportSheet({ ownerId, pieces, wallSpace = 12, onClose, onImported }: {
   ownerId: string; pieces: Piece[]; onClose: () => void;
+  /** How many more posters the wall can take (it holds WALL_MAX). */
+  wallSpace?: number;
   /** After something came in: how many, and whether they were films or books (so the room can say how to undo it). */
   onImported?: (count: number, kind: "films" | "books") => void;
 }) {
@@ -175,7 +177,7 @@ export function ImportSheet({ ownerId, pieces, onClose, onImported }: {
 
       <p className={`msg ${msg?.kind ?? ""}`} aria-live="polite">{msg?.text}</p>
 
-      {sorting && <FilmSorter key={round} films={candidates} room={room} busy={busy} onPut={(picks) => void put(picks)} onCancel={onClose} />}
+      {sorting && <FilmSorter key={round} films={candidates} room={room} wallSpace={wallSpace} busy={busy} onPut={(picks) => void put(picks)} onCancel={onClose} />}
 
       {source === "goodreads" && candidates && (
         <ul className="pick-list" aria-label="Choose what to bring in">
@@ -218,8 +220,8 @@ export function ImportSheet({ ownerId, pieces, onClose, onImported }: {
  * Letterboxd films, one at a time: swipe right (or tap) to hang it on the wall, left for the DVD pile, or skip it.
  * Nothing is saved until the end: Undo steps back, and the last screen lets you move any film or leave it out.
  */
-function FilmSorter({ films, room, busy, onPut, onCancel }: {
-  films: Candidate[]; room: number; busy: boolean;
+function FilmSorter({ films, room, wallSpace, busy, onPut, onCancel }: {
+  films: Candidate[]; room: number; wallSpace: number; busy: boolean;
   onPut: (picks: { c: Candidate; type: PieceType }[]) => void; onCancel: () => void;
 }) {
   const [place, setPlace] = useState<Record<string, Place>>({});
@@ -235,9 +237,12 @@ function FilmSorter({ films, room, busy, onPut, onCancel }: {
   const inPile = Object.values(place).filter((v) => v === "scene").length;
   const film = films[at];
   const full = placed(place) >= room;
+  // The wall holds WALL_MAX: once its spaces are used, the rest can go in the DVD pile.
+  const wallLeft = wallSpace - onWall;
 
   function decide(where: Place) {
     if (!film || leaving) return;
+    if (where === "poster" && wallLeft <= 0) { setDx(0); return; }
     setLeaving(where === "poster" ? "right" : where === "scene" ? "left" : "down");
     setDx(0);
     // A short glide out, then the next film (or the summary when the list or the room runs out).
@@ -279,8 +284,9 @@ function FilmSorter({ films, room, busy, onPut, onCancel }: {
     const picks = films.filter((f) => place[f.key] === "poster" || place[f.key] === "scene");
     const more = at + 1 < films.length || !place[films[at]?.key ?? ""];
     const move = (key: string, where: Place) => setPlace((p) => {
-      // Moving a left-out film back in only works while there's space.
+      // Moving a left-out film back in only works while there's space, and the wall only while it has space too.
       if (where !== "skip" && p[key] === "skip" && placed(p) >= room) return p;
+      if (where === "poster" && p[key] !== "poster" && wallLeft <= 0) return p;
       return { ...p, [key]: where };
     });
     return (
@@ -295,7 +301,7 @@ function FilmSorter({ films, room, busy, onPut, onCancel }: {
                   <span><b>{f.title}</b><span className="muted">{f.subtitle}</span></span>
                 </div>
                 <div className="chips sort-where" role="group" aria-label={`Where ${f.title} goes`}>
-                  <button type="button" className="chip" aria-pressed={place[f.key] === "poster"} onClick={() => move(f.key, "poster")}>Wall</button>
+                  <button type="button" className="chip" aria-pressed={place[f.key] === "poster"} disabled={place[f.key] !== "poster" && wallLeft <= 0} onClick={() => move(f.key, "poster")}>Wall</button>
                   <button type="button" className="chip" aria-pressed={place[f.key] === "scene"} onClick={() => move(f.key, "scene")}>DVD pile</button>
                   <button type="button" className="chip" aria-pressed={place[f.key] === "skip"} onClick={() => move(f.key, "skip")}>Leave out</button>
                 </div>
@@ -334,7 +340,7 @@ function FilmSorter({ films, room, busy, onPut, onCancel }: {
           onPointerCancel={() => { start.current = null; setDx(0); }}
         >
           <span className="sort-flag left" style={{ opacity: Math.max(0, -lean) }}>DVD pile</span>
-          <span className="sort-flag right" style={{ opacity: Math.max(0, lean) }}>Wall</span>
+          <span className="sort-flag right" style={{ opacity: Math.max(0, lean) }}>{wallLeft <= 0 ? "Wall full" : "Wall"}</span>
           {film.cover_url ? <img src={film.cover_url} alt="" draggable={false} /> : <span className="noart" aria-hidden="true" />}
           <b>{film.title}</b>
           <span className="muted">{[film.subtitle, film.note].filter(Boolean).join(" · ")}</span>
@@ -343,9 +349,13 @@ function FilmSorter({ films, room, busy, onPut, onCancel }: {
       <div className="sort-actions">
         <button className="btn ghost" type="button" onClick={() => decide("scene")}>← DVD pile</button>
         <button className="btn ghost small" type="button" onClick={() => decide("skip")}>Skip</button>
-        <button className="btn" type="button" onClick={() => decide("poster")}>Wall →</button>
+        <button className="btn" type="button" disabled={wallLeft <= 0} onClick={() => decide("poster")}>{wallLeft <= 0 ? "Wall full" : "Wall →"}</button>
       </div>
-      <p className="hint sort-legend">On the wall it hangs as a framed poster; in the DVD pile it&rsquo;s ready to play on your TV. Swipe the card, or tap.</p>
+      <p className="hint sort-legend">
+        {wallLeft <= 0
+          ? "The wall is full (it holds 12), so the rest can go in the DVD pile."
+          : <>On the wall it hangs as a framed poster ({wallLeft === 1 ? "1 space left" : `${wallLeft} spaces left`}); in the DVD pile it&rsquo;s ready to play on your TV. Swipe the card, or tap.</>}
+      </p>
       {history.length > 0 && (
         <div className="sort-foot">
           <button type="button" className="linkish" onClick={undo}>Undo</button>

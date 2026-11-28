@@ -19,7 +19,7 @@ import { connoisseurNumber } from "@/lib/connoisseurs";
 import { useRoomColors } from "@/lib/room-colors";
 import { useRemembered } from "@/lib/remember";
 import { rememberCameFrom, track } from "@/lib/track";
-import { MAX_PIECES, PIECE_TYPES, roomStyle } from "@/lib/themes";
+import { MAX_PIECES, onWall, PIECE_TYPES, roomStyle, WALL_FULL, WALL_MAX } from "@/lib/themes";
 import type { Piece, PieceType, Profile, Room } from "@/lib/types";
 import { AreaEditButton, AreaEditor, type Area } from "./area-editor";
 import { Bookcase } from "./bookcase";
@@ -306,6 +306,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
   const games = pieces.filter((p) => p.type === "game");
   const moments = pieces.filter((p) => p.type === "moment");
   const full = pieces.length >= MAX_PIECES;
+  const wallSpace = Math.max(0, WALL_MAX - wall.length);
 
   const detail = pieces.find((p) => p.id === detailId) ?? null;
   const chairBook = pieces.find((p) => p.id === room.now_book && p.type === "book") ?? null;
@@ -325,7 +326,8 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
   const siblings = detail ? pieces.filter((p) => p.type === detail.type) : [];
   const detailIndex = detail ? siblings.indexOf(detail) : -1;
 
-  const add = (type?: PieceType) => (full ? setNotice(`A room holds ${MAX_PIECES} pieces. Remove one to make space.`) : setEditing({ piece: null, type }));
+  const add = (type?: PieceType) => (full ? setNotice(`A room holds ${MAX_PIECES} pieces. Remove one to make space.`)
+    : type && onWall(type) && wallSpace === 0 ? setNotice(WALL_FULL) : setEditing({ piece: null, type }));
 
   async function friendAction() {
     if (!me) return;
@@ -494,11 +496,12 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
               {wall.length > 0 ? (
                 <div className="pieces" aria-label="On the wall">
                   {wall.map((p) => <PieceView key={p.id} piece={p} urls={urls} onOpen={() => setDetailId(p.id)} />)}
-                  {isOwner && (
+                  {isOwner && wallSpace > 0 && (
                     <div className="piece">
                       <button type="button" className="hang" onClick={() => add("poster")}>+ Hang something</button>
                     </div>
                   )}
+                  {isOwner && wallSpace === 0 && <p className="wall-full">{WALL_FULL}</p>}
                 </div>
               ) : isOwner ? (
                 <div className="pieces">
@@ -607,19 +610,20 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
           existing={editing.piece}
           initialType={editing.type}
           existingImageUrl={editing.piece?.image_path ? urls[editing.piece.image_path] : undefined}
+          wallFull={wallSpace === 0}
           onClose={() => { setEditing(null); load(); }}
         />
       )}
       {customizing && <Customize room={room} onClose={() => { setCustomizing(false); load(); }} />}
-      {picking && <StarterPicks ownerId={owner.id} pieces={pieces} onClose={() => { setPicking(false); load(); }} />}
+      {picking && <StarterPicks ownerId={owner.id} pieces={pieces} wallSpace={wallSpace} onClose={() => { setPicking(false); load(); }} />}
       {importing && (
-        <ImportSheet ownerId={owner.id} pieces={pieces} onClose={() => { setImporting(false); load(); }}
+        <ImportSheet ownerId={owner.id} pieces={pieces} wallSpace={wallSpace} onClose={() => { setImporting(false); load(); }}
           onImported={(n, kind) => setNotice(kind === "books"
             ? `Brought in ${n}. Changed your mind? Use Edit bookcase to take out any of them.`
             : `Brought in ${n}. Changed your mind? Use Edit wall or Edit DVD pile to move or take out any of them.`)} />
       )}
       {areaEdit && (
-        <AreaEditor area={areaEdit} urls={urls} onChanged={afterAreaChange} onClose={() => setAreaEdit(null)}
+        <AreaEditor area={areaEdit} urls={urls} wallSpace={wallSpace} onChanged={afterAreaChange} onClose={() => setAreaEdit(null)}
           pieces={areaEdit === "wall" ? wall : areaEdit === "screen" ? scenes : areaEdit === "books" ? books : songs} />
       )}
       {together && me && <StartTogetherSheet friendId={owner.id} friendName={owner.username} onClose={() => setTogether(false)} />}

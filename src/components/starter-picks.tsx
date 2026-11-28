@@ -70,7 +70,11 @@ const BOOKS: Pick[] = [
 
 const key = (p: Pick) => `${p.type}:${p.title}`;
 
-export function StarterPicks({ ownerId, pieces, onClose }: { ownerId: string; pieces: Piece[]; onClose: () => void }) {
+export function StarterPicks({ ownerId, pieces, wallSpace = 12, onClose }: {
+  ownerId: string; pieces: Piece[]; onClose: () => void;
+  /** How many more posters the wall can take (it holds WALL_MAX). */
+  wallSpace?: number;
+}) {
   const t = useT();
   const [tab, setTab] = useState<"films" | "books">("films");
   const [chosen, setChosen] = useState<string[]>([]);
@@ -80,8 +84,14 @@ export function StarterPicks({ ownerId, pieces, onClose }: { ownerId: string; pi
   const space = MAX_PIECES - pieces.length;
   const list = tab === "films" ? FILMS : BOOKS;
 
+  // Films go on the wall, which holds 12; once its spaces are picked, more films can't be.
+  const filmKeys = new Set(FILMS.map(key));
+  const filmsPicked = chosen.filter((k) => filmKeys.has(k)).length;
+  const wallFull = filmsPicked >= wallSpace;
+
   function toggle(p: Pick) {
     const k = key(p);
+    if (!chosen.includes(k) && p.type === "poster" && wallFull) return;
     setChosen((prev) => prev.includes(k) ? prev.filter((x) => x !== k) : prev.length < space ? [...prev, k] : prev);
   }
 
@@ -118,7 +128,7 @@ export function StarterPicks({ ownerId, pieces, onClose }: { ownerId: string; pi
           const on = inRoom || chosen.includes(k);
           return (
             <li key={k}>
-              <button type="button" className={on ? "on" : undefined} aria-pressed={on} disabled={inRoom}
+              <button type="button" className={on ? "on" : undefined} aria-pressed={on} disabled={inRoom || (!on && p.type === "poster" && wallFull)}
                 onClick={() => toggle(p)} aria-label={`${p.title}, ${p.subtitle}`}>
                 <img src={p.cover_url} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.visibility = "hidden"; }} />
                 {on && <span className="tick" aria-hidden="true">✓</span>}
@@ -127,6 +137,7 @@ export function StarterPicks({ ownerId, pieces, onClose }: { ownerId: string; pi
           );
         })}
       </ul>
+      {tab === "films" && wallFull && <p className="hint">{t("That's the wall full: it holds 12. Add books, or more films later in the DVD pile.")}</p>}
       <p className="msg err" aria-live="polite">{error}</p>
       <div className="row split starter-foot">
         <button className="btn ghost" type="button" onClick={onClose}>{t("Cancel")}</button>

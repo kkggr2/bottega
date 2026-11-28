@@ -10,7 +10,8 @@ import { episodeCode, posterUrl, watchPath, type Watching } from "@/lib/watching
 
 /* eslint-disable @next/next/no-img-element -- signed or remote stills */
 
-const CASES = ["#14213D", "#3D1F1F", "#1F3324", "#2A2A2A", "#3B2F4A", "#4A3B1F"];
+/** DVD cases in soft colours (rose, sky, sage, butter, lilac, peach, mint, pink), light enough for dark titles. */
+const CASES = ["#F2B5B5", "#A9C7E8", "#B5D3A7", "#F5D38A", "#CDB5E3", "#F4BE96", "#9ED0C6", "#EBC1D2"];
 const CARTS = ["#B23A48", "#2F5D8A", "#E0A100", "#3E7D4F", "#6A4C93", "#D65A31"];
 
 /** For a poster left in the TV: its trailer, and a wide still from the film to show while it isn't playing. */
@@ -105,6 +106,8 @@ export function ScreenCorner({
   /** For the owner: edit the whole DVD pile at once. */
   onEdit?: () => void;
 }) {
+  // More than six DVDs stand side by side like a shelf instead of piling up.
+  const rack = scenes.length > 6;
   // What's in the player: the chosen DVD or poster, otherwise the first scene that can play.
   const chosen = scenes.find((s) => s.id === tvId) ?? (extraFilm && extraFilm.id === tvId ? extraFilm : null);
   const current = chosen ?? scenes.find((s) => s.link && youtubeId(s.link)) ?? null;
@@ -190,7 +193,8 @@ export function ScreenCorner({
         </div>
 
         <div className="media-stack">
-        <div className="pile" role="list" aria-label="DVDs">
+        {/* Up to six DVDs make a small pile; more stand side by side like a shelf, so the pile never towers. */}
+        <div className={`pile${rack ? " rack" : ""}`} role="list" aria-label="DVDs">
           {isOwner && (
             <div role="listitem"><button type="button" className="dvd add" onClick={onAddScene}>+ scene</button></div>
           )}
@@ -203,7 +207,10 @@ export function ScreenCorner({
                   className={`dvd${s.id === tvId ? " in" : ""}`}
                   onClick={() => (s.link ? onInsert(s) : onOpen(s))}
                   aria-label={s.link ? `Play ${s.title} on the TV` : `${s.title}, open details`}
-                  style={{ "--case": CASES[w % CASES.length], marginLeft: (w % 14) - 4, rotate: `${((w >> 3) % 5) - 2}deg` } as CSSProperties}
+                  style={rack
+                    // On the shelf: spines of slightly different heights, and now and then one leaning on its neighbour.
+                    ? ({ "--case": CASES[w % CASES.length], "--h": `${120 + (w % 17)}px`, rotate: w % 7 === 0 ? "2.5deg" : undefined } as CSSProperties)
+                    : ({ "--case": CASES[w % CASES.length], marginLeft: (w % 14) - 4, rotate: `${((w >> 3) % 5) - 2}deg` } as CSSProperties)}
                 >
                   <span>{s.title}</span>
                 </button>

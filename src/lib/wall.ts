@@ -84,12 +84,14 @@ export async function loadRecommendations(toUser: string): Promise<Recommendatio
 export async function answerRecommendation(rec: Recommendation, keep: boolean, ownerId: string): Promise<string | null> {
   const sb = supabase();
   if (keep) {
-    const type: PieceType = rec.type;
-    const { error } = await sb.from("pieces").insert({
+    const piece = (type: PieceType) => sb.from("pieces").insert({
       owner_id: ownerId, type, title: rec.title, subtitle: rec.subtitle,
       body: rec.note ? `Recommended by @${rec.username}: “${rec.note}”` : `Recommended by @${rec.username}`,
       cover_url: rec.cover_url, preview_url: rec.type === "song" ? rec.preview_url : null, link: rec.link,
     });
+    let { error } = await piece(rec.type);
+    // A recommended film when the wall is full (it holds 12) goes in the DVD pile instead.
+    if (error && rec.type === "poster" && /wall holds 12/i.test(error.message)) ({ error } = await piece("scene"));
     if (error) return "Couldn't hang it. Try again.";
   }
   await sb.from("recommendations").update({ status: keep ? "kept" : "passed" }).eq("id", rec.id);

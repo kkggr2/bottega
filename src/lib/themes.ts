@@ -42,6 +42,13 @@ export const PIECE_TYPES: Record<
 };
 
 export const MAX_PIECES = 80;
+/**
+ * A wall looks best with room to breathe: at most 12 posters and poems (three rows on a computer). Films beyond that
+ * go in the DVD pile. The database holds the same limit (supabase/migrations/20261213000000_wall_limit.sql).
+ */
+export const WALL_MAX = 12;
+export const onWall = (type: PieceType) => PIECE_TYPES[type]?.zone === "wall";
+export const WALL_FULL = "The wall holds 12. Move one to the DVD pile, or take one down, to hang something new.";
 export const USERNAME = /^[a-z0-9_]{3,20}$/;
 
 export function roomStyle(room: Pick<Room, "theme"> | null | undefined): CSSProperties {

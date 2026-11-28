@@ -14,7 +14,7 @@ import {
 } from "@/lib/media";
 import { friendlyError, supabase } from "@/lib/supabase";
 import { track } from "@/lib/track";
-import { PIECE_TYPES } from "@/lib/themes";
+import { onWall, PIECE_TYPES, WALL_FULL } from "@/lib/themes";
 import type { Piece, PieceType } from "@/lib/types";
 import { SearchPicker } from "./search-picker";
 import { Sheet } from "./sheet";
@@ -49,12 +49,15 @@ export function PieceEditor({
   existing,
   existingImageUrl,
   initialType,
+  wallFull = false,
   onClose,
 }: {
   ownerId: string;
   existing: Piece | null;
   existingImageUrl?: string;
   initialType?: PieceType;
+  /** The wall already holds WALL_MAX: posters and poems can't be added until there's space. */
+  wallFull?: boolean;
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState<Draft>({
@@ -163,6 +166,7 @@ export function PieceEditor({
   async function save() {
     const link = draft.link.trim();
     if (!draft.title.trim()) return setMsg("Give it a title.");
+    if (!existing && wallFull && onWall(draft.type)) return setMsg(WALL_FULL);
     if (link && !/^https:\/\/\S{3,500}$/i.test(link)) return setMsg("Links need to start with https://");
     const clip_start = draft.type === "scene" ? parseTime(draft.clipStart) : null;
     const clip_end = draft.type === "scene" ? parseTime(draft.clipEnd) : null;
@@ -237,13 +241,14 @@ export function PieceEditor({
       {!existing && (
         <div className="typegrid" role="group" aria-label="Kind of piece">
           {TYPE_ORDER.map((k) => (
-            <button key={k} type="button" aria-pressed={draft.type === k}
+            <button key={k} type="button" aria-pressed={draft.type === k} disabled={wallFull && onWall(k)}
               onClick={() => { set({ type: k }); setStills([]); setUsedTrailer(false); setMsg(null); }}>
               <b>{PIECE_TYPES[k].glyph}</b>{PIECE_TYPES[k].label}
             </button>
           ))}
         </div>
       )}
+      {!existing && wallFull && <p className="hint">{WALL_FULL}</p>}
 
       {draft.type === "song" && (
         <SearchPicker key="song" id="find-song" label="Find a song" placeholder="Song or artist" source="Apple Music"
