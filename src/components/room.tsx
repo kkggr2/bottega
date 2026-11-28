@@ -21,6 +21,7 @@ import { useRemembered } from "@/lib/remember";
 import { rememberCameFrom, track } from "@/lib/track";
 import { MAX_PIECES, PIECE_TYPES, roomStyle } from "@/lib/themes";
 import type { Piece, PieceType, Profile, Room } from "@/lib/types";
+import { AreaEditButton, AreaEditor, type Area } from "./area-editor";
 import { Bookcase } from "./bookcase";
 import { useAuth } from "./auth";
 import { Customize } from "./customize";
@@ -78,6 +79,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
   const [editing, setEditing] = useState<Editing | null>(null);
   const [customizing, setCustomizing] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [areaEdit, setAreaEdit] = useState<Area | null>(null);
   const [picking, setPicking] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [safety, setSafety] = useState(false);
@@ -364,6 +366,13 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
     await load();
   }
 
+  // After editing a whole part of the room: stop a record or film that was just taken out, then reload.
+  async function afterAreaChange(removed: string[]) {
+    if (recordId && removed.includes(recordId)) { stopMusic(); setRecordId(null); }
+    if (tvId && removed.includes(tvId)) { setTvOn(false); setTvId(null); }
+    await load();
+  }
+
   // Leave a piece out (or put it away). The database stamps the time.
   async function setNow(piece: Piece, on: boolean) {
     const slot = slotFor(piece.type);
@@ -465,6 +474,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
       <section className="room" style={roomStyle(room)} aria-label={`${room.name}, @${owner.username}'s room`}
         onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         <div className={`wall p-${room.wallpaper}`}>
+          {isOwner && canView && wall.length > 0 && <span className="wall-edit"><AreaEditButton area="wall" onClick={() => setAreaEdit("wall")} /></span>}
           {!canView ? (
             <div className="empty-wall">
               <h2>The door is closed.</h2>
@@ -501,7 +511,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
               <div className="furniture">
                 {showBooks && (
                   <Bookcase books={books} isOwner={isOwner} onOpen={(p) => setDetailId(p.id)} onAdd={() => add("book")}
-                    chairBook={chairBook} urls={urls} note={bookNote} />
+                    chairBook={chairBook} urls={urls} note={bookNote} onEdit={() => setAreaEdit("books")} />
                 )}
                 {showScreen && (
                   <ScreenCorner
@@ -521,6 +531,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
                     leave={filmLeave}
                     live={canView && !tvTouched ? watching : null}
                     moments={moments}
+                    onEdit={() => setAreaEdit("screen")}
                   />
                 )}
                 {showMusic && (
@@ -535,6 +546,7 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
                     onAdd={() => add("song")}
                     note={songNote}
                     leave={songLeave}
+                    onEdit={() => setAreaEdit("music")}
                   />
                 )}
               </div>
@@ -600,7 +612,16 @@ function RoomInner({ username, me }: { username: string; me: Profile | null }) {
       )}
       {customizing && <Customize room={room} onClose={() => { setCustomizing(false); load(); }} />}
       {picking && <StarterPicks ownerId={owner.id} pieces={pieces} onClose={() => { setPicking(false); load(); }} />}
-      {importing && <ImportSheet ownerId={owner.id} pieces={pieces} onClose={() => { setImporting(false); load(); }} />}
+      {importing && (
+        <ImportSheet ownerId={owner.id} pieces={pieces} onClose={() => { setImporting(false); load(); }}
+          onImported={(n, kind) => setNotice(kind === "books"
+            ? `Brought in ${n}. Changed your mind? Use Edit bookcase to take out any of them.`
+            : `Brought in ${n}. Changed your mind? Use Edit wall or Edit DVD pile to move or take out any of them.`)} />
+      )}
+      {areaEdit && (
+        <AreaEditor area={areaEdit} urls={urls} onChanged={afterAreaChange} onClose={() => setAreaEdit(null)}
+          pieces={areaEdit === "wall" ? wall : areaEdit === "screen" ? scenes : areaEdit === "books" ? books : songs} />
+      )}
       {together && me && <StartTogetherSheet friendId={owner.id} friendName={owner.username} onClose={() => setTogether(false)} />}
       {recommending && me && (
         <RecommendSheet meId={me.id} toId={owner.id} toName={owner.username} onClose={() => setRecommending(false)} />

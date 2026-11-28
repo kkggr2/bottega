@@ -45,7 +45,7 @@ export function PieceView({ piece, urls, onOpen }: { piece: Piece; urls: Record<
 }
 
 /** The first sentence or line of the owner's note, short enough for a plaque. */
-function firstLine(body: string): string {
+export function firstLine(body: string): string {
   const text = body.trim().split(/\n/)[0] ?? "";
   const sentence = text.match(/^.*?[.!?…](\s|$)/)?.[0]?.trim() ?? text;
   return sentence.length > 150 ? `${sentence.slice(0, 147).trimEnd()}…` : sentence;

@@ -26,7 +26,11 @@ type Place = "poster" | "scene" | "skip";
 
 const stars = (rating: number | null) => (rating ? "★".repeat(Math.floor(rating)) + (rating % 1 ? "½" : "") : "");
 
-export function ImportSheet({ ownerId, pieces, onClose }: { ownerId: string; pieces: Piece[]; onClose: () => void }) {
+export function ImportSheet({ ownerId, pieces, onClose, onImported }: {
+  ownerId: string; pieces: Piece[]; onClose: () => void;
+  /** After something came in: how many, and whether they were films or books (so the room can say how to undo it). */
+  onImported?: (count: number, kind: "films" | "books") => void;
+}) {
   const [source, setSource] = useState<Source>("letterboxd");
   const [username, setUsername] = useState("");
   const [candidates, setCandidates] = useState<Candidate[] | null>(null);
@@ -132,6 +136,7 @@ export function ImportSheet({ ownerId, pieces, onClose }: { ownerId: string; pie
     setBusy(false);
     if (error) return setMsg({ kind: "err", text: friendlyError(error, "Couldn't add them.") });
     track("import", { room: ownerId, detail: `${source}:${rows.length}` });
+    onImported?.(rows.length, source === "goodreads" ? "books" : "films");
     onClose();
   }
 

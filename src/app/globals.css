@@ -403,6 +403,29 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .pick-list b { display: block; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pick-list .muted { display: block; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* "✎ Edit wall / DVD pile / bookcase / records": one quiet button per part of the room, in the room's own ink. */
+.area-edit { font: 500 13px/1 var(--font-ui); padding: 7px 12px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+  color: var(--rink, var(--fg)); background: color-mix(in srgb, var(--rink, var(--fg)) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--rink, var(--fg)) 26%, transparent); }
+.area-edit:hover { background: color-mix(in srgb, var(--rink, var(--fg)) 13%, transparent); }
+.wall-edit { display: flex; justify-content: flex-end; margin: -10px 0 12px; }
+/* The sheet: a list to tick, each with its plaque words (on the wall), and the actions at the bottom. */
+.area-all { justify-self: start; }
+.area-list { list-style: none; margin: 0; padding: 4px; display: grid; gap: 2px; max-height: 50vh; overflow: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); }
+.area-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 4px 8px; padding: 6px 8px; border-radius: 8px; }
+.area-list li.on { background: var(--surface); }
+.area-row { display: grid; grid-template-columns: auto 40px minmax(0, 1fr); gap: 10px; align-items: center; cursor: pointer; }
+.area-row input { width: 18px; height: 18px; accent-color: var(--brass); }
+.area-row img, .area-row .noart { width: 40px; height: 56px; object-fit: cover; border-radius: 3px; background: var(--line); display: block; }
+.area-row b { display: block; font-weight: 500; }
+.area-row .muted { display: block; font-size: 13px; }
+.area-plaque { display: block; margin-top: 3px; font: italic 400 14px/1.35 var(--font-ui); color: var(--fg); }
+.area-plaque.empty { font-style: normal; color: var(--muted); }
+.area-words-open { align-self: center; font-size: 14px; }
+.area-words { grid-column: 1 / -1; display: grid; gap: 6px; padding: 4px 0 6px 28px; }
+.area-words .row { justify-content: flex-end; }
+.area-actions { justify-content: flex-end; }
+
 /* Letterboxd films, one at a time: a poster card you swipe right for the wall, left for the DVD pile. */
 .sorter { display: grid; gap: 12px; }
 .sort-top, .sort-foot { display: flex; justify-content: space-between; gap: 12px; font: 500 14px/1.3 var(--font-ui); color: var(--muted); }

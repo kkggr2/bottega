@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties }
 import { formatTime, sceneEmbed, youtubeId } from "@/lib/lookup";
 import { imageOf, wobble } from "@/lib/piece-media";
 import type { Piece } from "@/lib/types";
+import { AreaEditButton } from "./area-editor";
 import { episodeCode, posterUrl, watchPath, type Watching } from "@/lib/watching";
 
 /* eslint-disable @next/next/no-img-element -- signed or remote stills */
@@ -78,6 +79,7 @@ export function ScreenCorner({
   leave = null,
   live = null,
   moments = [],
+  onEdit,
 }: {
   scenes: Piece[];
   games: Piece[];
@@ -100,6 +102,8 @@ export function ScreenCorner({
   live?: Watching | null;
   /** Lines the owner wrote in Margins, pinned like ticket stubs. Only the show and the minute show here. */
   moments?: Piece[];
+  /** For the owner: edit the whole DVD pile at once. */
+  onEdit?: () => void;
 }) {
   // What's in the player: the chosen DVD or poster, otherwise the first scene that can play.
   const chosen = scenes.find((s) => s.id === tvId) ?? (extraFilm && extraFilm.id === tvId ? extraFilm : null);
@@ -137,6 +141,7 @@ export function ScreenCorner({
 
   return (
     <section className="corner screen-corner" aria-label="Television and films">
+      {isOwner && onEdit && scenes.length > 0 && <AreaEditButton area="screen" onClick={onEdit} />}
       <div className="screen-set">
         <div className="tv">
           <span className="antenna" aria-hidden="true" />

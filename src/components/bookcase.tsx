@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 import { imageOf, wobble } from "@/lib/piece-media";
 import type { Piece } from "@/lib/types";
+import { AreaEditButton } from "./area-editor";
 
 /* eslint-disable @next/next/no-img-element -- remote or signed cover art */
 
@@ -16,6 +17,7 @@ export function Bookcase({
   chairBook,
   urls = {},
   note,
+  onEdit,
 }: {
   books: Piece[];
   /** The book left open on the armchair, if any. */
@@ -26,9 +28,12 @@ export function Bookcase({
   isOwner: boolean;
   onOpen: (piece: Piece) => void;
   onAdd: () => void;
+  /** For the owner: edit the whole bookcase at once. */
+  onEdit?: () => void;
 }) {
   return (
     <section className="corner bookcase-corner" aria-label="Bookshelf">
+      {isOwner && onEdit && books.length > 0 && <AreaEditButton area="books" onClick={onEdit} />}
       <div className="bookcase">
         <div className="books">
           {books.map((b) => {

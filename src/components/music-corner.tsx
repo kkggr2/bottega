@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { audioOf, imageOf, wobble } from "@/lib/piece-media";
 import type { Piece } from "@/lib/types";
+import { AreaEditButton } from "./area-editor";
 
 /* eslint-disable @next/next/no-img-element -- signed or remote cover art */
 
@@ -20,6 +21,7 @@ export function MusicCorner({
   onAdd,
   note,
   leave = null,
+  onEdit,
 }: {
   songs: Piece[];
   urls: Record<string, string>;
@@ -33,6 +35,8 @@ export function MusicCorner({
   note?: string | null;
   /** For the owner: leave this record out on the turntable. */
   leave?: LeaveAction;
+  /** For the owner: edit all the records at once. */
+  onEdit?: () => void;
 }) {
   const current = songs.find((s) => s.id === currentId) ?? null;
   // The sleeves sit stacked in the crate. Tapping it spreads them out so each one is easy to pick.
@@ -43,6 +47,7 @@ export function MusicCorner({
 
   return (
     <section className="corner music-corner" aria-label="Record player">
+      {isOwner && onEdit && songs.length > 0 && <AreaEditButton area="music" onClick={onEdit} />}
       <div className="rug" aria-hidden="true" />
       <div className="music-set">
         <div className={`turntable${spinning ? " on" : ""}${current ? " loaded" : ""}`}>
