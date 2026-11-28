@@ -367,6 +367,7 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 
 /* DVDs on a shelf, spines out, without photos: a black DVD band at the top, the film's colour, the title running down
    the spine in a typeface from its era, a tiny disc at the foot, and the plastic edges catching the light. */
+.dvd-shelf { display: grid; justify-items: center; gap: 10px; }
 .dvds { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 16px 3px; max-width: min(320px, 100%); }
 .dvd { position: relative; display: block; padding: 0; border: 0; background: none; cursor: pointer; transition: transform .2s ease; }
 .dvd-spine { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; justify-items: center; width: 30px; height: 140px; border-radius: 3px; overflow: hidden;

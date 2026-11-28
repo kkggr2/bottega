@@ -146,7 +146,6 @@ export function ScreenCorner({
 
   return (
     <section className="corner screen-corner" aria-label="Television and films">
-      {isOwner && onEdit && scenes.length > 0 && <AreaEditButton area="screen" onClick={onEdit} />}
       <div className="screen-set">
         <div className="tv">
           <span className="antenna" aria-hidden="true" />
@@ -198,6 +197,9 @@ export function ScreenCorner({
         {/* DVDs on a shelf, spines out, without photos: the black DVD band at the top, the film's colour, the title
             running down the spine in a typeface from its era, and a tiny disc at the foot. The one in the player is
             pulled halfway out. */}
+        <div className="dvd-shelf">
+        {/* The owner's edit button sits right above the DVDs it edits, not up by the TV. */}
+        {isOwner && onEdit && scenes.length > 0 && <AreaEditButton area="screen" onClick={onEdit} />}
         <div className="dvds" role="list" aria-label="DVDs">
           {scenes.map((s) => {
             const w = wobble(s.id, 1000);
@@ -230,6 +232,7 @@ export function ScreenCorner({
               </button>
             </div>
           )}
+        </div>
         </div>
 
         {moments.length > 0 && (
