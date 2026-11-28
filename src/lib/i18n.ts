@@ -74,3 +74,6 @@ export function t(text: string, vars?: Vars): string {
 export function currentLang(): Lang {
   return typeof window === "undefined" ? "en" : getLang();
 }
+
+/** Dates in the app's language: "29 Kasım Pazar 13:00" for Turkish, "Sunday 29 November at 13:00" otherwise. */
+export const dateLocale = () => (currentLang() === "tr" ? "tr-TR" : "en-GB");

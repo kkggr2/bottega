@@ -7,7 +7,7 @@ import {
   setClubPin, setProgress, startReading, updateReading,
   type ClubNote, type Meeting, type PartWord, type Pinned, type Reading, type ReadingKind, type Rsvp,
 } from "@/lib/clubs";
-import { useT } from "@/lib/i18n";
+import { dateLocale, useT } from "@/lib/i18n";
 import { filmDetails, searchBooks, searchFilms, type Found } from "@/lib/lookup";
 import { notifyClub } from "@/lib/push";
 import { LinkedText } from "./linked-text";
@@ -63,7 +63,7 @@ export function ClubPin({ clubId, isHost, refresh = 0 }: { clubId: string; isHos
 
 function pinnedWhen(iso: string, t: ReturnType<typeof useT>): string {
   const days = Math.floor((Date.now() - Date.parse(iso)) / 864e5);
-  return days < 1 ? t("today") : days === 1 ? t("yesterday") : new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return days < 1 ? t("today") : days === 1 ? t("yesterday") : new Date(iso).toLocaleDateString(dateLocale(), { month: "short", day: "numeric" });
 }
 
 function PinSheet({ clubId, current, onClose, onDone }: { clubId: string; current: string; onClose: () => void; onDone: (told: boolean) => void }) {
@@ -135,7 +135,7 @@ export function ClubMeeting({ clubId, clubName, me, isHost }: { clubId: string; 
 
       {meeting ? (
         <>
-          <p className="meeting-when">{meetingWhen(meeting.starts_at)}</p>
+          <p className="meeting-when">{meetingWhen(meeting.starts_at, undefined, dateLocale())}</p>
           {(meeting.place || meeting.link) && (
             <p className="meeting-where">
               {meeting.place}
@@ -405,7 +405,7 @@ export function ClubReading({ clubId, me, isHost, people, onShelved }: {
           <b className="reading-title">{r.title}</b>
           {r.subtitle && <span className="muted">{r.subtitle}</span>}
           {film && <span className="muted">{runtime(r.parts)}</span>}
-          {r.due_on && <span className="mono muted reading-due">{t(film ? "Watch by {date}" : "Read by {date}", { date: new Date(`${r.due_on}T12:00`).toLocaleDateString(undefined, { day: "numeric", month: "long" }) })}</span>}
+          {r.due_on && <span className="mono muted reading-due">{t(film ? "Watch by {date}" : "Read by {date}", { date: new Date(`${r.due_on}T12:00`).toLocaleDateString(dateLocale(), { day: "numeric", month: "long" }) })}</span>}
           <span className="muted">{r.finished
             ? t(film ? "{n} of {m} have watched it" : "{n} of {m} reading have finished", { n: r.finished, m: Math.max(r.readers, r.finished) })
             : r.readers ? t(film ? "{n} watching" : "{n} reading", { n: r.readers }) : ""}</span>
