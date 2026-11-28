@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Fraunces } from "next/font/google";
+import { dvdFontVariables } from "@/lib/dvd-fonts";
 import { AuthProvider } from "@/components/auth";
 import { NativeLinks } from "@/components/native-links";
 import { ViaCapture } from "@/components/via-capture";
@@ -40,7 +41,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={fraunces.variable}>
+    <html lang="en" className={`${fraunces.variable} ${dvdFontVariables}`}>
       <body>
         <AuthProvider>
           <NativeLinks />

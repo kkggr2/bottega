@@ -365,27 +365,27 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .tv-stand span:first-child::after { right: 6px; }
 .tv-stand span:last-child::after { left: 6px; }
 
-/* DVDs: soft-coloured cases with rounded corners, a little shiny disc, and the title in the room's serif. */
-.pile { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
-.dvd { position: relative; display: flex; align-items: center; gap: 7px; width: 150px; height: 28px; padding: 0 10px 0 6px; border: 0; border-radius: 6px;
-  background: linear-gradient(180deg, rgba(255,255,255,.35), rgba(255,255,255,0) 45%), var(--case, #A9C7E8); color: #2A1D13; text-align: left;
-  box-shadow: inset 0 -3px 0 rgba(0,0,0,.1), inset 0 1px 0 rgba(255,255,255,.55), 0 1px 3px rgba(0,0,0,.22); transition: transform .2s ease, opacity .2s ease; }
-.dvd::before { content: ""; flex: none; width: 15px; height: 15px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(0,0,0,.1);
-  background: radial-gradient(circle, color-mix(in srgb, var(--case, #A9C7E8) 80%, #000) 0 1.6px, #fff 2.2px 3.2px, #E4EAF0 3.8px 5px, #C7D0DA 6px, #F6F8FA 7.5px); }
-.dvd span { font: 500 12.5px/1.15 var(--font-display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dvd:hover, .dvd:focus-visible { transform: translateX(8px); }
-.dvd.in { transform: translateX(18px); opacity: .6; }
-.dvd.add { background: transparent; border: 1.5px dashed color-mix(in srgb, var(--rink) 40%, transparent); color: var(--rink); box-shadow: none; }
-.dvd.add::before { display: none; }
-/* More than six DVDs: they stand side by side like a shelf, spines up, instead of piling into a tower. The disc sits
-   at the top of each spine, the title runs up it like a book's, and they're slightly different heights. */
-.pile.rack { flex-direction: row; flex-wrap: wrap; align-items: flex-end; justify-content: center; gap: 4px; max-width: min(300px, 100%); }
-.pile.rack .dvd { flex-direction: column; justify-content: flex-start; gap: 7px; width: 28px; height: var(--h, 126px); padding: 7px 0 9px; transform-origin: bottom center; }
-.pile.rack .dvd::before { width: 14px; height: 14px; }
-.pile.rack .dvd span { writing-mode: vertical-rl; transform: rotate(180deg); max-height: calc(var(--h, 126px) - 36px); font-size: 12px; }
-.pile.rack .dvd.add { justify-content: center; }
-.pile.rack .dvd:hover, .pile.rack .dvd:focus-visible { transform: translateY(-6px); }
-.pile.rack .dvd.in { transform: translateY(-14px); opacity: .6; }
+/* DVDs on a shelf, spines out, without photos: a black DVD band at the top, the film's colour, the title running down
+   the spine in a typeface from its era, a tiny disc at the foot, and the plastic edges catching the light. */
+.dvds { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 16px 3px; max-width: min(320px, 100%); }
+.dvd { position: relative; display: block; padding: 0; border: 0; background: none; cursor: pointer; transition: transform .2s ease; }
+.dvd-spine { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; justify-items: center; width: 30px; height: 140px; border-radius: 3px; overflow: hidden;
+  background: var(--cover, #F3E9D7); color: var(--ink, #2A1D13);
+  box-shadow: 0 0 0 1px #1c1a19, inset 2px 0 0 rgba(255,255,255,.25), inset -2px 0 0 rgba(0,0,0,.18), 0 2px 4px rgba(0,0,0,.25); }
+.dvd-logo { justify-self: stretch; height: 14px; background: #141414; color: #fff; font: italic 800 7.5px/14px var(--font-ui); letter-spacing: .04em; text-align: center; }
+.dvd-title { align-self: center; writing-mode: vertical-rl; max-height: 100%; max-width: calc(var(--ts, 12px) * 1.08 * var(--lines, 1)); padding: 4px 0;
+  font-size: var(--ts, 12px); line-height: 1.08; text-align: center; overflow: hidden; }
+.dvd-dot { width: 12px; height: 12px; margin: 0 0 6px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(0,0,0,.14);
+  background: radial-gradient(circle, #fff 0 1.6px, transparent 2px), conic-gradient(from 20deg, #F6D7E3, #D9E8F7, #DDF1E4, #FBEFC9, #E9DDF7, #F6D7E3); }
+.dvd.f-cinzel .dvd-title { font-family: var(--ff-cinzel), serif; font-weight: 700; letter-spacing: .02em; }
+.dvd.f-playfair .dvd-title { font-family: var(--ff-playfair), serif; font-style: italic; font-weight: 700; }
+.dvd.f-abril .dvd-title { font-family: var(--ff-abril), serif; }
+.dvd.f-righteous .dvd-title { font-family: var(--ff-righteous), sans-serif; }
+.dvd.f-bebas .dvd-title { font-family: var(--ff-bebas), sans-serif; text-transform: uppercase; letter-spacing: .03em; }
+.dvd.f-elite .dvd-title { font-family: var(--ff-elite), monospace; }
+.dvd:hover, .dvd:focus-visible { transform: translateY(-5px); }
+.dvd.in { transform: translateY(-16px); }
+.dvd.add .dvd-spine { display: grid; place-items: center; background: transparent; box-shadow: none; border: 1.5px dashed color-mix(in srgb, var(--rink) 40%, transparent); color: var(--rink); font: 400 22px/1 var(--font-ui); }
 /* A full wall: one quiet line where "+ Hang something" was. */
 .wall-full { grid-column: 1 / -1; margin: 0; font: 500 14px/1.4 var(--font-ui); color: color-mix(in srgb, var(--rink) 75%, transparent); text-align: center; }
 .carts { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-end; max-width: 120px; }
@@ -684,7 +684,6 @@ h1, h2, .brand b, .join-title, .dp-next, .panel-title, .door-open h2, .make-your
 /* Spines and cartridges are tiny: tighter type so titles still fit. */
 .book span { font-size: 12px; letter-spacing: -.01em; font-variation-settings: "SOFT" 100, "opsz" 9; }
 .cart-mini span { font: 600 7px/1.05 var(--font-body); letter-spacing: 0; text-transform: none; overflow-wrap: normal; word-break: normal; hyphens: auto; }
-.dvd span { letter-spacing: 0; font-variation-settings: "SOFT" 100; }
 @media (max-width: 520px) { .landing-room .pieces { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* Report and block. */

@@ -6,12 +6,16 @@ import { formatTime, sceneEmbed, youtubeId } from "@/lib/lookup";
 import { imageOf, wobble } from "@/lib/piece-media";
 import type { Piece } from "@/lib/types";
 import { AreaEditButton } from "./area-editor";
+import { dvdLook, dvdSpineTitle } from "@/lib/dvd-fonts";
 import { episodeCode, posterUrl, watchPath, type Watching } from "@/lib/watching";
 
 /* eslint-disable @next/next/no-img-element -- signed or remote stills */
 
-/** DVD cases in soft colours (rose, sky, sage, butter, lilac, peach, mint, pink), light enough for dark titles. */
-const CASES = ["#F2B5B5", "#A9C7E8", "#B5D3A7", "#F5D38A", "#CDB5E3", "#F4BE96", "#9ED0C6", "#EBC1D2"];
+/** DVD covers: a plain colour and the ink its title is printed in (cream, black, red, navy, sage, pink, mustard, lilac). */
+const COVERS: [string, string][] = [
+  ["#F3E9D7", "#2A1D13"], ["#1E1B1A", "#F3E3C2"], ["#B23A3A", "#FBEFDF"], ["#1F3557", "#F5D38A"],
+  ["#B5D3A7", "#22351B"], ["#EBC1D2", "#5A1E33"], ["#F2C65A", "#3A2A10"], ["#CDB5E3", "#2F2148"],
+];
 const CARTS = ["#B23A48", "#2F5D8A", "#E0A100", "#3E7D4F", "#6A4C93", "#D65A31"];
 
 /** For a poster left in the TV: its trailer, and a wide still from the film to show while it isn't playing. */
@@ -106,8 +110,6 @@ export function ScreenCorner({
   /** For the owner: edit the whole DVD pile at once. */
   onEdit?: () => void;
 }) {
-  // More than six DVDs stand side by side like a shelf instead of piling up.
-  const rack = scenes.length > 6;
   // What's in the player: the chosen DVD or poster, otherwise the first scene that can play.
   const chosen = scenes.find((s) => s.id === tvId) ?? (extraFilm && extraFilm.id === tvId ? extraFilm : null);
   const current = chosen ?? scenes.find((s) => s.link && youtubeId(s.link)) ?? null;
@@ -193,30 +195,41 @@ export function ScreenCorner({
         </div>
 
         <div className="media-stack">
-        {/* Up to six DVDs make a small pile; more stand side by side like a shelf, so the pile never towers. */}
-        <div className={`pile${rack ? " rack" : ""}`} role="list" aria-label="DVDs">
-          {isOwner && (
-            <div role="listitem"><button type="button" className="dvd add" onClick={onAddScene}>+ scene</button></div>
-          )}
+        {/* DVDs on a shelf, spines out, without photos: the black DVD band at the top, the film's colour, the title
+            running down the spine in a typeface from its era, and a tiny disc at the foot. The one in the player is
+            pulled halfway out. */}
+        <div className="dvds" role="list" aria-label="DVDs">
           {scenes.map((s) => {
             const w = wobble(s.id, 1000);
+            const [cover, ink] = COVERS[w % COVERS.length];
+            const look = dvdLook(s.subtitle, w);
+            const fit = dvdSpineTitle(s.title, look);
             return (
               <div role="listitem" key={s.id}>
                 <button
                   type="button"
-                  className={`dvd${s.id === tvId ? " in" : ""}`}
+                  className={`dvd f-${look}${s.id === tvId ? " in" : ""}`}
                   onClick={() => (s.link ? onInsert(s) : onOpen(s))}
                   aria-label={s.link ? `Play ${s.title} on the TV` : `${s.title}, open details`}
-                  style={rack
-                    // On the shelf: spines of slightly different heights, and now and then one leaning on its neighbour.
-                    ? ({ "--case": CASES[w % CASES.length], "--h": `${120 + (w % 17)}px`, rotate: w % 7 === 0 ? "2.5deg" : undefined } as CSSProperties)
-                    : ({ "--case": CASES[w % CASES.length], marginLeft: (w % 14) - 4, rotate: `${((w >> 3) % 5) - 2}deg` } as CSSProperties)}
+                  title={[s.title, s.subtitle].filter(Boolean).join(" · ")}
+                  style={{ "--cover": cover, "--ink": ink, "--ts": `${fit.size}px`, "--lines": fit.lines } as CSSProperties}
                 >
-                  <span>{s.title}</span>
+                  <span className="dvd-spine" aria-hidden="true">
+                    <span className="dvd-logo">DVD</span>
+                    <span className="dvd-title">{s.title}</span>
+                    <span className="dvd-dot" />
+                  </span>
                 </button>
               </div>
             );
           })}
+          {isOwner && (
+            <div role="listitem">
+              <button type="button" className="dvd add" onClick={onAddScene} aria-label="Add a scene">
+                <span className="dvd-spine" aria-hidden="true">+</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {moments.length > 0 && (
